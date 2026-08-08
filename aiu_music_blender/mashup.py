@@ -234,6 +234,23 @@ def song_part(path, work_folder, want_vocals):
 APPEND_CROSSFADE_SECONDS = 0.5
 
 
+# Define the function that strips ALL vocals from one song, writing the instrumental.
+def render_instrumental(path, output_path):
+    # Verify the stem separator is installed.
+    if not demucs_available():
+        # Raise the error the faces will show the user.
+        raise RuntimeError("Vocal stripping needs Demucs, which is not installed; "
+                           "install with: pip3 install demucs")
+    # Do the separation work in a temporary folder that cleans itself up.
+    with tempfile.TemporaryDirectory() as work_folder:
+        # Separate the song and keep only its instrumental stem.
+        _, instrumental = separate_stems(path, work_folder)
+        # Write the instrumental at the engine sample rate.
+        soundfile.write(output_path, load_mono(instrumental), SAMPLE_RATE)
+    # Return where the instrumental was written.
+    return output_path
+
+
 # Define the helper that appends part B onto the end of part A with a smooth seam.
 def append_parts(conformed_a, conformed_b):
     # Load the conformed part A.

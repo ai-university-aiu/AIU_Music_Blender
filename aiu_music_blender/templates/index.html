@@ -136,6 +136,34 @@
     <div id="mashup_status">Paste two songs, then blend; the result loads into the
       AIU Song Blender above so it can play forever.</div>
   </div>
+
+  <!-- The third big rounded-corner group rectangle: one song, vocals stripped, blended. -->
+  <div class="group">
+    <!-- The title inside the top of the rectangle. -->
+    <h2>AIU Vocal to Instrumental Blender</h2>
+    <!-- Row one: the song's YouTube link, stripped and analyzed on Enter or button press. -->
+    <div class="row">
+      <label for="instrumental_input">YouTube URL:</label>
+      <input type="text" id="instrumental_input" size="34"
+             placeholder="https://www.youtube.com/watch?v=...">
+      <button id="instrumental_button">Strip vocals &amp; analyze</button>
+    </div>
+    <!-- Row two: the instrumental blender's own chaos label, slider, and live value. -->
+    <div class="row">
+      <label for="chaos_three">Chaos (jump probability):</label>
+      <input type="range" id="chaos_three" min="0" max="1" step="0.05" value="0.25"
+             title="How likely each beat is to jump to a look-alike beat: 0.0 never, 1.0 always.">
+      <span id="chaos_three_value">0.25</span>
+    </div>
+    <!-- Row three: the instrumental blender's own start and stop. -->
+    <div class="row">
+      <button id="play_three_button" disabled>Play Forever</button>
+      <button id="stop_three_button" disabled>Stopped</button>
+    </div>
+    <!-- Report the vocal stripping progress here. -->
+    <div id="instrumental_status">This box strips out ALL vocals from the track given,
+      before it is fed to the blender.</div>
+  </div>
   <!-- Draw the classic arc diagram on this canvas. -->
   <canvas id="arc_canvas" width="900" height="520"></canvas>
 
@@ -189,6 +217,19 @@
       // Write the slider's value, always with two decimals, into its value label.
       chaosTwoValue.textContent = parseFloat(chaosTwoSlider.value).toFixed(2);
     });
+    // Find the instrumental rectangle's elements.
+    const instrumentalInput = document.getElementById("instrumental_input");
+    const instrumentalButton = document.getElementById("instrumental_button");
+    const instrumentalStatus = document.getElementById("instrumental_status");
+    const chaosThreeSlider = document.getElementById("chaos_three");
+    const chaosThreeValue = document.getElementById("chaos_three_value");
+    const playThreeButton = document.getElementById("play_three_button");
+    const stopThreeButton = document.getElementById("stop_three_button");
+    // Whenever the instrumental slider moves, show its current value beside it.
+    chaosThreeSlider.addEventListener("input", () => {
+      // Write the slider's value, always with two decimals, into its value label.
+      chaosThreeValue.textContent = parseFloat(chaosThreeSlider.value).toFixed(2);
+    });
     // The slider the running walk reads its chaos from (set by whichever Play was pressed).
     let activeChaosSlider = chaosSlider;
 
@@ -222,10 +263,12 @@
         + record.graph.flat().length + " jump edges. Ready.";
       // Draw the arc diagram.
       drawArcs(-1);
-      // Enable both rectangles' play buttons.
+      // Enable every rectangle's play button.
       playButton.disabled = false;
       // Enable the mash-up rectangle's play button too.
       playTwoButton.disabled = false;
+      // Enable the instrumental rectangle's play button too.
+      playThreeButton.disabled = false;
     }
 
     // When a file is chosen, send it to the local server for analysis.
@@ -488,7 +531,8 @@
     // Put both rectangles' play and stop buttons into the same state together.
     function setButtonsWalking(nowWalking) {
       // Walk every play button with its partner stop button.
-      [[playButton, stopButton], [playTwoButton, stopTwoButton]].forEach(([play, stop]) => {
+      [[playButton, stopButton], [playTwoButton, stopTwoButton],
+       [playThreeButton, stopThreeButton]].forEach(([play, stop]) => {
         // A running walk disables play and arms stop; a stopped walk does the reverse.
         play.disabled = nowWalking;
         // Label the play button with its state.
@@ -536,10 +580,62 @@
     playButton.addEventListener("click", () => startWalk(chaosSlider));
     // The Mash-Up Blender's play starts a walk steered by ITS own slider.
     playTwoButton.addEventListener("click", () => startWalk(chaosTwoSlider));
-    // Either rectangle's stop ends the walk.
+    // The Instrumental Blender's play starts a walk steered by ITS own slider.
+    playThreeButton.addEventListener("click", () => startWalk(chaosThreeSlider));
+    // Any rectangle's stop ends the walk.
     stopButton.addEventListener("click", stopWalk);
     // The mash-up rectangle's stop does the same.
     stopTwoButton.addEventListener("click", stopWalk);
+    // The instrumental rectangle's stop does the same.
+    stopThreeButton.addEventListener("click", stopWalk);
+
+    // Strip the vocals from the pasted song and load the instrumental into the player.
+    async function analyzeInstrumental() {
+      // Take the pasted link.
+      const link = instrumentalInput.value.trim();
+      // Do nothing when the box is empty.
+      if (!link) return;
+      // Show the work on the button itself.
+      instrumentalButton.disabled = true;
+      // Change the button label to the state, with the spinning working indicator.
+      instrumentalButton.innerHTML = '<span class="spinner"></span>Stripping...';
+      // Tell the user the download, stripping, and analysis are running.
+      instrumentalStatus.textContent = "Downloading, stripping ALL vocals "
+        + "(a few minutes the first time), then analyzing...";
+      // Guard the whole round trip so every failure is shown, never silent.
+      try {
+        // Build the form carrying the link.
+        const form = new FormData();
+        // Attach the link as the input.
+        form.append("input", link);
+        // Post the link to the instrumental route.
+        const answer = await fetch("/instrumental", { method: "POST", body: form });
+        // Refuse gracefully if the server reported a problem.
+        if (!answer.ok) { instrumentalStatus.textContent = "Stripping failed - check the link."; return; }
+        // Load the vocal-free record into the shared player.
+        await loadRecord(await answer.json());
+        // Report success in this rectangle.
+        instrumentalStatus.textContent = "Vocals stripped! The instrumental is loaded "
+          + "- press Play Forever.";
+      // Surface any network or server failure.
+      } catch (problem) {
+        // Show the failure instead of doing nothing.
+        instrumentalStatus.textContent = "Could not reach the local server: " + problem;
+      // Always restore the button, success or failure.
+      } finally {
+        // Re-enable the button.
+        instrumentalButton.disabled = false;
+        // Restore the button label.
+        instrumentalButton.textContent = "Strip vocals & analyze";
+      }
+    }
+    // Strip when the button is pressed.
+    instrumentalButton.addEventListener("click", analyzeInstrumental);
+    // Strip when Enter is pressed in the box.
+    instrumentalInput.addEventListener("keydown", (key) => {
+      // React only to the Enter key.
+      if (key.key === "Enter") analyzeInstrumental();
+    });
   </script>
 </body>
 </html>

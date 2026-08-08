@@ -10,7 +10,7 @@ from .ingest import cache_directory, local_audio_path
 # Import the engine's analysis function and cache key.
 from .analysis import analyze_song, cache_key
 # Import the engine's mash-up renderer.
-from .mashup import render_mashup
+from .mashup import render_mashup, render_instrumental
 
 # Create the Flask application, pointing at our templates folder.
 application = Flask(__name__, template_folder="templates")
@@ -90,6 +90,27 @@ def mashup_route():
     AUDIO_PATHS[key] = output_path
     # Return the report and the playable record together.
     return jsonify({"report": report, "record": dict(record, audio_key=key)})
+
+
+# Define the route that strips all vocals from one song and returns its playable record.
+@application.route("/instrumental", methods=["POST"])
+def instrumental_route():
+    # Resolve the input (path or YouTube link) to a local file.
+    path = local_audio_path(request.form["input"])
+    # Name the cached instrumental by the source song's cache key.
+    output_path = os.path.join(cache_directory(), "instrumental_" + cache_key(path) + ".wav")
+    # Strip the vocals only if this song's instrumental is not already cached.
+    if not os.path.isfile(output_path):
+        # Render the vocal-free instrumental.
+        render_instrumental(path, output_path)
+    # Analyze the instrumental so it can play in the infinite engine.
+    record = analyze_song(output_path)
+    # Remember the instrumental's audio for the audio route.
+    key = cache_key(output_path)
+    # Store the mapping.
+    AUDIO_PATHS[key] = output_path
+    # Return the playable record.
+    return jsonify(dict(record, audio_key=key))
 
 
 # Define the function that starts the localhost-only server.
