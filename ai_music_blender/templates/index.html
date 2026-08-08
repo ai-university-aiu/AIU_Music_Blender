@@ -11,8 +11,11 @@
     body { background: #3a0000; color: #ffce59; font-family: sans-serif; text-align: center; }
     /* Style the headline. */
     h1 { color: #ff933a; margin-bottom: 0.2em; }
-    /* Style the controls row. */
+    /* Style the controls block. */
     .controls { margin: 1em; }
+    /* Give each control its own line, with the pieces of a row staying together. */
+    .row { margin: 0.6em auto; display: flex; justify-content: center;
+           align-items: center; gap: 0.5em; flex-wrap: wrap; }
     /* Style the buttons and inputs. */
     button, input { background: #7c0300; color: #ffce59; border: 1px solid #c02b18;
                     padding: 0.4em 0.8em; border-radius: 6px; }
@@ -25,18 +28,24 @@
   <h1>AI Music Blender</h1>
   <!-- Show the tagline. -->
   <p>The self-hosted infinite jukebox. Nothing to deprecate. Nothing to die.</p>
-  <!-- Provide the song chooser and the walk controls. -->
+  <!-- Provide the song chooser and the walk controls, one control per line for narrow screens. -->
   <div class="controls">
-    <!-- Let the user pick a local audio file. -->
-    <input type="file" id="file_input" accept="audio/*">
-    <!-- Let the user set the chaos (jump probability), with the live value shown beside it. -->
-    <label for="chaos">Chaos (jump probability):</label>
-    <input type="range" id="chaos" min="0" max="1" step="0.05" value="0.25"
-           title="How likely each beat is to jump to a look-alike beat: 0.0 never, 1.0 always.">
-    <span id="chaos_value">0.25</span>
-    <!-- Start and stop the infinite walk. -->
-    <button id="play_button" disabled>Play forever</button>
-    <button id="stop_button" disabled>Stop</button>
+    <!-- Row one: let the user pick a local audio file. -->
+    <div class="row">
+      <input type="file" id="file_input" accept="audio/*">
+    </div>
+    <!-- Row two: the chaos label, slider, and live value, kept together on one line. -->
+    <div class="row">
+      <label for="chaos">Chaos (jump probability):</label>
+      <input type="range" id="chaos" min="0" max="1" step="0.05" value="0.25"
+             title="How likely each beat is to jump to a look-alike beat: 0.0 never, 1.0 always.">
+      <span id="chaos_value">0.25</span>
+    </div>
+    <!-- Row three: start and stop the infinite walk. -->
+    <div class="row">
+      <button id="play_button" disabled>Play forever</button>
+      <button id="stop_button" disabled>Stop</button>
+    </div>
   </div>
   <!-- Report progress and results here. -->
   <div id="status">Choose a song to analyze it locally.</div>
