@@ -9,12 +9,12 @@ READ FIRST
 
 • docs/AIU_Music_Blender_Vision_Document_v2.txt - the story, the plan, and the repo strategy (fresh repo, vendored snapshot).
 
-• The DSPARCD Fileset - docs/ai_music_blender_1_definition through 7_demonstration - the design record this code answers to.
+• The DSPARCD Fileset - docs/aiu_music_blender_1_definition through 7_demonstration - the design record this code answers to.
 
 
 THE LAYOUT
 
-  ai_music_blender/        the engine (the only place decisions live)
+  aiu_music_blender/        the engine (the only place decisions live)
     ingest.py              turns "a file path or YouTube link" into a local audio path
     analysis.py            librosa pipeline: beats, MFCC, chroma, key, beat graph; JSON cache
     jukebox.py             the infinite walk: live audition and file rendering
@@ -23,7 +23,7 @@ THE LAYOUT
     web.py                 the Flask localhost face
     templates/index.html   the browser side: arc diagram canvas + Web Audio playback
     gui.py                 the GTK 3 face
-  bin/ai-music-blender     the launcher
+  bin/aiu-music-blender     the launcher
   tests/                   synthetic-audio tests (no copyrighted material, no network)
   vendor/EternalJukebox    pristine snapshot of the ancestor; reference only, never imported
   docs/                    the DSPARCD Fileset, tutorials, vision, build log; old versions in docs/archive/
@@ -36,7 +36,7 @@ Everything flows through the JSON analysis record produced by analysis.analyze_s
   source, duration, tempo, key {tonic, mode, camelot}, beats [seconds...],
   graph [per beat: [[target_beat, distance], ...]], version
 
-It is cached at ~/.cache/ai_music_blender/<sha1-of-file>.json.
+It is cached at ~/.cache/aiu_music_blender/<sha1-of-file>.json.
 
 The graph is the product; the walker and the web page are just two ways of following its edges.
 

@@ -17,7 +17,7 @@ from .mashup import render_mashup, score_compatibility
 def build_parser():
     # Create the top-level parser with the program's name and story.
     parser = argparse.ArgumentParser(
-        prog="ai-music-blender",
+        prog="aiu-music-blender",
         description="AIU Music Blender: the self-hosted infinite jukebox and mash-up machine.")
     # Create the sub-command holder.
     commands = parser.add_subparsers(dest="command", required=True)
@@ -132,7 +132,7 @@ def run_mashup(arguments):
           % (report["target_tempo"], report["stretch_a"], report["stretch_b"],
              report["key_shift_applied"], report["stems"]))
     # Print where the blend was written.
-    print("Wrote %s - now try: ai-music-blender jukebox %s" % (report["output"],
+    print("Wrote %s - now try: aiu-music-blender jukebox %s" % (report["output"],
                                                                report["output"]))
 
 

@@ -28,13 +28,13 @@ The seven (7) step waterfall workflow documents are inspired by the specificatio
 /home/ccaitwo/AIU_Music_Blender/docs/DSPARCD_EXPLAINED.txt
 
 The versioned files are created and named:
-/home/ccaitwo/AIU_Music_Blender/docs/ai_music_blender_1_definition_v1.txt
-/home/ccaitwo/AIU_Music_Blender/docs/ai_music_blender_2_specification_v1.txt
-/home/ccaitwo/AIU_Music_Blender/docs/ai_music_blender_3_pseudocode_v1.txt
-/home/ccaitwo/AIU_Music_Blender/docs/ai_music_blender_4_architecture_v1.txt
-/home/ccaitwo/AIU_Music_Blender/docs/ai_music_blender_5_refinement_v1.txt
-/home/ccaitwo/AIU_Music_Blender/docs/ai_music_blender_6_completion_v1.txt
-/home/ccaitwo/AIU_Music_Blender/docs/ai_music_blender_7_demonstration_v1.txt
+/home/ccaitwo/AIU_Music_Blender/docs/aiu_music_blender_1_definition_v1.txt
+/home/ccaitwo/AIU_Music_Blender/docs/aiu_music_blender_2_specification_v1.txt
+/home/ccaitwo/AIU_Music_Blender/docs/aiu_music_blender_3_pseudocode_v1.txt
+/home/ccaitwo/AIU_Music_Blender/docs/aiu_music_blender_4_architecture_v1.txt
+/home/ccaitwo/AIU_Music_Blender/docs/aiu_music_blender_5_refinement_v1.txt
+/home/ccaitwo/AIU_Music_Blender/docs/aiu_music_blender_6_completion_v1.txt
+/home/ccaitwo/AIU_Music_Blender/docs/aiu_music_blender_7_demonstration_v1.txt
 
 These seven (7) files will be known as "The DSPARCD Fileset".
 
@@ -93,7 +93,7 @@ Keep it that way.
 
 THE TENTH COMMANDMENT: ONE ENGINE, THREE FACES:
 The command line interface, the localhost web page, and the Ubuntu GUI app are all thin
-faces over ONE shared engine (the ai_music_blender Python package).
+faces over ONE shared engine (the aiu_music_blender Python package).
 
 A capability added to the engine is added once; a face merely exposes it.
 

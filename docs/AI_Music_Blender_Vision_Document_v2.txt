@@ -164,9 +164,9 @@ nothing hosted or distributed. Keep it that way.
 6. THREE WAYS TO RUN IT
 --------------------------------------------------------------------------------
   1. COMMAND LINE
-       ai-music-blender jukebox  File1                 # classic infinite mode
-       ai-music-blender mashup   File1 File2           # The_AI_Mashup_Machine
-       ai-music-blender jukebox  <YouTube-URL>         # fetch + analyze + play
+       aiu-music-blender jukebox  File1                 # classic infinite mode
+       aiu-music-blender mashup   File1 File2           # The_AI_Mashup_Machine
+       aiu-music-blender jukebox  <YouTube-URL>         # fetch + analyze + play
      (File1 for Infinite Jukebox; File1 + File2 for The_AI_Mashup_Machine.)
 
   2. WEB PAGE INTERFACE — localhost for now. The EternalJukebox already ships

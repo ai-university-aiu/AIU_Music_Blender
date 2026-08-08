@@ -12,22 +12,22 @@ THE CHOSEN DEMONSTRATION: A MINIMUM VIABLE PRODUCT ANYONE CAN RUN
 
 The demonstration is the Minimum Viable Product (MVP) run, end to end, on the viewer's own song, on the viewer's own machine, with no network and no account:
 
-  Step 1: bin/ai-music-blender analyze  YOUR_SONG.mp3
+  Step 1: bin/aiu-music-blender analyze  YOUR_SONG.mp3
           - watch the self-hosted pipeline report tempo, key, beat count, and jump-edge count.
 
-  Step 2: bin/ai-music-blender jukebox  YOUR_SONG.mp3 --render forever.wav --length 120
+  Step 2: bin/aiu-music-blender jukebox  YOUR_SONG.mp3 --render forever.wav --length 120
           - render two minutes of a song that never ends, then listen to forever.wav.
 
-  Step 3: bin/ai-music-blender jukebox  YOUR_SONG.mp3 --seed 42
+  Step 3: bin/aiu-music-blender jukebox  YOUR_SONG.mp3 --seed 42
           - hear a live infinite walk; run it twice and hear the SAME walk, proving the shareable-seed promise.
 
-  Step 4: bin/ai-music-blender mashup   SONG_A.mp3 SONG_B.mp3 -o blend.wav
+  Step 4: bin/aiu-music-blender mashup   SONG_A.mp3 SONG_B.mp3 -o blend.wav
           - watch the compatibility report (stretch and key shift applied), then listen to the blend.
 
-  Step 5: bin/ai-music-blender jukebox  blend.wav
+  Step 5: bin/aiu-music-blender jukebox  blend.wav
           - the crown jewel: the mash-up itself plays forever. Infinite mash-up radio.
 
-  Step 6: bin/ai-music-blender web
+  Step 6: bin/aiu-music-blender web
           - open http://localhost:8765 and watch the classic arc diagram light up as the walk jumps.
 
 
@@ -53,7 +53,7 @@ DEMONSTRATION REFLECTION
 
 The MVP shape was chosen over a benchmark because there is no respected public benchmark for "sounds seamless forever"; the honest demonstration is the viewer's own ears on the viewer's own music.
 
-Laying this document beside ai_music_blender_1_definition_v1.txt: the promise was a self-hosted, unkillable, extendable infinite jukebox, and the demonstration shows exactly that.
+Laying this document beside aiu_music_blender_1_definition_v1.txt: the promise was a self-hosted, unkillable, extendable infinite jukebox, and the demonstration shows exactly that.
 
 
 END OF DEMONSTRATION VERSION 1

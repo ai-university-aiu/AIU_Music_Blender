@@ -17,11 +17,11 @@ import numpy
 # Import the audio file writer.
 import soundfile
 # Import the engine's analysis pipeline.
-from ai_music_blender.analysis import analyze_song, SAMPLE_RATE
+from aiu_music_blender.analysis import analyze_song, SAMPLE_RATE
 # Import the engine's walker and renderer.
-from ai_music_blender.jukebox import InfiniteWalk, render_walk
+from aiu_music_blender.jukebox import InfiniteWalk, render_walk
 # Import the engine's mash-up pieces.
-from ai_music_blender.mashup import render_mashup, score_compatibility
+from aiu_music_blender.mashup import render_mashup, score_compatibility
 
 
 # Define a helper that synthesizes a click-track song with a repeated section.

@@ -12,7 +12,7 @@ import sys
 # Add the repository root so the engine package imports in tests.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Import the web face's Flask application.
-from ai_music_blender.web import application
+from aiu_music_blender.web import application
 # Import the synthetic song maker from the engine tests.
 from test_engine import make_test_song
 

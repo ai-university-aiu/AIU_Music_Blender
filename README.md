@@ -24,17 +24,17 @@ Every hosted ancestor of this idea (Echo Nest, The Eternal Jukebox, eternalbox.d
 
 ```bash
 # 1. Command line
-bin/ai-music-blender analyze  MySong.mp3
-bin/ai-music-blender jukebox  MySong.mp3                 # play one song forever
-bin/ai-music-blender jukebox  MySong.mp3 --seed 42       # a shareable, reproducible walk
-bin/ai-music-blender mashup   SongA.mp3 SongB.mp3 -o blend.wav
-bin/ai-music-blender jukebox  blend.wav                  # the mash-up plays forever
+bin/aiu-music-blender analyze  MySong.mp3
+bin/aiu-music-blender jukebox  MySong.mp3                 # play one song forever
+bin/aiu-music-blender jukebox  MySong.mp3 --seed 42       # a shareable, reproducible walk
+bin/aiu-music-blender mashup   SongA.mp3 SongB.mp3 -o blend.wav
+bin/aiu-music-blender jukebox  blend.wav                  # the mash-up plays forever
 
 # 2. Localhost web page (the classic arc diagram, live)
-bin/ai-music-blender web      # then open http://localhost:8765
+bin/aiu-music-blender web      # then open http://localhost:8765
 
 # 3. Ubuntu desktop app (GTK)
-bin/ai-music-blender gui
+bin/aiu-music-blender gui
 ```
 
 YouTube links work anywhere a file does (downloaded locally, analyzed locally).
@@ -54,7 +54,7 @@ python3 -m unittest discover tests                    # verify: 8 tests, no netw
 - [CONSTITUTION.md](CONSTITUTION.md) — the rules of the repository
 - [docs/User_Tutorial_v1.txt](docs/User_Tutorial_v1.txt) — for the newcomer user
 - [docs/Developer_Tutorial_v1.txt](docs/Developer_Tutorial_v1.txt) — for the newcomer developer
-- The DSPARCD Fileset — [Definition](docs/ai_music_blender_1_definition_v1.txt) · [Specification](docs/ai_music_blender_2_specification_v1.txt) · [Pseudocode](docs/ai_music_blender_3_pseudocode_v1.txt) · [Architecture](docs/ai_music_blender_4_architecture_v1.txt) · [Refinement](docs/ai_music_blender_5_refinement_v1.txt) · [Completion](docs/ai_music_blender_6_completion_v1.txt) · [Demonstration](docs/ai_music_blender_7_demonstration_v1.txt)
+- The DSPARCD Fileset — [Definition](docs/aiu_music_blender_1_definition_v1.txt) · [Specification](docs/aiu_music_blender_2_specification_v1.txt) · [Pseudocode](docs/aiu_music_blender_3_pseudocode_v1.txt) · [Architecture](docs/aiu_music_blender_4_architecture_v1.txt) · [Refinement](docs/aiu_music_blender_5_refinement_v1.txt) · [Completion](docs/aiu_music_blender_6_completion_v1.txt) · [Demonstration](docs/aiu_music_blender_7_demonstration_v1.txt)
 - [docs/AIU_Music_Blender_Vision_Document_v2.txt](docs/AIU_Music_Blender_Vision_Document_v2.txt) — the story and the plan
 
 ## Attribution

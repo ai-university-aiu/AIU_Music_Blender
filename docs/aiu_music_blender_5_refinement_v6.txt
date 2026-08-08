@@ -1,8 +1,8 @@
-AIU MUSIC BLENDER - DSPARCD PHASE 5 - REFINEMENT - VERSION 5
+AIU MUSIC BLENDER - DSPARCD PHASE 5 - REFINEMENT - VERSION 6
 
 Date: 2026-08-07
 
-(Version 5 supersedes version 4, now in docs/archive/; it adds Iteration 5.)
+(Version 6 supersedes version 5, now in docs/archive/; it adds Iteration 6.)
 
 
 HOW REFINEMENT WORKS ON THIS PROJECT
@@ -56,9 +56,19 @@ Iteration 5 (2026-08-07): The project is renamed AIU_Music_Blender, by owner ins
 
 • Every instance of "AI_Music_Blender", "AI Music Blender", and "AI MUSIC BLENDER" across the documents, code comments, web page, README, and CONSTITUTION now reads AIU; the web page heading now says "AIU Music Blender".
 
-• The lowercase engine package name (ai_music_blender), the launcher name (ai-music-blender), and the vendored ancestor snapshot are unchanged: the first two were not part of the instruction and keep every command working, and the vendor snapshot stays pristine by design.
+• The lowercase engine package name (aiu_music_blender), the launcher name (aiu-music-blender), and the vendored ancestor snapshot are unchanged: the first two were not part of the instruction and keep every command working, and the vendor snapshot stays pristine by design.
 
 • The full test suite stays green after the rename.
+
+Iteration 6 (2026-08-07): The lowercase names complete the rename, by owner instruction.
+
+• The engine package is renamed ai_music_blender to aiu_music_blender, the launcher is renamed bin/ai-music-blender to bin/aiu-music-blender, and the DSPARCD Fileset document files (current and archived) are renamed to the aiu_music_blender_ prefix, all with git mv so history follows.
+
+• Every import, test, document reference, command example, and the program's own help name were updated to match; the analysis cache folder moved to ~/.cache/aiu_music_blender with its contents preserved, so no song needs re-analysis.
+
+• The vendored EternalJukebox snapshot remains pristine, as always.
+
+• The full test suite (8 tests) and the launcher help both pass after the rename.
 
 
 PLANNED REFINEMENTS (the resume attacks, in order)
@@ -81,4 +91,4 @@ The wickedest problem so far is that "sounds seamless" is perceptual: the simila
 Iteration 2 taught a small interface lesson: a probability control without a visible number invites guessing; showing the value costs three lines and removes the guess.
 
 
-END OF REFINEMENT VERSION 5
+END OF REFINEMENT VERSION 6

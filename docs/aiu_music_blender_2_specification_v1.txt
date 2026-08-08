@@ -2,7 +2,7 @@ AIU MUSIC BLENDER - DSPARCD PHASE 2 - SPECIFICATION - VERSION 1
 
 Date: 2026-08-07
 
-Every requirement below traces to the concept and principles in ai_music_blender_1_definition_v1.txt.
+Every requirement below traces to the concept and principles in aiu_music_blender_1_definition_v1.txt.
 
 
 FUNCTIONAL REQUIREMENTS - ANALYSIS (traces to: Self-host everything)
@@ -50,7 +50,7 @@ F17. The rendered mash-up is written as an audio file, and it can be fed back in
 
 FUNCTIONAL REQUIREMENTS - THE THREE FACES (traces to: One engine, three faces)
 
-F18. Command line: ai-music-blender jukebox FILE_OR_URL, ai-music-blender mashup FILE1 FILE2, ai-music-blender analyze FILE, ai-music-blender web, ai-music-blender gui.
+F18. Command line: aiu-music-blender jukebox FILE_OR_URL, aiu-music-blender mashup FILE1 FILE2, aiu-music-blender analyze FILE, aiu-music-blender web, aiu-music-blender gui.
 
 F19. Web page: a localhost-only web server presents the classic arc-diagram visualization (beats around the rim, jump edges as arcs), live playback with visible jumps, and the mash-up mode.
 

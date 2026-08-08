@@ -9,7 +9,7 @@ import subprocess
 import hashlib
 
 # Define the folder where downloads and analyses are cached.
-CACHE_DIRECTORY = os.path.expanduser("~/.cache/ai_music_blender")
+CACHE_DIRECTORY = os.path.expanduser("~/.cache/aiu_music_blender")
 
 
 # Define a function that makes sure the cache folder exists and returns it.

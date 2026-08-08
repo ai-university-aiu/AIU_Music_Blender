@@ -1,4 +1,4 @@
-AIU MUSIC BLENDER - DSPARCD PHASE 6 - COMPLETION - VERSION 2
+AIU MUSIC BLENDER - DSPARCD PHASE 6 - COMPLETION - VERSION 1
 
 Date: 2026-08-07
 
@@ -32,22 +32,20 @@ DEPLOYMENT NOTE (there is no deployment - the Second Commandment)
 
 Install once, on the user's machine:
 
-  1. Install the system programs: sudo apt install ffmpeg rubberband-cli python3-gi gir1.2-gtk-3.0 ; pip3 install --user --break-system-packages -U yt-dlp
-
-(Version 2 note: yt-dlp moved from apt to pip3 after real-song testing found the Ubuntu-packaged version too old for current YouTube.)
+  1. Install the system programs: sudo apt install ffmpeg rubberband-cli yt-dlp python3-gi gir1.2-gtk-3.0
 
   2. Install the Python libraries: pip3 install --user --break-system-packages librosa soundfile flask numpy
 
   3. Optional, for stem mash-ups: pip3 install --user --break-system-packages demucs
 
-  4. Run: bin/ai-music-blender --help
+  4. Run: bin/aiu-music-blender --help
 
 
 MONITORING
 
 There is nothing to monitor; there is no server but the localhost one the user starts and stops.
 
-The analysis cache at ~/.cache/ai_music_blender can be deleted at any time and rebuilds itself.
+The analysis cache at ~/.cache/aiu_music_blender can be deleted at any time and rebuilds itself.
 
 
 SIGN-OFF
@@ -62,4 +60,4 @@ COMPLETION REFLECTION
 The riskiest part of completion was the temptation to call the system done when the engine worked but the faces were thin; the tutorials forced honesty, because a tutorial cannot be written for a face that does not actually work.
 
 
-END OF COMPLETION VERSION 2
+END OF COMPLETION VERSION 1

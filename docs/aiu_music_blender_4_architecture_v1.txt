@@ -5,7 +5,7 @@ Date: 2026-08-07
 
 THE SHAPE OF THE SYSTEM
 
-One Python package, ai_music_blender, is the engine.
+One Python package, aiu_music_blender, is the engine.
 
 Three thin faces call it: the command line, the localhost web server, and the GTK app.
 
@@ -17,7 +17,7 @@ A vendored, pristine snapshot of the ancestor lives in vendor/EternalJukebox for
         |
     analysis.py  ---------------------- librosa (beats, MFCC, chroma, key)
         |
-   [analysis record: beats, features, graph]  --- cached as JSON in ~/.cache/ai_music_blender
+   [analysis record: beats, features, graph]  --- cached as JSON in ~/.cache/aiu_music_blender
         |
         +----> jukebox.py  (infinite walk; audition or render)
         |
@@ -82,7 +82,7 @@ DATA MODEL - THE ANALYSIS RECORD (JSON)
     "version": 1
   }
 
-The record is cached at ~/.cache/ai_music_blender/<hash>.json, where the hash is of the audio file bytes, so re-analysis is automatic when the audio changes and instant when it does not.
+The record is cached at ~/.cache/aiu_music_blender/<hash>.json, where the hash is of the audio file bytes, so re-analysis is automatic when the audio changes and instant when it does not.
 
 
 DEPLOYMENT
@@ -91,7 +91,7 @@ There is no deployment; that is the point.
 
 The repository is cloned, dependencies are installed once, and everything runs locally on ccai2 (Ubuntu Studio 24.04).
 
-bin/ai-music-blender is the single launcher for all faces.
+bin/aiu-music-blender is the single launcher for all faces.
 
 
 FUTURE FACES (Windows, Mac, iPhone, Android)
