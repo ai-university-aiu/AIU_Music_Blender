@@ -277,26 +277,48 @@
       return beatIndex + 1;
     }
 
-    // Play one beat span and schedule the next, forever.
-    function playBeat(beatIndex) {
-      // Stop quietly if the user pressed stop.
-      if (!walking) return;
+    // The scheduler state: the beat to schedule next, when it starts on the audio clock,
+    // the queued sources (so Stop can silence them), and the pump timer.
+    let scheduleBeat = 0, scheduleTime = 0, queuedSources = [], pumpTimer = null;
+    // How far ahead, in seconds, beats are queued on the audio clock.
+    const LOOKAHEAD_SECONDS = 0.35;
+
+    // Queue one beat span at an exact time on the audio clock (sample-accurate, no drift).
+    function queueBeat(beatIndex, startTime) {
       // Create a source for this beat span.
       const source = audioContext.createBufferSource();
       // Give the source the song's audio.
       source.buffer = audioBuffer;
       // Connect the source to the speakers.
       source.connect(audioContext.destination);
-      // Compute this beat's start and length.
+      // Compute this beat's start and length inside the song.
       const start = record.beats[beatIndex], length = beatEnd(beatIndex) - start;
-      // Play exactly this beat span.
-      source.start(0, start, length);
-      // Redraw the diagram with this beat active.
-      drawArcs(beatIndex);
-      // Choose the next beat with the engine's rules.
-      const next = chooseNextBeat(beatIndex);
-      // Schedule the next beat to start when this one ends.
-      nextTimer = setTimeout(() => playBeat(next), length * 1000);
+      // Start exactly on the audio clock, playing exactly this beat span.
+      source.start(startTime, start, length);
+      // Remember the source so Stop can silence it.
+      queuedSources.push(source);
+      // Light up the diagram when this beat actually begins.
+      setTimeout(() => { if (walking) drawArcs(beatIndex); },
+                 Math.max(0, (startTime - audioContext.currentTime) * 1000));
+      // Report how long this beat lasts.
+      return length;
+    }
+
+    // The pump: keep the audio clock's queue topped up a little way into the future.
+    function pumpSchedule() {
+      // Stop pumping if the user pressed stop.
+      if (!walking) return;
+      // Queue beats until the lookahead horizon is full.
+      while (scheduleTime < audioContext.currentTime + LOOKAHEAD_SECONDS) {
+        // Queue the current beat at its exact start time and learn its length.
+        const length = queueBeat(scheduleBeat, scheduleTime);
+        // The next beat starts exactly when this one ends.
+        scheduleTime += length;
+        // Choose the next beat with the engine's rules (reading the chaos slider live).
+        scheduleBeat = chooseNextBeat(scheduleBeat);
+        // Forget sources that have already finished playing.
+        if (queuedSources.length > 8) queuedSources.shift();
+      }
     }
 
     // Start the infinite walk when play is pressed.
@@ -306,16 +328,26 @@
       // Swap the button states, with the labels saying what is happening.
       playButton.disabled = true; playButton.textContent = "Playing forever...";
       stopButton.disabled = false; stopButton.textContent = "Stop";
-      // Begin at beat zero.
-      playBeat(0);
+      // Begin at beat zero, a breath from now on the audio clock.
+      scheduleBeat = 0;
+      // Anchor the schedule to the audio clock.
+      scheduleTime = audioContext.currentTime + 0.06;
+      // Fill the queue immediately.
+      pumpSchedule();
+      // Keep the queue topped up ten times a second.
+      pumpTimer = setInterval(pumpSchedule, 100);
     });
 
     // Stop the walk when stop is pressed.
     stopButton.addEventListener("click", () => {
       // Mark the walk as stopped.
       walking = false;
-      // Cancel any scheduled beat.
-      clearTimeout(nextTimer);
+      // Stop the pump.
+      clearInterval(pumpTimer);
+      // Silence every queued source.
+      queuedSources.forEach((source) => { try { source.stop(); } catch (ignored) {} });
+      // Forget the silenced sources.
+      queuedSources = [];
       // Swap the button states back, with the labels saying what is happening.
       playButton.disabled = false; playButton.textContent = "Play forever";
       stopButton.disabled = true; stopButton.textContent = "Stopped";

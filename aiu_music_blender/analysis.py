@@ -30,6 +30,18 @@ NEIGHBOR_EXCLUSION = 3
 MAX_EDGES_PER_BEAT = 6
 # Define the percentile of all distances below which an edge is considered similar.
 SIMILARITY_PERCENTILE = 10.0
+# Define the weight of the one-beat-ahead context in the similarity distance.
+CONTEXT_WEIGHT_ONE = 0.6
+# Define the weight of the two-beats-ahead context in the similarity distance.
+CONTEXT_WEIGHT_TWO = 0.3
+# Define how strongly jumping on a singing beat is penalized, as a fraction of the median distance.
+VOCAL_PENALTY_FRACTION = 0.8
+# Define the bottom of the vocal frequency band, in Hertz.
+VOCAL_LOW_HERTZ = 200.0
+# Define the top of the vocal frequency band, in Hertz.
+VOCAL_HIGH_HERTZ = 4000.0
+# Define the analysis record format version; a cache with an older version is re-analyzed.
+ANALYSIS_VERSION = 2
 # Define the Krumhansl major key profile (perceived strength of each pitch class in a major key).
 MAJOR_PROFILE = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88]
 # Define the Krumhansl minor key profile.
@@ -64,12 +76,16 @@ def analyze_song(audio_path, force=False):
     key = cache_key(audio_path)
     # Build the path where this song's analysis record is cached.
     record_path = os.path.join(cache_directory(), key + ".json")
-    # If a cached record exists and force is off, reuse it.
+    # If a cached record exists and force is off, reuse it when its version is current.
     if os.path.isfile(record_path) and not force:
         # Open the cached record file.
         with open(record_path, "r") as record_file:
-            # Return the cached analysis record.
-            return json.load(record_file)
+            # Read the cached analysis record.
+            cached = json.load(record_file)
+        # Return the cached record only if it was made by this version of the pipeline.
+        if cached.get("version") == ANALYSIS_VERSION:
+            # Return the still-valid cached record.
+            return cached
     # Load the song's samples.
     samples, sample_rate = load_samples(audio_path)
     # Detect the tempo and the beat frame positions with the beat tracker.
@@ -78,8 +94,10 @@ def analyze_song(audio_path, force=False):
     beat_times = librosa.frames_to_time(beat_frames, sr=sample_rate).tolist()
     # Compute the per-beat timbre and pitch feature matrix.
     features = beat_feature_matrix(samples, sample_rate, beat_frames)
-    # Build the beat graph of jump edges from the features.
-    graph = build_beat_graph(features)
+    # Measure how strongly the vocal band is singing on every beat.
+    vocal = vocal_activity(samples, sample_rate, beat_frames)
+    # Build the beat graph of jump edges from the features and the vocal activity.
+    graph = build_beat_graph(features, vocal)
     # Estimate the song's key from its overall chroma.
     key_estimate = estimate_key(samples, sample_rate)
     # Package everything into one analysis record.
@@ -96,8 +114,10 @@ def analyze_song(audio_path, force=False):
         "beats": beat_times,
         # Record the beat graph.
         "graph": graph,
+        # Record the per-beat vocal activity (0.0 silent to 1.0 full singing).
+        "vocal": [round(float(value), 3) for value in vocal],
         # Record the analysis record format version.
-        "version": 1}
+        "version": ANALYSIS_VERSION}
     # Open the cache file for writing.
     with open(record_path, "w") as record_file:
         # Write the analysis record as JSON.
@@ -134,12 +154,63 @@ def standardize(matrix):
     return (matrix - row_means) / row_spreads
 
 
+# Define a function that measures per-beat vocal activity from the harmonic vocal band.
+def vocal_activity(samples, sample_rate, beat_frames):
+    # Compute the song's spectrogram.
+    spectrogram = numpy.abs(librosa.stft(samples))
+    # Split the spectrogram into its harmonic (sung and played notes) and percussive parts.
+    harmonic, _ = librosa.decompose.hpss(spectrogram)
+    # Find the frequency of every spectrogram row.
+    frequencies = librosa.fft_frequencies(sr=sample_rate)
+    # Build a mask selecting only the vocal band rows.
+    vocal_band = (frequencies >= VOCAL_LOW_HERTZ) & (frequencies <= VOCAL_HIGH_HERTZ)
+    # Sum the harmonic energy inside the vocal band, frame by frame.
+    band_energy = (harmonic[vocal_band, :] ** 2).sum(axis=0, keepdims=True)
+    # Average the band energy between each beat and the next.
+    beat_energy = librosa.util.sync(band_energy, beat_frames, aggregate=numpy.mean)[0]
+    # Find the loud reference level (the ninety-fifth percentile beat).
+    reference = numpy.percentile(beat_energy, 95.0) + 1e-12
+    # Scale to the range zero to one, clipping the loudest outliers.
+    return numpy.clip(beat_energy / reference, 0.0, 1.0)
+
+
+# Define a helper that blends each pair's distance with its following-beats context.
+def context_distances(distance_table):
+    # Copy the table so the original stays untouched.
+    blended = distance_table.copy()
+    # Blend in the one-beat-ahead distances (beat i+1 against beat j+1), shifted into place.
+    blended[:-1, :-1] += CONTEXT_WEIGHT_ONE * distance_table[1:, 1:]
+    # Blend in the two-beats-ahead distances the same way.
+    blended[:-2, :-2] += CONTEXT_WEIGHT_TWO * distance_table[2:, 2:]
+    # Make the final beats (which lack full context) simply repeat their own distance weight.
+    blended[-1, :] *= (1.0 + CONTEXT_WEIGHT_ONE + CONTEXT_WEIGHT_TWO)
+    # Do the same for the final column.
+    blended[:, -1] *= (1.0 + CONTEXT_WEIGHT_ONE + CONTEXT_WEIGHT_TWO)
+    # Return the context-aware distance table.
+    return blended
+
+
+# Define a helper that penalizes jumps landing on or leaving a strongly singing beat.
+def vocal_penalty_table(distance_table, vocal):
+    # Find the typical distance so the penalty is scaled to this song.
+    typical = numpy.median(off_diagonal_values(distance_table))
+    # Take each pair's stronger vocal activity (cutting EITHER end mid-word is bad).
+    pair_vocal = numpy.maximum(vocal[:, None], vocal[None, :])
+    # Return the scaled penalty table.
+    return VOCAL_PENALTY_FRACTION * typical * pair_vocal
+
+
 # Define a function that builds the beat graph: per beat, a list of [target, distance] jump edges.
-def build_beat_graph(features):
+def build_beat_graph(features, vocal):
     # Count the beats (the columns of the feature matrix).
     beat_count = features.shape[1]
     # Compute the full table of distances between every pair of beats.
     distance_table = pairwise_distances(features)
+    # Blend each pair's distance with the distances of the beats that FOLLOW them,
+    # so a jump prefers a landing whose continuation also matches (phrase-boundary behavior).
+    distance_table = context_distances(distance_table)
+    # Penalize jumps that would cut into or out of a strongly singing beat.
+    distance_table = distance_table + vocal_penalty_table(distance_table, vocal)
     # Add the bar-position penalty to pairs at different positions within a four-beat bar.
     distance_table = distance_table + bar_penalty_table(beat_count)
     # Choose the similarity threshold as a low percentile of all off-diagonal distances.
