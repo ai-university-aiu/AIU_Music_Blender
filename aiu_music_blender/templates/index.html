@@ -34,8 +34,9 @@
                animation: spin 0.9s linear infinite; }
     /* Turn the ring around and around. */
     @keyframes spin { to { transform: rotate(360deg); } }
-    /* Style the info card row. */
-    .cards { display: flex; justify-content: center; gap: 1em; margin: 0.8em; }
+    /* Style the info card row, wrapping gracefully on narrow screens. */
+    .cards { display: flex; justify-content: center; gap: 0.7em; margin: 0.8em;
+             flex-wrap: wrap; }
     /* Style each info card. */
     .card { background: #590000; border: 1px solid #c02b18; border-radius: 10px;
             padding: 0.6em 1.2em; min-width: 9em; display: none; }
@@ -86,11 +87,13 @@
       <button id="stop_button" disabled>Stopped</button>
     </div>
     <!-- Show what the local pipeline found, one card per fact, inside the same rectangle. -->
-    <div class="cards">
-      <!-- The tempo info card. -->
-      <div class="card" id="tempo_card"><h3>Tempo</h3><p id="tempo_value"></p></div>
-      <!-- The key info card. -->
-      <div class="card" id="key_card"><h3>Key</h3><p id="key_value"></p></div>
+    <div class="cards" id="cards_one">
+      <div class="card"><h3>Tempo</h3><p id="tempo_value_one"></p></div>
+      <div class="card"><h3>Key</h3><p id="key_value_one"></p></div>
+      <div class="card"><h3>Beats</h3><p id="beats_value_one"></p></div>
+      <div class="card"><h3>Jump Edges</h3><p id="edges_value_one"></p></div>
+      <div class="card"><h3>Length</h3><p id="length_value_one"></p></div>
+      <div class="card"><h3>Vocals</h3><p id="vocal_value_one"></p></div>
     </div>
     <!-- Report progress, beats, and edges here, inside the same rectangle. -->
     <div id="status">Choose a song to analyze it locally.</div>
@@ -154,6 +157,15 @@
       <button id="play_two_button" disabled>Play Forever</button>
       <button id="stop_two_button" disabled>Stopped</button>
     </div>
+    <!-- Show what the pipeline found in the finished blend, one card per fact. -->
+    <div class="cards" id="cards_two">
+      <div class="card"><h3>Tempo</h3><p id="tempo_value_two"></p></div>
+      <div class="card"><h3>Key</h3><p id="key_value_two"></p></div>
+      <div class="card"><h3>Beats</h3><p id="beats_value_two"></p></div>
+      <div class="card"><h3>Jump Edges</h3><p id="edges_value_two"></p></div>
+      <div class="card"><h3>Length</h3><p id="length_value_two"></p></div>
+      <div class="card"><h3>Vocals</h3><p id="vocal_value_two"></p></div>
+    </div>
     <!-- Report mash-up progress and the honest compatibility report here. -->
     <div id="mashup_status">Paste two songs, then blend; the result loads into the
       AIU Song Blender above so it can play forever.</div>
@@ -186,6 +198,15 @@
     <div class="row">
       <button id="play_three_button" disabled>Play Forever</button>
       <button id="stop_three_button" disabled>Stopped</button>
+    </div>
+    <!-- Show what the pipeline found in the stripped instrumental, one card per fact. -->
+    <div class="cards" id="cards_three">
+      <div class="card"><h3>Tempo</h3><p id="tempo_value_three"></p></div>
+      <div class="card"><h3>Key</h3><p id="key_value_three"></p></div>
+      <div class="card"><h3>Beats</h3><p id="beats_value_three"></p></div>
+      <div class="card"><h3>Jump Edges</h3><p id="edges_value_three"></p></div>
+      <div class="card"><h3>Length</h3><p id="length_value_three"></p></div>
+      <div class="card"><h3>Vocals</h3><p id="vocal_value_three"></p></div>
     </div>
     <!-- Report the vocal stripping progress here. -->
     <div id="instrumental_status">This box strips out ALL vocals from the track given,
@@ -227,10 +248,31 @@
     // Find the new page elements: the YouTube row and the info cards.
     const youtubeInput = document.getElementById("youtube_input");
     const youtubeButton = document.getElementById("youtube_button");
-    const tempoCard = document.getElementById("tempo_card");
-    const tempoValue = document.getElementById("tempo_value");
-    const keyCard = document.getElementById("key_card");
-    const keyValue = document.getElementById("key_value");
+
+    // Fill one rectangle's metric cards from an analysis record and show them.
+    function showMetrics(rectangle, rec) {
+      // A tiny helper to write one card's value by its id.
+      const write = (name, value) =>
+        { document.getElementById(name + "_value_" + rectangle).textContent = value; };
+      // Show the tempo in beats per minute.
+      write("tempo", rec.tempo.toFixed(1) + " BPM");
+      // Show the key with its Camelot code.
+      write("key", rec.key.tonic + " " + rec.key.mode + " (" + rec.key.camelot + ")");
+      // Show the beat count.
+      write("beats", rec.beats.length);
+      // Show the jump edge count (the walk's choices).
+      write("edges", rec.graph.flat().length);
+      // Show the track length as minutes and seconds.
+      write("length", Math.floor(rec.duration / 60) + ":"
+        + String(Math.round(rec.duration % 60)).padStart(2, "0"));
+      // Show the average vocal activity as a percentage (100% is full singing).
+      write("vocal", rec.vocal && rec.vocal.length
+        ? Math.round(100 * rec.vocal.reduce((a, b) => a + b, 0) / rec.vocal.length) + "%"
+        : "-");
+      // Reveal every card in this rectangle's card row.
+      document.getElementById("cards_" + rectangle)
+        .querySelectorAll(".card").forEach((card) => { card.style.display = "block"; });
+    }
 
     // Find the mash-up rectangle's elements.
     const songOneInput = document.getElementById("song_one_input");
@@ -312,6 +354,10 @@
       if (!answer.ok) { statusLine.textContent = "Analysis failed - check the input."; return; }
       // Load the record the server returned.
       await loadRecord(await answer.json());
+      // Fill the Song Blender's metric cards.
+      showMetrics("one", record);
+      // Say the song is ready.
+      statusLine.textContent = "Ready - press Play Forever.";
       // Arm the Song Blender's save buttons for this track.
       armSave("one", record.audio_key);
     }
@@ -326,16 +372,6 @@
       audioContext = audioContext || new AudioContext();
       // Decode the audio for beat-accurate playback.
       audioBuffer = await audioContext.decodeAudioData(audioBytes);
-      // Fill and show the tempo card.
-      tempoValue.textContent = record.tempo.toFixed(1) + " BPM";
-      tempoCard.style.display = "block";
-      // Fill and show the key card.
-      keyValue.textContent = record.key.tonic + " " + record.key.mode
-        + " (" + record.key.camelot + ")";
-      keyCard.style.display = "block";
-      // Report the rest on the status line.
-      statusLine.textContent = record.beats.length + " beats, "
-        + record.graph.flat().length + " jump edges. Ready.";
       // Draw the arc diagram.
       drawArcs(-1);
       // Enable every rectangle's play button.
@@ -446,6 +482,8 @@
         const blended = await answer.json();
         // Load the mash-up into the Song Blender above, ready to play forever.
         await loadRecord(blended.record);
+        // Fill the Mash-Up Blender's metric cards from the finished blend.
+        showMetrics("two", blended.record);
         // Arm the Mash-Up Blender's save buttons for this blend.
         armSave("two", blended.record.audio_key);
         // Show the honest compatibility report.
@@ -697,6 +735,8 @@
         const instrumentalRecord = await answer.json();
         // Load the vocal-free record into the shared player.
         await loadRecord(instrumentalRecord);
+        // Fill the Instrumental Blender's metric cards (its Vocals card should sit near zero).
+        showMetrics("three", instrumentalRecord);
         // Arm the Instrumental Blender's save buttons for this track.
         armSave("three", instrumentalRecord.audio_key);
         // Report success in this rectangle.
