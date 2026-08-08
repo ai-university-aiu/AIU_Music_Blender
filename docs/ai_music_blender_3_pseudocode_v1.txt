@@ -1,0 +1,110 @@
+AI MUSIC BLENDER - DSPARCD PHASE 3 - PSEUDOCODE - VERSION 1
+
+Date: 2026-08-07
+
+Written in the spirit of English Readable Code (ERC): structured English sentences that translate mechanically to code.
+
+
+MODULE: ingest (getting audio into the system)
+
+To obtain a local audio path from an input string:
+
+  If the input string starts with "http", then:
+    Call the yt-dlp program to download the best audio into the cache folder.
+    Return the path of the downloaded file.
+  Otherwise:
+    Verify the file exists.
+    Return the input path unchanged.
+
+To load audio samples from a path:
+  Call librosa to load the file as mono samples at the analysis sample rate.
+  Return the samples and the sample rate.
+
+
+MODULE: analysis (the self-hosted pipeline)
+
+To analyze a song:
+
+  Load the audio samples.
+  Detect the tempo and the beat frame positions with the librosa beat tracker.
+  Convert beat frames to beat times in seconds.
+  For each beat, compute the average MFCC vector between this beat and the next (timbre).
+  For each beat, compute the average chroma vector between this beat and the next (pitch).
+  Normalize the timbre and chroma vectors so neither dominates.
+  Estimate the key by correlating the whole-song chroma with the twelve major and twelve minor key profiles, and keeping the best.
+  Build the beat graph (below).
+  Package tempo, key, beat times, features, and graph into one analysis record.
+  Write the analysis record to the cache as JSON, keyed by a hash of the audio file.
+  Return the analysis record.
+
+To build the beat graph:
+
+  For each pair of beats, compute the distance as the weighted sum of timbre distance and chroma distance, plus a small penalty when the two beats sit at different positions inside their bars.
+  For each beat, keep as jump edges the nearest other beats whose distance is below the similarity threshold, excluding immediate neighbors.
+  Return, for every beat, its list of jump edges with distances.
+
+
+MODULE: jukebox (the classic infinite walk, sacred)
+
+To walk forever from an analysis record, given a chaos value and an optional seed:
+
+  Seed the random number generator if a seed was given.
+  Start at beat zero.
+  Repeat forever:
+    Announce the current beat (play it, or record it in the rendered walk).
+    If the current beat has jump edges, and a random draw is below the chaos value, then:
+      Move to a randomly chosen jump edge, weighted toward smaller distances.
+    Otherwise:
+      Move to the next beat in order.
+    If the walk has reached the final beat, then:
+      Jump back to the most similar earlier beat, so the song never ends.
+
+To render a walk of a requested length:
+  Run the walk, appending each visited beat's audio samples with a short crossfade at every jump, until the requested length is reached.
+  Write the samples to the output audio file.
+
+
+MODULE: mashup (The_AI_Mashup_Machine)
+
+To score the compatibility of two analyzed songs:
+  Compute the tempo ratio needed to match them, folded into the range near one.
+  Compute the key distance on the Camelot wheel.
+  Return a score that is high when the stretch is small and the keys are neighbors.
+
+To render a mash-up of Song A and Song B:
+  Analyze both songs.
+  Choose the common tempo between the two tempos, favoring the smaller total stretch.
+  Time-stretch each song to the common tempo without changing pitch (rubberband).
+  If the keys are one or two semitones apart, pitch-shift Song A to match Song B.
+  If stems are requested and Demucs is available, then:
+    Separate both songs into vocals, drums, bass, and other.
+    Take the vocals of Song A and the instrumental stems of Song B.
+  Align the two parts at their first downbeats, on an eight-beat phrase boundary.
+  Mix the aligned parts with the instrumental slightly lowered where the vocal is present.
+  Write the mix to the output audio file, and report the stretch and shift that were applied.
+
+
+MODULE: the three faces
+
+Command line: parse the sub-command (analyze, jukebox, mashup, web, gui) and call the matching engine function.
+
+Web: serve the index page; serve analysis records as JSON; serve the audio file; the browser draws the arc diagram on a canvas and schedules beats with the Web Audio interface, jumping along graph edges exactly as the jukebox module does.
+
+GUI: a GTK window with two file choosers, a chaos slider, and buttons that call the same engine functions, playing results with the system player.
+
+
+TEST PLAN SKETCH
+
+Generate synthetic audio (click tracks and tones) inside the tests, so the tests need no copyrighted material and no network.
+
+Assert tempo detection, graph edges across repetitions, seeded-walk determinism, render length, mash-up rendering, and the web endpoints, per the acceptance scenarios in the Specification.
+
+
+PSEUDOCODE REFLECTION
+
+The walk algorithm is stated so simply on purpose: the ancestors proved that the magic is in the GRAPH, not in a clever walker.
+
+The crossfade-at-jump detail is the one addition the ancestors handled in the browser; stating it here keeps the rendered walks click-free from day one.
+
+
+END OF PSEUDOCODE VERSION 1

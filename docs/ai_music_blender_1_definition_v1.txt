@@ -1,0 +1,113 @@
+AI MUSIC BLENDER - DSPARCD PHASE 1 - DEFINITION - VERSION 1
+
+Date: 2026-08-07
+
+
+WHAT IT IS
+
+AI Music Blender is a self-hosted, local-first resurrection and extension of the Infinite Jukebox: it analyzes songs on the user's own machine, builds a beat-similarity graph, plays any song forever by jumping between similar beats, and - the extension - blends TWO songs into mash-ups that can themselves play forever.
+
+It is a fun tool, a music toy, and an Artificial Intelligence (AI) resume project, all at once.
+
+
+WHAT IT IS NOT
+
+• It is NOT a hosted service.
+
+There is no server for anyone else, no accounts, no API keys, and no cloud dependency of any kind.
+
+• It is NOT a music distribution or sharing platform.
+
+It runs on the user's own files and local downloads, renders locally, and distributes nothing.
+
+• It is NOT a Digital Audio Workstation (DAW).
+
+It does not aim to edit, record, or produce music track by track.
+
+• It is NOT a rewrite of the Infinite Jukebox core idea.
+
+The classic behavior is adopted and preserved, never changed - only extended around.
+
+• It is NOT dependent on any external analysis API, ever.
+
+That dependency is what killed every ancestor.
+
+
+GUIDING PRINCIPLES
+
+1. Self-host everything.
+
+If a capability cannot run on the user's machine, it does not ship.
+
+2. The classic mode is sacred.
+
+All features are additive; the original Infinite Jukebox behavior keeps working, unmodified, at every stage (the Golden Rule).
+
+3. One engine, three faces.
+
+The command line, the localhost web page, and the Ubuntu Graphical User Interface (GUI) app are thin faces over one shared engine.
+
+4. Every feature must be demonstrable.
+
+If it cannot be shown working, it is not done.
+
+5. Prefer boring, proven technology.
+
+librosa over novelty, ffmpeg over custom decoders, files over databases.
+
+6. Local files only, legality by design.
+
+Nothing hosted, nothing distributed, nothing uploaded.
+
+
+THE BOLD DECISIONS, WITH REJECTED ALTERNATIVES
+
+• Bold decision: replace the dead Spotify and Echo Nest analysis with our own local Machine Learning (ML) pipeline built on librosa.
+
+Rejected alternative: scraping or reverse-engineering a surviving commercial API - rejected because it recreates the exact fatal flaw.
+
+• Bold decision: a FRESH repository with a vendored, pristine snapshot of EternalJukebox (in vendor/), not a GitHub fork.
+
+Rejected alternative: forking EternalBox/EternalJukebox on GitHub - rejected (per Vision Document v2) because GitHub deprioritizes forks, the project diverges heavily from upstream, and a fresh repository reads as OUR project; attribution lives in the README and the preserved upstream LICENSE.
+
+• Bold decision: implement the engine fresh in Python, in this repository, with the vendored ancestor as reference and conscience.
+
+Rejected alternative: building directly inside the Kotlin and Java EternalJukebox codebase - rejected because the ML pipeline, the mash-up engine, and the GUI are all Python-natural, and a single language keeps one mind across the system.
+
+• Bold decision: the mash-up mode ("The_AI_Mashup_Machine") feeds its output back into the infinite engine, so a two-song mash-up can play forever.
+
+Rejected alternative: a one-shot mash-up renderer only - rejected because infinite mash-up radio is the crown jewel that makes this project more than a clone.
+
+• Bold decision: the Ubuntu GUI uses GTK version 3 with PyGObject, because GTK version 3 is what Ubuntu Studio 24.04 on the target machine actually provides today.
+
+Rejected alternative: GTK version 4 and libadwaita - deferred, not rejected forever; the GUI is a thin face, so upgrading it later touches nothing else.
+
+
+THE CONCEPTUAL OWNER
+
+The ccai user owns the concept, with the AI assistant as the builder who guards conceptual integrity between sessions through the DSPARCD Fileset and the CONSTITUTION.
+
+
+THE WICKED EDGES, HELD WITH HUMILITY
+
+• Beat-similarity thresholds that "sound seamless" are perceptual; expect the metric to be revised by ear, and eventually learned (the planned learned-embeddings upgrade).
+
+• Mash-up quality depends on song compatibility; the compatibility scorer will evolve from rules (tempo and key) toward a learned "mashability" model.
+
+• Stem separation (Demucs) is heavy; it is optional at every point, never required for the classic mode.
+
+
+DEFINITION REFLECTION
+
+Why this concept and not a neighbor: the neighboring concept - "just rehost EternalBox" - dies the same death as its ancestors and teaches nothing.
+
+The chosen concept - own the analysis, own the engine, extend into mash-ups - can never be killed from outside and carries two genuine resume attacks: the self-hosted pipeline replacement, and the mashability model.
+
+What we are betting on: that librosa-grade beat tracking and chroma features are good enough for seamless-sounding jumps; the ancestors proved the idea with Echo Nest features of similar kind, so the bet is sound.
+
+What would prove the concept wrong: if local analysis could not produce a listenable infinite walk on real songs, the core promise fails; the Demonstration phase exists to test exactly this.
+
+What we are choosing not to build: hosting, sharing, accounts, editing tools - everything on the NOT list - so that the project keeps its shape.
+
+
+END OF DEFINITION VERSION 1

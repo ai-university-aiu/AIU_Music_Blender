@@ -1,0 +1,64 @@
+BUILDING AI MUSIC BLENDER - THE BUILD LOG - VERSION 1
+
+An append-only chronicle, voiced as a scientific paper and as a story.
+
+
+CHAPTER ONE: THE DEATH THAT STARTED IT (2026-08-07)
+
+The question was innocent: "Where did the Infinite Jukebox go?"
+
+The answer was a graveyard.
+
+Echo Nest Labs, gone.
+
+The Eternal Jukebox, broken by a Spotify API change in mid-2023.
+
+eternalbox.dev, a Cloudflare 522, origin not responding.
+
+infiniby.com, a frontend smiling above a backend that answers 404 to every song.
+
+Each death traced to the same organ failure: a dependency on someone else's server.
+
+The conclusion was written into a vision document and carried to the build machine through the Syncthing channel: clone it, own it, make the analysis OURS, and while we are in there, make it smarter.
+
+
+CHAPTER TWO: THE PAPERS BEFORE THE BRICKS (2026-08-07)
+
+The repository was created fresh on GitHub (not a fork - Vision Document version 2 decided that deliberately, for divergence and for the resume), and a pristine snapshot of EternalBox/EternalJukebox was vendored into vendor/ as its own first commit, so every later diff against the ancestor stays reviewable.
+
+The CONSTITUTION was written: twelve commandments, from the Golden Rule (the classic mode is sacred) to the build log you are reading.
+
+The DSPARCD Fileset was written - the family's first SEVEN-document fileset, with Definition at the front where DSPARCD_EXPLAINED.txt argues it belongs.
+
+The Definition froze the concept in a page: self-hosted, unkillable, extendable; NOT a hosted service, NOT a distribution platform, NOT a rewrite of the beloved core.
+
+
+CHAPTER THREE: THE ENGINE (2026-08-07)
+
+The engine went up as one Python package with information-hiding seams straight out of Parnas:
+
+ingest.py hides where audio comes from (a file, or a YouTube link through yt-dlp).
+
+analysis.py hides how similarity is measured: librosa beat tracking, per-beat MFCC and chroma averaged BETWEEN beats, a weighted distance with a bar-position penalty, edges kept below a global percentile threshold, key by Krumhansl profile correlation, all cached as JSON under a hash of the audio bytes.
+
+jukebox.py hides how the walk is chosen: chaos-probability jumps weighted toward similar beats, an end-of-song jump back to the best-matching earlier beat, and equal-power crossfades at every seam.
+
+mashup.py hides how two songs become one: octave-folded tempo matching split geometrically between the songs, rubberband stretching, small key shifts on the Camelot logic, optional Demucs stems (vocals of A over the instrumental of B), downbeat alignment, and honest reporting of every ratio applied.
+
+Three faces - cli.py, web.py with the arc-diagram canvas, gui.py in GTK 3 - expose the engine and decide nothing.
+
+
+CHAPTER FOUR: PROOF (2026-08-07)
+
+Eight tests, all on synthetic audio the tests generate themselves: tempo within tolerance, edges across repetitions, seeded-walk determinism, render length, mash-up rendering, walk bounds, and both web endpoints.
+
+All eight passed (after one environment repair: a stale coverage package that tripped numba).
+
+The end-to-end smoke test ran the whole promise: analyze, render a forever-walk, blend two songs at different tempos (score 0.625, stretches under five percent each side), and then - the crown jewel - feed the blend back into the jukebox and render the mash-up playing forever.
+
+The Jukebox is dead.
+
+Long live the AI Music Blender.
+
+
+END OF BUILD LOG VERSION 1 (append below this line in future sessions)

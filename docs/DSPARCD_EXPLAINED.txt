@@ -1,0 +1,819 @@
+DSPARCD EXPLAINED: THE COMPLETE REPORT
+
+Definition, Specification, Pseudocode, Architecture, Refinement, Completion, Demonstration
+
+This report is an EXPANSION of the SPARCD report, which was itself an expansion of the original SPARC report. It adds a new FIRST phase, Definition, giving the acronym DSPARCD, pronounced "dee-spark-dee". Everything true of the original five-phase SPARC methodology, and of the added sixth phase Demonstration, remains true here, unchanged. The new phase is added at the very front, where it belongs, and it answers the one question every creation must answer before any other: "What is this thing, and what is it not?"
+
+A deep and wide research report covering the SPARC methodology, its sixth-phase expansion SPARCD, and now its seventh-phase expansion DSPARCD, to the last detail, written for the novice, newcomer, learner, and layperson.
+
+Compiled July 2026 from public web sources, including the official repositories, package registries, documentation wikis, interviews with the creator, and community discussions, and enriched with the classic literature of design gathered in the folder that holds this report.
+
+Every technical term is defined the first time it appears, and examples are given wherever an idea might be hard to picture.
+
+A note on how to read this report: the methodology exists at two levels, and this report covers both.
+
+First, it is a general methodology, meaning a repeatable way of working that any person or team can follow by hand, with any Artificial Intelligence (AI) assistant, or with no AI at all.
+
+Second, its five original phases are built directly into specific software tools, such as Claude-Flow and its successor Ruflo, where they are automated and connected to teams of AI agents.
+
+The two phases added by this report, Definition at the front and Demonstration at the end, are, for now, methodology-level phases: they are practiced by hand and with an AI assistant, and the tooling has not yet automated them.
+
+A note on the name: the whole method is called DSPARCD, but the reader should hold one idea firmly, which comes from Fred Brooks's book "The Design of Design" - a copy of whose front matter and one chapter sit in this folder. The whole method is an act of DESIGN from beginning to end. Specification is design, Architecture is design, Refinement is design. The new first phase is not "the design phase," because that would wrongly imply the others are not design. It is the DEFINITION phase: the phase in which the concept is born and named, so that everything designed afterward can come from a single, coherent mind.
+
+
+PART ONE: WHAT DSPARCD IS, IN ONE BREATH
+
+DSPARCD is a step-by-step method for building software.
+
+The name is an acronym, meaning a word formed from the first letters of other words.
+
+DSPARCD stands for Definition, Specification, Pseudocode, Architecture, Refinement, Completion, and Demonstration.
+
+Those are the seven phases, in order, that a project moves through: first you decide what the thing IS and is NOT (Definition), then you write down exactly what it must do (Specification), then you sketch the logic in plain language (Pseudocode), then you design the structure (Architecture), then you improve it through testing (Refinement), then you finish, document, and ship it (Completion), and finally you SHOW what it can do (Demonstration).
+
+The five middle phases, Specification through Completion, are the original SPARC methodology, unchanged.
+
+The seventh phase, Demonstration, was added by the SPARCD report, and it answers the question "so, what can it do?".
+
+The first phase, Definition, is added by this report, and it answers the earlier and deeper question "what is this thing meant to be, and what is it not?".
+
+DSPARCD was designed to be executed not just by human developers, but by Artificial Intelligence (AI) coding agents - computer programs powered by Large Language Models (LLMs), which are AI systems trained on enormous amounts of text and code, that can plan and write software with limited human supervision.
+
+In practical terms, DSPARCD is the discipline that turns a vague wish like "build me a chat app" first into a clear CONCEPT, and then into a chain of small, well-defined, checkable tasks that AI agents can carry out reliably.
+
+Here is the core problem the method was invented to solve.
+
+When a person gives an AI a vague instruction such as "build me a login system," the AI must guess at hundreds of unstated details, and because it is guessing, it often produces code that is incomplete, insecure, or simply wrong, without any warning.
+
+Programmers call this "failing silently", meaning the software looks finished but hides serious problems.
+
+The method attacks this problem by refusing to let anyone, human or AI, skip the thinking.
+
+Definition adds a deeper defense still: it refuses to let anyone skip the DECIDING - the choice of what the thing fundamentally is - which is the guess that, when left unstated, corrupts every phase that follows.
+
+For example:
+
+Imagine building a house.
+
+You would not hand a pile of bricks to builders and say "make a house."
+
+But before you even write down the room-by-room requirements, you would first decide what KIND of house this is: a small, cheap, energy-tight cabin for one person, or a grand family home built to last a century. That decision - the concept, the essence, the guiding idea - is the Definition, and it silently governs every later choice about rooms, materials, and finish.
+
+Only after the concept is fixed do you write down what the house needs (Specification), sketch the flow of the rooms (Pseudocode), draw the blueprints and choose the materials (Architecture), review and improve the plans as building proceeds (Refinement), finish, inspect, and hand over the keys (Completion), and finally walk a visitor through it so they can see for themselves what it is (Demonstration).
+
+DSPARCD applies exactly this common-sense order to software.
+
+
+PART TWO: WHO CREATED IT AND WHERE IT LIVES
+
+The five original phases, SPARC, were created by Reuven Cohen, who goes by the handle rUv, and whose GitHub account is ruvnet.
+
+GitHub is a website that hosts source code so anyone can read, copy, and contribute to it.
+
+Reuven Cohen is the founder of the Agentics Foundation, an organization focused on "agentic engineering", and he is also the creator of Claude-Flow, a popular multi-agent orchestration platform, and of SPARC 2.0.
+
+The word "agentic" describes AI systems that can act on their own: interpreting goals, breaking them into subtasks, using tools, and correcting themselves based on feedback.
+
+The two added phases, Definition and Demonstration, are contributions of this report and its companion SPARCD report; they are not the work of the original SPARC author, and they are offered as extensions in the same spirit, honestly labeled as additions so that no one confuses them with the original five.
+
+The main homes of the original SPARC on the internet are:
+
+• The original framework repository at github.com/ruvnet/sparc, which contains the methodology documents, a Command Line Interface (CLI) tool, and a web User Interface (UI).
+
+• The prompt that started it all, published as a GitHub gist by ruvnet, describing SPARC as a framework where an AI acts as a "Reflective Architect and Editor" guiding a project through the phases.
+
+• The scaffolding tool create-sparc on npm, the package registry for the JavaScript world, launched with the command npx create-sparc init.
+
+• The successor framework SPARC 2.0 at github.com/agenticsorg/sparc2.
+
+• The claude-sparc.sh automated development script for the Claude Code CLI, published as a GitHub gist.
+
+• The Claude-Flow platform at github.com/ruvnet/claude-flow, where SPARC is built in as the core development methodology with the command npx claude-flow init with the sparc option.
+
+
+PART THREE: A BRIEF HISTORY AND TIMELINE
+
+The story of SPARC tracks the story of AI coding itself, and DSPARCD adds two bookends to that story.
+
+Late 2024: Reuven Cohen publishes the SPARC framework and the ruvnet/sparc repository.
+
+The original workflow was document-driven: a project kept five markdown files named specification.md, pseudocode.md, architecture.md, refinement.md, and completion.md, and the AI filled and refined them phase by phase.
+
+The original tooling recommendations were the research tool Perplexity for gathering information, and AIDER.chat, an AI pair-programming tool, for integrating different AI models.
+
+Early 2025: SPARC is integrated with Roo Code, an AI coding extension for Visual Studio Code, through the create-sparc npm package and the "Boomerang task" concept, described in a later part.
+
+The recommended reasoning models of that era included Claude 3.7 Sonnet, OpenAI o3, GPT-4o, and DeepSeek.
+
+Spring 2025: The claude-sparc.sh script brings full SPARC automation to Anthropic's Claude Code CLI, and SPARC 2.0 launches as an agentic code analysis and generation framework.
+
+A pivotal economic moment: in an interview, Cohen explained that early agentic swarms - multiple coordinated AI agents attacking one problem - worked in prototypes but were financially brutal, with minimal 36-hour runs costing around 4,000 United States dollars per day, and ten concurrent agents costing roughly 7,500 dollars per hour, often making humans cheaper.
+
+Then, in April 2025, Anthropic introduced flat-rate subscription plans for Claude Code, removing the hard token ceiling.
+
+Cohen and collaborators reimagined SPARC as the protocol that orchestrates recursion in agentic workflows, and suddenly hours-long, high-parallelism agent runs became feasible for a flat monthly fee.
+
+Mid 2025 onward: SPARC becomes the built-in methodology of Claude-Flow, with seventeen specialized agent modes, and spreads through the community as Claude Code "skills", meaning reusable instruction packages, with derivative frameworks appearing, such as SPARC-SAPPO.
+
+February 2026: The Claude-Flow project is renamed to "Ruflo", reportedly for trademark reasons, with the version 3.5 stable release.
+
+The name "Ruflo" blends "Ru", for the Rust programming language and for the creator rUv, with "flo", for flow; the newer version was rewritten in Rust, a language prized for speed and safety.
+
+The command that users type remains "claude-flow", and SPARC remains the core methodology inside the renamed tool.
+
+The SPARCD expansion: a companion report adds Demonstration as a sixth phase, so that a finished system is not merely completed but SHOWN to work.
+
+The DSPARCD expansion, this report: a seventh phase, Definition, is added at the FRONT, so that a project does not merely start from requirements but from a deliberate concept - what the thing is and is not - which is the true first act of design.
+
+By 2026, the underlying project had become one of the most widely adopted open-source multi-agent platforms in the world, gathering tens of thousands of "stars" on GitHub, where a "star" is a bookmark that users give to projects they admire.
+
+
+PART FOUR: THE SEVEN PHASES IN DETAIL
+
+Phase 1: DEFINITION.
+
+Purpose: decide and record what the invention or creation IS, what it is NOT, and the guiding principles that will govern every later choice - before a single requirement is written.
+
+Definition is the phase that gives the whole system a single mind to come from.
+
+Why this phase exists, and why it comes first:
+
+The original SPARC began at Specification, which quietly assumes you already know what you are building. But the hardest and most valuable act in all of design is deciding what the thing should be in the first place.
+
+Fred Brooks makes this exact point in his 1986 essay "No Silver Bullet", a copy of which sits in this folder. He divides the difficulty of software into the "essence" - fashioning the complex web of interlocking concepts that IS the software - and the "accidents" - the secondary labor of expressing that web in a language and running it on a machine. Definition attacks the essence directly, at the earliest possible moment, before the accidents can distract anyone.
+
+Brooks's lifelong theme, argued across "The Mythical Man-Month" and "The Design of Design", is "conceptual integrity": a design should feel as though it came from a single coherent mind, and this, he says, is the single most important property a system can have. Definition is the phase where that one concept is set, before a team of humans or a swarm of AI agents can splinter it into a committee's compromise.
+
+Melvin Conway, in his 1968 paper "How Do Committees Invent?", also in this folder, proved that the structure of a system copies the communication structure of the organization that builds it - now called Conway's Law. He observed further that the very act of organizing a design team silently locks in design choices, so that, in his words, there is no such thing as a design group that is both organized and unbiased. The lesson for DSPARCD is stark: you must fix the concept BEFORE you organize and delegate, because delegation freezes decisions. Definition therefore comes before every phase that implies dividing the work.
+
+Finally, Brooks observed in the preface to "The Design of Design" that, looking back over decades of projects, the BOLDEST design decisions accounted for most of the goodness of the results, and that these bold choices were always gambles requiring extra investment. Definition is the phase where those bold, defining bets are made on purpose, with eyes open, rather than stumbled into.
+
+What Definition produces - the three questions it answers:
+
+• What it IS. The concept, or essence, stated as briefly as it can honestly be stated - ideally a single sentence. This is the project's "north star", the fixed point every later argument is measured against. If you cannot say what the thing is in a sentence or two, you do not yet understand it well enough to build it.
+
+• What it is NOT. The explicit non-goals, sometimes called anti-scope: the things this system will deliberately not do and not try to be. Naming what you refuse is itself a design act. The industrial designer Dieter Rams captured the spirit in his motto "less, but better", and Brooks's bold-decision insight includes bold exclusions. A clear list of non-goals is the single best defense against "scope creep", the slow, unplanned swelling of a project until it loses its shape.
+
+• The guiding PRINCIPLES. Three to seven durable rules or values that will be invoked to settle trade-offs in every later phase. A "trade-off" is a choice in which gaining one benefit means giving up another. Examples of principles: "prefer boring, proven technology over novelty," "privacy takes precedence over convenience," "every feature must be demonstrable," "correctness before features, always." Rams's ten principles for good design are a famous general model; a DSPARCD project writes its own short list, specific to itself.
+
+Activities:
+
+• Write the concept in one or two plain sentences: what this is, for whom, and why it deserves to exist.
+
+• State the non-goals explicitly, as a list of what the system will NOT do and what it is NOT trying to be.
+
+• Establish the guiding principles: the small set of values that will later break ties, chosen deliberately and written down.
+
+• Make the bold defining decisions: the few high-leverage bets that most shape the outcome - the core metaphor, the platform, the one thing the system must do superbly - each recorded as a decision alongside the serious alternatives that were rejected and why.
+
+• Name the conceptual owner: designate a chief architect, or a small architecture team of one or two, who holds the concept and guards its integrity through all later phases. Brooks argues conceptual integrity requires such an owner, and that "two is a magic number" for close collaboration.
+
+• Acknowledge the wicked-problem nature of the work: note where the problem is likely to shift as building reveals it, so the concept is held with humility and allowed to evolve. This idea comes from Horst Rittel and Melvin Webber, who named "wicked problems" - messy, unique problems that cannot be fully defined until you begin solving them - and it is echoed in Brooks's warning that the tidy "gather all requirements first" picture, which he calls the Rational Model, does not match reality.
+
+• Write a Definition Reflection: why this concept and not a neighboring one, what you are betting on, what would prove the concept wrong, and what you are choosing not to build.
+
+Deliverable: definition.md, containing the concept statement, the non-goals, the guiding principles, the bold decisions with their rejected alternatives, the named conceptual owner, and the reflection.
+
+By design, definition.md is SHORT, often a single page. This is deliberate and important. Definition is NOT the place for detailed design; that is what Architecture is for. Trying to design everything before building is the classic waterfall failure that programmers call Big Design Up Front (BDUF), and every source in this folder warns against it. Definition is a page of CONCEPT, not a binder of blueprints.
+
+The boundary with Specification, stated plainly:
+
+Definition is the WHY and the north star; Specification is the WHAT, made testable.
+
+Definition says: "this is a fast, private, single-user notes application that is NOT a collaboration suite and NEVER sends data to a server; its principle is that your notes are yours alone."
+
+Specification then says: "a note saves in under one hundred milliseconds," and "the application makes no network calls," and "the user can search all notes."
+
+Definition feeds Specification; it does not duplicate it. If a proposed requirement violates the concept or a principle, Definition is the authority that overrules it.
+
+The boundary with Architecture:
+
+Architecture is the design of the system's internal STRUCTURE - its components, interfaces, and technology choices. Definition is the design of the system's INTENT - what it is and why. Both are genuinely design, which is exactly Brooks's point: the whole method is design, and Definition merely names the phase where the concept is born.
+
+The bookend with Demonstration:
+
+The two added phases mirror each other, and the two D's are not an accident. Definition opens the pipeline by stating the PROMISE - "what this is meant to be." Demonstration closes it by supplying the PROOF - "what it turned out to be able to do." A healthy project can lay its definition.md beside its final demonstration and ask honestly whether the promise was kept. Definition is the intent; Demonstration is the evidence.
+
+For example:
+
+For a user authentication system, matching the running example used later in this report, Definition would say: "This is a self-hosted authentication service whose single obsession is security and operational simplicity. It is NOT an identity platform, NOT a user-management dashboard, and it will NOT collect marketing data. Guiding principles: fail closed rather than open, never log a secret, and prefer boring standards over clever inventions." Notice that not one requirement has been written yet; those arrive in Specification, and they will all be judged against this concept.
+
+For a banking application: "This is a retail money-transfer app whose defining promise is that a transfer feels instant and is never lost. It is NOT a trading platform and NOT a budgeting tool. Principle: correctness over features, always."
+
+For a cognitive architecture, matching the Mentova example described under Demonstration below: "This is a system whose reason to exist is general abstract reasoning, judged by public benchmarks it has not been trained on. It is NOT a chatbot and NOT a narrow, domain-specific solver." That concept is precisely the promise the later Demonstration phase then proves, when the system completes the Abstract Reasoning Corpus for Artificial General Intelligence.
+
+Phase 2: SPECIFICATION.
+
+Purpose: define the problem completely before touching any code.
+
+Activities:
+
+• Define functional requirements, meaning what the software must do, and non-functional requirements, meaning qualities it must have, such as speed, security, and scalability.
+
+• Analyze user scenarios and write user stories, meaning short plain-language descriptions of what a user wants to accomplish and why.
+
+• Create user personas, meaning fictional profiles of typical users, and use cases.
+
+• Establish User Interface and User Experience (UI/UX) guidelines.
+
+• Document objectives, constraints, acceptance criteria, technical boundaries, and performance targets, such as Service Level Agreements (SLAs), which are promised levels of speed and reliability.
+
+Deliverable: a specification document, traditionally specification.md.
+
+A note added by DSPARCD: every requirement in the specification should trace back to the concept and principles in definition.md. If a requirement serves neither the concept nor a principle, it is a candidate for a non-goal instead. This traceability is how Definition protects the specification from swelling.
+
+For example:
+
+For a banking app, the specification would state "the user can transfer money between accounts" (functional), "a transfer completes in under two seconds" (non-functional), and "no secret credentials may ever appear in the code" (constraint).
+
+For a second example, drawn from the official documentation, a specification for a user authentication system might list these functional requirements: users can register with email and password, users can also sign in through outside providers such as Google or GitHub, email verification is required, and passwords must meet strength rules.
+
+"Authentication" means confirming that users are who they claim to be.
+
+The same specification might list these security requirements: passwords are protected using a slow, salted hashing method called bcrypt, the login endpoint limits how many attempts can be made, accounts lock after repeated failures, and the system defends against a web attack known as Cross-Site Request Forgery (CSRF).
+
+"Hashing" means scrambling a password into a fixed jumble that cannot be reversed, and "salting" adds random data so that identical passwords do not scramble to identical results.
+
+It might then list test scenarios such as: a valid registration succeeds, a duplicate email is rejected, an invalid password format is caught, and an expired login token is refreshed correctly.
+
+Notice that in both examples, not one line of real program code has been written yet; that restraint is the entire point of the phase.
+
+Phase 3: PSEUDOCODE.
+
+Purpose: sketch the logic of the solution in plain, language-agnostic form before committing to any programming language.
+
+Pseudocode is an informal, human-readable outline of an algorithm - a step-by-step procedure - written in structured plain language rather than real code.
+
+Activities:
+
+• Create high-level logic flows for each feature.
+
+• Organize the logic into modular components, where "modular" means built from small, self-contained, swappable pieces.
+
+• Include plans for how tests will verify each piece.
+
+• Provide detailed inline comments and descriptions.
+
+Deliverable: pseudocode.md, serving as the roadmap for implementation.
+
+For example:
+
+For a login feature, the pseudocode might read: receive the username and password, look up the stored password hash, compare the hashes, if they match create a session, otherwise return an error, and never log the raw password.
+
+Phase 4: ARCHITECTURE.
+
+Purpose: design the skeleton of the system so it will be robust and extensible.
+
+Activities:
+
+• Identify the major components and the interfaces between them, where an "interface" is the defined boundary through which one component talks to another.
+
+• Select the technology stack, meaning the chosen set of languages, frameworks, and services.
+
+• Create system diagrams, often using Mermaid, a text-based diagramming notation.
+
+• Define data models, database schemas, and integration points.
+
+• Plan deployment infrastructure, meaning where and how the software will run.
+
+Deliverable: architecture.md, with diagrams and technology explanations.
+
+A note added by DSPARCD: this is the phase where a lesson from David Parnas belongs. Parnas taught that a system should be divided into modules so that each module HIDES one difficult or changeable design decision behind a stable interface - an idea called "information hiding." Done well, when that decision later changes, only one module changes. The architecture should also be shaped to match the team you actually have, because Conway's Law guarantees the product will echo the team's communication structure whether you plan for it or not.
+
+Phase 5: REFINEMENT.
+
+Purpose: improve the design and the code through iteration, meaning repeated cycles of testing and revision.
+
+Activities:
+
+• Apply Test-Driven Development (TDD), the practice of writing an automated test that fails first, then writing just enough code to make it pass, then cleaning up - a cycle known as Red-Green-Refactor.
+
+• The method specifically favors the London School of TDD, a style that tests each unit in isolation by using "mocks", meaning stand-in fake versions of a unit's collaborators, and that emphasizes testing behavior and interactions.
+
+• Optimize algorithms and improve code quality, security, and error handling.
+
+• Incorporate feedback from stakeholders, meaning everyone with an interest in the project.
+
+• Review and revise both the architecture and the implementation.
+
+Deliverable: refinement.md documenting the iterative improvements, plus the growing, tested codebase itself.
+
+A note added by DSPARCD: Refinement exists because real problems are "wicked" - you cannot get them fully right the first time, so you must loop. This is also the phase where the concept in definition.md is allowed to be revisited in the light of what building has taught you. Conway warned that the first design is almost never the best and that the concept may need to change; Refinement is the honest place to change it, deliberately, rather than letting it drift.
+
+Phase 6: COMPLETION.
+
+Purpose: finish properly - test everything, document everything, deploy, and monitor.
+
+Activities:
+
+• Comprehensive testing at every level: unit tests (single pieces), integration tests (pieces working together), and system-level tests (the whole product).
+
+• Detailed documentation for both users and developers.
+
+• Deployment preparation, rollout, and monitoring setup, meaning the dashboards and alerts that watch the live system.
+
+• Final review, security audits, and stakeholder sign-off.
+
+Deliverable: completion.md with deployment plans and user documentation, and a live, monitored system.
+
+Phase 7: DEMONSTRATION.
+
+Purpose: show what the finished system can actually DO, so that anyone can see its ability and answer the plain question everyone eventually asks, "So, what can it do?"
+
+This phase is not part of the original five-phase SPARC methodology. It was added by the SPARCD report, because a system that is merely finished is not the same as a system that has been SHOWN to work, and the showing is often what convinces a funder, a collaborator, a user, or a sceptic that the thing is real.
+
+The first six phases produce a system that is defined, specified, sketched, designed, refined, and completed. That is an enormous achievement, but it is a quiet one. A completed system sits there, correct and documented, and says nothing about itself to a person who has not read its code. Demonstration is the phase that makes the system SPEAK for itself, by showing it in action on a task whose result a viewer can judge without expertise.
+
+Activities:
+
+• Choose the demonstration that best answers "what can it do?" for this particular system, because the right demonstration is different for every system.
+
+• Build a Minimum Viable Product (MVP), meaning the smallest version of the system that still delivers real, visible value, stripped of every feature not needed to show the core ability. An MVP is not a toy; it is the shortest honest path to a working demonstration.
+
+• Or build a Proof of Concept (POC), meaning a small, focused build whose only job is to prove that a specific, doubted capability is actually achievable, before investing in the full system.
+
+• Or run the system against a recognized, hard, public benchmark, so that its performance can be compared to a standard the audience already respects.
+
+• Present the demonstration so that its result is legible to the intended audience without requiring them to read the specification, the code, or the tests.
+
+Deliverable: a demonstration, often called simply a demo, that a viewer can watch or run and from which they can conclude, for themselves, what the system can do; and a demonstration.md that records what was demonstrated and what it proves.
+
+For example:
+
+A weather application might demonstrate itself by correctly forecasting tomorrow's rain in a city the viewer knows, which needs no explanation to be convincing.
+
+A database system might demonstrate itself by answering a complex query over a million records in under a second, in front of the viewer.
+
+And a cognitive architecture might demonstrate itself by solving a benchmark designed to be hard for machines. The Mentova system did exactly this, achieving the significant and bold demonstrated accomplishment of completing the Abstract Reasoning Corpus for Artificial General Intelligence, Versions One and Two - written ARC-AGI-1 and ARC-AGI-2 - a public benchmark of abstract visual reasoning that most Artificial Intelligence systems fail. Its success answered "what can it do?" in a way no description could: it did the thing the benchmark was built to be hard at, in front of everyone, and the score is a number others can check.
+
+The three most common shapes a demonstration takes are worth naming:
+
+• The Minimum Viable Product shows the SMALLEST COMPLETE thing the system can do end to end - the core value, and nothing else.
+
+• The Proof of Concept shows that a SPECIFIC HARD CAPABILITY is real - the one thing people doubted, proven.
+
+• The Benchmark Result shows the system's ability MEASURED against a respected external standard - a number others can trust.
+
+A good demonstration is HONEST: it shows what the system genuinely does, not a rehearsed illusion. And it is REPRODUCIBLE: a sceptic can run it again and get the same result. A demonstration that cannot be reproduced is a magic trick, not a demonstration.
+
+The Reflection habit applies here too: in demonstration.md, the author records WHY this demonstration was chosen, what it does and does not prove, and what a viewer should and should not conclude. The honest limits of a demonstration are part of what it demonstrates. And, in DSPARCD, the demonstration is finally measured against definition.md: did the system become what it promised to be?
+
+An end-to-end example, applied to building an Application Programming Interface (API), which is a defined way for programs to request services from each other:
+
+• Definition: declare what this API is and is not - "a small, read-only public data API whose promise is uptime and simplicity; it is NOT a general write platform" - and the principles that will govern it.
+
+• Specification: define the API endpoints, request and response formats, authentication requirements, and rate limits.
+
+• Pseudocode: outline the route handlers, the data validation logic, and the error handling.
+
+• Architecture: design the database schema, the service layers, and the deployment plan.
+
+• Refinement: optimize the database queries, tighten security, and add logging, all driven by tests.
+
+• Completion: implement the full test suite, write the API documentation, deploy with monitoring, and audit security.
+
+• Demonstration: show the finished Application Programming Interface answering real requests live - a small client that calls it and displays the result - so an observer can see, without reading the code, that it works and what it does.
+
+
+PART FIVE: THE REFLECTION HABIT THAT RUNS THROUGH EVERY PHASE
+
+Woven through all seven phases is a habit that the original SPARC prompt calls "Reflection".
+
+In that original prompt, the AI is told to act as a "Reflective Architect and Editor".
+
+This means that at each step, the person or the AI pauses to justify the decisions made, to consider the alternatives that were rejected, and to discuss potential challenges along with ways to handle them.
+
+In the original template, every step's written document includes a Reflection subsection, in which the author records why choices were made and what trade-offs were accepted.
+
+DSPARCD extends this habit to the new first phase: definition.md opens with the boldest reflection of all, because choosing what a thing IS, and refusing what it is not, is the decision every other decision inherits.
+
+This idea has a distinguished ancestor. Donald Schon, a scholar of how professionals actually work, described good designers as carrying on a "reflective conversation with the materials of the situation" - making a move, watching how the situation answers, and adjusting. He called it "reflection-in-action." The Reflection subsection is that conversation, written down.
+
+For example:
+
+In the Definition document, reflection records why this concept was chosen over a neighboring one, and what would prove the concept wrong.
+
+In the Specification document, reflection might justify why each requirement was included, and consider challenges before they become problems.
+
+In the Architecture document, reflection might explain why one design was chosen over a plausible alternative.
+
+This habit turns the method from a mechanical checklist into a thoughtful process, and it leaves behind a valuable written record of the reasoning behind a project, not merely the result.
+
+
+PART SIX: THE GUIDING PRINCIPLES AND QUALITY RULES
+
+Across every implementation, a consistent set of principles appears.
+
+The advertised benefits of the framework are:
+
+• Structured approach: a clear, step-by-step path from concept to demonstrated capability.
+
+• Flexibility: adaptable to projects of any size and type.
+
+• Enhanced collaboration: defined roles and heavy documentation keep teams, and teams of AI agents, aligned.
+
+• Quality assurance: thorough testing and refinement are built into the process, not bolted on.
+
+• Documentation focus: every phase produces a written artifact - and in DSPARCD the first artifact, definition.md, is the one all the others answer to.
+
+The hard quality rules enforced by the agent instructions are famously specific:
+
+• Every file must be 500 lines or fewer.
+
+• Every function should be 50 lines or fewer.
+
+• No hardcoded secrets: no passwords, keys, or environment variables may ever be written directly into the code - "environment variables" are configuration values supplied to a program from outside it.
+
+• Comprehensive input validation, meaning the program must check all incoming data before trusting it.
+
+• Modular, extensible design with clean interface boundaries - the direct descendant of Parnas's information hiding.
+
+• Self-documenting code with strategic comments.
+
+• Test coverage targets, with the TDD London School approach.
+
+• Structured commit messages - a "commit" is a saved snapshot of code changes in version control - using prefixes such as feat for features, test for tests, fix for bug fixes, docs for documentation, arch for architecture changes, quality for refactoring, and deploy for deployment changes.
+
+DSPARCD adds one rule of its own, at the level of the concept rather than the code:
+
+• Every requirement, module, and feature must trace to the concept or a principle in definition.md; anything that traces to neither is either out of scope or belongs on the non-goals list. This is the rule that keeps a project the same shape it set out to be.
+
+The original framework also describes "symbolic reasoning integration", meaning the use of explicit, rule-like analysis for pattern recognition in code, adaptive optimization, information integration, and better architectural decision making.
+
+
+PART SEVEN: WHY DEFINITION IS THE KEEL, AND PSEUDOCODE IS THE HEART
+
+Two phases carry special weight, one new and one original.
+
+The P in the middle, Pseudocode, gives the methodology its special relationship with AI.
+
+An LLM writing code directly from a vague request must guess at intent, and guesses compound into bugs.
+
+By forcing an explicit pseudocode phase, the method makes the AI, or the human, state the logic in plain language first, where mistakes are cheap to spot and fix.
+
+The pseudocode then becomes the contract that the real code must honor, and the tests verify that honor.
+
+This is the same insight found in comment-driven development and in controlled natural language systems: precise plain language is the best bridge between human intent and machine execution.
+
+The new D at the front, Definition, is the keel of the whole ship - the timber along the bottom that everything else is built upon and that keeps the vessel pointed straight.
+
+Where Pseudocode prevents the AI from guessing HOW, Definition prevents everyone from guessing WHAT.
+
+Brooks's "No Silver Bullet" explains why this matters more than any tool: the hard part of software, he argues, is deciding what to say, not saying it, so no cleverness of expression can rescue a project that never decided what it was. Definition is the phase that decides.
+
+And because the concept, once set, silently shapes the specification, the architecture, and every module beneath it, an error in Definition is the most expensive error a project can make - it is copied, faithfully, into everything. That is why the cheapest place to think hardest is the very first page.
+
+
+PART EIGHT: THE DESIGN WISDOM DSPARCD RESTS ON
+
+This report sits in a folder with the classic literature of design, and DSPARCD, especially its Definition phase, is built on that literature. Here is what each source contributes, in plain terms, and how it shows up in the method. All of it is summarized in the reader's own words; the original works are cited so they can be read in full.
+
+Fred Brooks, "The Design of Design: Essays from a Computer Scientist" (2010).
+
+• The whole activity is design. Brooks designed in five media over six decades - computer hardware, software, houses, books, and organizations - and found the design PROCESS nearly identical in all of them. This is why DSPARCD treats every phase as design and names only the concept phase "Definition", to avoid pretending the rest is not design.
+
+• Conceptual integrity is the highest good. A system should feel as if it came from one mind. This is the reason Definition exists and the reason it names a conceptual owner.
+
+• The Rational Model is wrong. The neat picture of gathering all requirements and then building does not match reality; you learn the requirements by designing. This is why Definition stays light and why Refinement loops.
+
+• Constraints are friends. Limits focus creativity rather than smothering it, so Definition welcomes constraints and even manufactures them by naming non-goals.
+
+• The boldest decisions produce most of the goodness. This is why Definition makes the bold, defining bets deliberately and records them.
+
+• Better wrong than vague. Brooks argues it is better to write down a specific, even imperfect, model than to stay comfortably vague. Definition demands a concrete concept, on the page, where it can be tested and corrected.
+
+Fred Brooks, "No Silver Bullet: Essence and Accidents of Software Engineering" (1986).
+
+• Essence versus accident. The essence is the conceptual construct; the accidents are the tools and syntax. Definition attacks the essence first.
+
+• There is no ten-times "silver bullet"; progress is disciplined and incremental. DSPARCD is exactly such a discipline, and Brooks's own suggested attacks map onto its phases: buy rather than build (a Definition and Architecture decision), rapid prototyping to find requirements (Refinement and Demonstration), grow software organically (the whole loop), and, above all, grow great designers (the named conceptual owner in Definition).
+
+• Software's four essential hardnesses - complexity, conformity, changeability, and invisibility - are permanent. Definition and Architecture fight complexity by choosing what NOT to build; Refinement and Completion fight changeability with tests; documentation and diagrams fight invisibility.
+
+Melvin Conway, "How Do Committees Invent?" (1968), known as Conway's Law.
+
+• A system's structure copies the communication structure of the team that builds it. So DSPARCD urges you, in Architecture, to shape teams to match the design you want - the "Inverse Conway Maneuver."
+
+• Organizing a team locks in bias; there is no organized-and-unbiased design group. So Definition must fix the concept BEFORE the work is divided.
+
+• Keep design teams lean and flexible, because the first design is rarely the best. This licenses Refinement to revise even the concept, and warns against overstaffing.
+
+• His wry warning - there is never enough time to do it right, but always enough time to do it over - is the whole argument for spending real thought in Definition, up front.
+
+The wider design canon, drawn together in the companion notes file in this folder.
+
+• Herbert Simon, "The Sciences of the Artificial": design is devising courses of action to turn existing situations into preferred ones; and because we are boundedly rational, we "satisfice", accepting a good-enough answer. Definition sets the "preferred situation" the whole project aims at.
+
+• Horst Rittel and Melvin Webber, "wicked problems": real design problems cannot be fully defined before they are solved, have no clear stopping rule, and are judged better-or-worse rather than right-or-wrong. Definition therefore stays humble and light, and Refinement expects to revise.
+
+• Donald Schon, "The Reflective Practitioner": design is a reflective conversation with the materials. This is the Reflection habit in every phase.
+
+• Nigel Cross, "Designerly Ways of Knowing": designers are solution-focused and think through models and sketches, not just words. Pseudocode and Architecture diagrams are exactly this non-verbal modeling.
+
+• Dieter Rams, "Ten Principles for Good Design", summed up as "less, but better": the direct inspiration for Definition's insistence on non-goals and a short list of principles.
+
+• Christopher Alexander, "A Pattern Language": reusable named solutions - the ancestor of software design patterns, which live in the Architecture phase.
+
+• David Parnas, "On the Criteria To Be Used in Decomposing Systems into Modules": information hiding - split a system so each module hides a changeable decision. This is the root of the method's modularity quality rules.
+
+• Eric Raymond, "The Cathedral and the Bazaar": open, many-eyes collaboration finds bugs quickly ("given enough eyeballs, all bugs are shallow"), and releasing early and often is a design strategy. This informs Refinement and Demonstration.
+
+• Design thinking (the IDEO and Stanford d.school tradition): empathize, DEFINE, ideate, prototype, test. Notice that "define" is its own explicit step there too - independent confirmation that a definition phase belongs at the front.
+
+
+PART NINE: THE METHOD MEETS ROO CODE, CREATE-SPARC AND BOOMERANG TASKS
+
+Roo Code is an AI-powered coding extension for Visual Studio Code, a widely used free code editor.
+
+The create-sparc npm package scaffolds a project, meaning it generates the starting folder structure, with one command: npx create-sparc init.
+
+That command creates a .roo directory and a .roomodes file, which configure a set of specialized AI assistant modes inside Roo Code.
+
+The key innovation is the Boomerang task concept.
+
+A Boomerang task works like this: an orchestrator agent breaks a large objective into small subtasks, throws each subtask to a specialized agent, and each subtask, like a boomerang, comes back to the orchestrator with its result, ready for the next throw.
+
+The specialized modes installed by create-sparc include: SPARC Orchestrator, Specification Writer, Architect, Auto-Coder, Tester (TDD), Debugger, Security Reviewer, Documentation Writer, System Integrator, Deployment Monitor, Optimizer, DevOps, Ask, SPARC Tutorial, Supabase Admin, and MCP Integration - the last connecting external services through the Model Context Protocol (MCP), a standardized bridge that lets AI assistants interact with databases, APIs, and cloud resources.
+
+Each mode can even be assigned a different LLM through configuration profiles, so an expensive reasoning model can do the architecture while a cheaper, faster model does routine coding.
+
+A DSPARCD note: the tools listed here automate the original five phases. Definition and Demonstration are, for now, practiced by hand or with a general AI assistant. A natural future extension would be a "Definer" mode that produces definition.md - the concept, non-goals, and principles - and hands it to the Specification Writer, and a "Demonstrator" mode that builds the Minimum Viable Product or benchmark run.
+
+
+PART TEN: THE CLAUDE-SPARC AUTOMATED DEVELOPMENT SYSTEM
+
+The claude-sparc.sh script is a complete agentic workflow for the Claude Code CLI.
+
+Its distinguishing features: an automated research phase before the phases begin, using parallel web research; full execution of the phases with TDD London School testing; parallel orchestration through a BatchTool, which launches independent specialist tasks concurrently and gathers the results; automated linting, meaning automatic style and error checking, plus testing and security validation; a structured commit after each phase; and options for dry runs, quiet mode, JavaScript Object Notation (JSON) output, and custom MCP configurations.
+
+A typical three-wave orchestration:
+
+• Wave one, in parallel: the architect designs, the specification writer specifies, the security reviewer audits, and the TDD agent builds the test framework.
+
+• Wave two, in parallel: the coder implements against the specs, the integrator merges the components, and the documentation writer documents.
+
+• Wave three, in parallel: the debugger resolves integration issues, DevOps deploys to staging, and the monitor sets up post-deployment observation.
+
+A DSPARCD note: in a fully seven-phase automation, a "define" wave would run first and alone - not in parallel - because the concept must be settled before any work is divided, exactly as Conway's Law warns. Definition is the one phase that should not be parallelized, because it is the phase that decides what the parallel work is for.
+
+
+PART ELEVEN: SPARC INSIDE CLAUDE-FLOW, THE SEVENTEEN MODES
+
+Claude-Flow is Reuven Cohen's flagship orchestration platform for Claude Code, describing itself as a swarm coordination layer for AI agents.
+
+One command initializes everything: npx claude-flow init with the sparc flag, which creates a local wrapper script, a .claude configuration directory, a CLAUDE.md project instruction file, and the pre-configured SPARC modes.
+
+The mode list, as reported by the tool itself, includes: architect, code, tdd, debug, security-review, docs-writer, integration, post-deployment-monitoring-mode, refinement-optimization-mode, ask, devops, tutorial, supabase-admin, spec-pseudocode (one mode handling both closely linked phases), mcp, sparc (the orchestrator), and swarm (multi-agent coordination), rounding out the advertised seventeen.
+
+The main commands: sparc modes lists the modes; sparc run followed by a mode name and a task executes one mode; sparc tdd runs the full test-driven workflow; sparc batch runs several modes at once; and sparc pipeline runs the full phase sequence on a task.
+
+Claude-Flow integrates the method with a persistent memory system, so specifications stored in one phase can be recalled by agents in later phases, using memory namespaces such as sparc/auth-service.
+
+A DSPARCD note: the persistent memory system is the ideal home for definition.md. Stored in memory at the start under a namespace such as project/definition, the concept, non-goals, and principles can be recalled by every later agent, so that a coder or an architect can check its own work against the concept without a human in the loop. This is how conceptual integrity is enforced across a swarm.
+
+It also supports hooks, meaning lifecycle events that fire automatically between phases, and claims parallel execution speed gains of 2.8 to 4.4 times over sequential work.
+
+
+PART TWELVE: SPARC 2.0
+
+SPARC 2.0, hosted by the Agentics organization, reframes the method from a workflow into an intelligent coding agent framework.
+
+Its notable capabilities: secure execution environments for running generated code safely; a unified diff system that records precisely what changed between code versions, acting like a perfect memory of the code's evolution and enabling easy rollbacks; deep integration with Git, the standard version control system, and GitHub; a vector store, meaning a specialized database that converts code and text into numerical patterns capturing meaning, so the system can find conceptually similar code, not just identical words; Model Context Protocol (MCP) capabilities; specialized agents that analyze, suggest, implement, and validate collaboratively; and a memory bank that persists knowledge across sessions.
+
+
+PART THIRTEEN: THE PHILOSOPHY, AGENTIC ENGINEERING VERSUS VIBE CODING
+
+"Vibe coding" is a 2025-era term for conversational, feel-driven AI coding: you chat with the AI, accept what looks right, and iterate by intuition.
+
+Vibe coding is celebrated for ideation, meaning rapid idea exploration, but criticized for producing unverified, unmaintainable results at scale.
+
+The method is the flagship of the opposing school, which Cohen calls "agentic engineering": designing for autonomy with verification, prioritizing architectures and processes that are repeatable and outcome-driven, rather than just prompting for inspiration.
+
+Independent academic work echoes the distinction: research contrasts the prompt-and-accept dynamic of vibe coding with agentic coding, in which agents plan, act, use tools, and self-evaluate, concluding that conversation is good for discovering intent, while structured artifacts - specifications, tests, documentation - are required for trustworthy implementation.
+
+DSPARCD sharpens this argument. Vibe coding fails hardest precisely because it never DEFINES: it discovers a little intent in conversation and then builds on a concept that was never written down, so the system drifts. Definition is the antidote - it captures the intent that vibe coding surfaces and freezes it into a north star the agents can be held to. In this light, Definition is where the best of conversational discovery is made durable, and agentic engineering is what carries it to a demonstrated result.
+
+
+PART FOURTEEN: CRITICISMS, LIMITATIONS, AND KNOWN ROUGH EDGES
+
+An honest report includes the warts, and the public record shows several, to which DSPARCD adds one of its own.
+
+• Mode naming inconsistencies: a documented Claude-Flow issue showed the slash command describing one set of modes while the command line tool recognized a different list.
+
+• Configuration confusion: documentation sometimes pointed to Roo Code configuration files even when the user was running Claude Code.
+
+• Orchestration fragility: community members noted that if an orchestrator agent is granted editing rights, it may try to do the work itself instead of delegating, so role permissions must be configured with care.
+
+• Ceremony and cost: the method's thoroughness consumes time and tokens - a token is the unit of text that AI models process and bill by - which can be overkill for small scripts and quick experiments.
+
+• Historical cost barriers: before flat-rate plans, serious swarms cost thousands of dollars per day.
+
+• Verification still matters: academic surveys caution that agentic coding is neither a toy nor a universal multiplier, and that its value depends on verification gates and human oversight - which is precisely what Refinement and Completion exist to provide.
+
+• The DSPARCD risk - over-defining. The new Definition phase can be misused. If a team pours detailed design into it, it becomes Big Design Up Front, the very waterfall trap the design literature warns against. The mitigation is built into the phase: definition.md is a page of concept, not a binder of blueprints; it names what the thing is, is not, and stands for, and then stops. Detailed design waits for Architecture, and the concept itself stays open to revision in Refinement.
+
+
+PART FIFTEEN: DO NOT CONFUSE IT WITH THESE OTHER SPARCS
+
+The acronym SPARC has several unrelated famous meanings, and a newcomer should not mix them up.
+
+• SPARC the processor: Scalable Processor ARChitecture, a family of computer chips introduced by Sun Microsystems in 1987 - completely unrelated hardware.
+
+• SPARC in research funding: a program of the United States National Institutes of Health (NIH) called Stimulating Peripheral Activity to Relieve Conditions - unrelated.
+
+• SPARC assembly language courses at universities - these teach the Sun processor, not the methodology.
+
+This report concerns only the software development methodology and its DSPARCD expansion: Definition, Specification, Pseudocode, Architecture, Refinement, Completion, Demonstration.
+
+
+PART SIXTEEN: HOW A COMPLETE BEGINNER WOULD USE DSPARCD TODAY
+
+You do not need any of the tooling to benefit from DSPARCD.
+
+The manual, tool-free version:
+
+1. Create seven empty text documents named definition, specification, pseudocode, architecture, refinement, completion, and demonstration.
+
+2. In the definition document, write what the thing IS in a sentence, what it is NOT as a list, and three to seven guiding principles; name who owns the concept; and reflect on why.
+
+3. Fill the specification with what you want, for whom, and how you will know it works - checking each requirement against the definition.
+
+4. Write the logic of every feature in plain structured English in the pseudocode document.
+
+5. Sketch the components, technologies, and diagrams in the architecture document.
+
+6. Build in small tested steps, recording each improvement in the refinement document, and revising the definition if building proves it wrong.
+
+7. Finish with full tests, documentation, and a deployment note in the completion document.
+
+8. Show the working system on a task a viewer can judge, and record in the demonstration document what it proves - and whether it kept the promise the definition made.
+
+The tooled version, on a computer with Node.js installed - Node.js is the runtime that lets JavaScript programs run outside a browser:
+
+1. Write definition.md by hand or with an AI assistant first, since the tools do not yet automate this phase.
+
+2. For a Roo Code workflow, run npx create-sparc init inside your project folder; for a Claude Code workflow, run npx claude-flow init with the sparc option, then use sparc run with a mode name, or sparc tdd with a feature description, feeding the concept from definition.md into the specification step.
+
+3. Let the orchestrator throw Boomerang subtasks to the specialist modes, and review each returned result against the definition.
+
+4. Keep the quality rules sacred: small files, small functions, no secrets in code, tests first, and every piece traceable to the concept.
+
+5. Finish with a Demonstration the intended audience can judge for themselves.
+
+
+PART SEVENTEEN: KEY TAKEAWAYS
+
+• DSPARCD is a seven-phase software development method: Definition, Specification, Pseudocode, Architecture, Refinement, Completion, Demonstration. The middle five are the original SPARC by Reuven Cohen; Demonstration was added by the SPARCD report; Definition is added here, at the front.
+
+• Definition, the new first phase, decides what the invention IS, what it is NOT, and the principles that govern it, before any requirement is written. It is the phase that gives the whole system a single mind to come from, and it is grounded in Brooks's "conceptual integrity", in his essence-versus-accident distinction, and in Conway's warning that you must fix the concept before you divide the work.
+
+• The two D's are bookends: Definition states the promise ("what this is meant to be"), Demonstration supplies the proof ("what it turned out to do").
+
+• The essence of the method is planning-first, concept-anchored, test-driven, documentation-heavy development, made precise enough that AI agents can execute it autonomously and verifiably.
+
+• Its ecosystem spans the original sparc repository, the create-sparc scaffolder for Roo Code with Boomerang tasks, the claude-sparc.sh automation script, SPARC 2.0's agent framework, and the seventeen SPARC modes inside Claude-Flow, which was renamed Ruflo in early 2026 while keeping the method as its core.
+
+• Its signature quality rules: files of 500 lines or fewer, functions of 50 lines or fewer, no hardcoded secrets, London School Test-Driven Development, a written artifact for every phase, and, added by DSPARCD, traceability of everything back to the definition.
+
+• It stands as the disciplined "agentic engineering" answer to freewheeling "vibe coding": conversation discovers intent, Definition freezes intent into a concept, and structure delivers demonstrated software.
+
+• Above all, it rests on a single idea from Fred Brooks's "The Design of Design": the whole enterprise, from the first page to the final demonstration, is one continuous act of design.
+
+
+PART EIGHTEEN: GLOSSARY OF EVERY TECHNICAL TERM USED IN THIS REPORT
+
+• Agent: an AI program that can plan, act, use tools, and adjust based on feedback.
+
+• Agentic engineering: the discipline of building repeatable, verifiable systems of AI agents.
+
+• API: Application Programming Interface, a defined way for programs to request services from each other.
+
+• Architecture: the high-level internal structure of a software system, and the fourth DSPARCD phase.
+
+• Big Design Up Front (BDUF): the waterfall mistake of trying to design every detail before building; the trap the Definition phase is kept light to avoid.
+
+• Boomerang task: a subtask delegated by an orchestrator to a specialist agent, whose result returns to the orchestrator.
+
+• CI/CD: Continuous Integration and Continuous Deployment, automated pipelines that test and release code.
+
+• CLI: Command Line Interface, a program operated by typed commands.
+
+• Commit: a saved snapshot of code changes in version control.
+
+• Conceptual integrity: the quality of a design feeling as though it came from a single coherent mind; the reason the Definition phase exists. From Fred Brooks.
+
+• Conway's Law: the observation that a system's structure copies the communication structure of the team that builds it. From Melvin Conway.
+
+• CSRF: Cross-Site Request Forgery, a web attack that tricks a logged-in user's browser into making an unwanted request.
+
+• Definition: the first DSPARCD phase, in which the concept - what the thing is, what it is not, and its principles - is decided before any requirement is written.
+
+• Demonstration: the seventh DSPARCD phase, in which the finished system is shown doing what it can do.
+
+• Demo: short for demonstration.
+
+• Diff: a record of exactly what changed between two versions of a file.
+
+• Essence and accident: Brooks's distinction between the hard conceptual core of software (essence) and the secondary labor of tools and syntax (accident).
+
+• Environment variable: a configuration value supplied to a program from outside its code.
+
+• Git and GitHub: the standard version control system, and the website that hosts Git repositories.
+
+• Hashing and salting: scrambling a password into an irreversible jumble, with added random data so identical passwords do not match.
+
+• Information hiding: Parnas's principle of splitting a system so each module hides one changeable decision behind a stable interface.
+
+• JSON: JavaScript Object Notation, a text format for structured data.
+
+• Linting: automated checking of code for style problems and likely errors.
+
+• LLM: Large Language Model, an AI system trained on vast text and code.
+
+• London School TDD: a test-driven style that isolates units with mocks and tests behavior and interactions.
+
+• MCP: Model Context Protocol, a standardized bridge letting AI assistants use external services.
+
+• Minimum Viable Product (MVP): the smallest version of a system that still delivers real, visible value.
+
+• Mock: a stand-in fake version of a component, used in testing.
+
+• Modular: built from small, self-contained, swappable pieces.
+
+• Node.js, npm, npx: the JavaScript runtime, its package registry, and its package runner.
+
+• Non-goals (anti-scope): the explicit list of what a system will deliberately not do; a core product of the Definition phase.
+
+• North star: the fixed guiding concept every later decision is measured against.
+
+• Orchestrator: the coordinating agent that decomposes objectives and delegates subtasks.
+
+• Proof of Concept (POC): a small build whose only job is to prove a specific doubted capability is achievable.
+
+• Pseudocode: an informal, human-readable, language-agnostic outline of an algorithm; the third DSPARCD phase.
+
+• Rational Model: the tidy but unrealistic picture of design as gathering all requirements first, then building; criticized by Brooks.
+
+• Refactor: restructure code without changing its behavior.
+
+• Reflection: the habit, in every phase, of writing down why choices were made and what was rejected.
+
+• Roo Code: an AI coding extension for Visual Studio Code.
+
+• Ruflo: the 2026 renamed version of Claude-Flow, rewritten in Rust, with the method still at its core.
+
+• Satisficing: accepting a good-enough answer rather than a provably optimal one; from Herbert Simon.
+
+• Scaffolding: automatically generating the starting structure of a project.
+
+• Scope creep: the slow, unplanned swelling of a project until it loses its shape; guarded against by non-goals.
+
+• SLA: Service Level Agreement, a promised level of speed and reliability.
+
+• Swarm: multiple coordinated AI agents working one problem together.
+
+• TDD: Test-Driven Development, writing a failing test first, then the code to pass it, then cleaning up.
+
+• Token: the unit of text that AI models process and bill by.
+
+• User story: a short plain-language statement of what a user wants and why.
+
+• Vector store: a database that stores meaning-based numerical representations of text and code.
+
+• Vibe coding: conversational, intuition-driven AI coding without formal structure.
+
+• Wicked problem: a messy, unique problem that cannot be fully defined until you try to solve it; from Rittel and Webber.
+
+
+PART NINETEEN: SOURCES CONSULTED
+
+On the methodology:
+
+• The ruvnet/sparc repository and its DeepWiki documentation, covering the framework principles, the phases, the CLI, the UI, and symbolic reasoning integration.
+
+• The original SPARC framework gist by ruvnet, describing the Reflective Architect and Editor prompt and the markdown documents.
+
+• The create-sparc npm package documentation and the ruvnet/rUv-dev repository, covering Roo Code integration, Boomerang tasks, the specialized modes, and MCP.
+
+• The claude-sparc.sh gist, covering the automated Claude Code workflow, London School TDD, quality standards, and commit conventions.
+
+• The agenticsorg/sparc2 repository, covering SPARC 2.0's agent framework, diff tracking, and vector store.
+
+• The claude-flow npm package, the ruvnet/claude-flow repository, its SPARC Methodology wiki pages, and its issue tracker.
+
+• The AI Native Dev podcast interview with Reuven Cohen, covering swarm economics, the April 2025 cost-curve flip, and the agentic engineering philosophy.
+
+• Academic preprints contrasting vibe coding with agentic coding.
+
+On design, gathered in this folder and standing behind the Definition phase:
+
+• Frederick P. Brooks Jr., "The Design of Design: Essays from a Computer Scientist" (Addison-Wesley, 2010) - conceptual integrity, the invariant design process, the Rational Model critique, constraints as friends, and bold decisions.
+
+• Frederick P. Brooks Jr., "No Silver Bullet: Essence and Accidents of Software Engineering" (1986) - essence versus accident and the four essential difficulties.
+
+• Melvin E. Conway, "How Do Committees Invent?" (Datamation, 1968) - Conway's Law and the bias of organizing before deciding.
+
+• The companion notes in this folder summarizing the wider canon: Herbert Simon's "The Sciences of the Artificial", Rittel and Webber on wicked problems, Donald Schon's "The Reflective Practitioner", Nigel Cross's "Designerly Ways of Knowing", Dieter Rams's ten principles, Christopher Alexander's "A Pattern Language", David Parnas on modular decomposition, Eric Raymond's "The Cathedral and the Bazaar", and the design thinking tradition.
+
+
+END OF DSPARCD_EXPLAINED.txt

@@ -1,0 +1,109 @@
+AI MUSIC BLENDER - DSPARCD PHASE 4 - ARCHITECTURE - VERSION 1
+
+Date: 2026-08-07
+
+
+THE SHAPE OF THE SYSTEM
+
+One Python package, ai_music_blender, is the engine.
+
+Three thin faces call it: the command line, the localhost web server, and the GTK app.
+
+A vendored, pristine snapshot of the ancestor lives in vendor/EternalJukebox for reference and attribution; our code never imports from it.
+
+  input (file or YouTube link)
+        |
+     ingest.py  ----------------------- yt-dlp, ffmpeg (system programs)
+        |
+    analysis.py  ---------------------- librosa (beats, MFCC, chroma, key)
+        |
+   [analysis record: beats, features, graph]  --- cached as JSON in ~/.cache/ai_music_blender
+        |
+        +----> jukebox.py  (infinite walk; audition or render)
+        |
+        +----> mashup.py   (tempo/key match, optional Demucs stems, mix render)
+                   |
+                   +----> its output feeds back into jukebox.py  (mash-up radio)
+
+  faces: cli.py  |  web.py + templates/index.html  |  gui.py (GTK 3)
+
+
+THE MODULES AND WHAT EACH ONE HIDES (Parnas information hiding)
+
+• ingest.py hides WHERE AUDIO COMES FROM.
+
+Callers ask for "a local audio path for this input"; whether that means checking a file or running yt-dlp is invisible to them.
+
+• analysis.py hides HOW SIMILARITY IS MEASURED.
+
+The beat-graph format (beat times, per-beat features, jump edges with distances) is the stable interface; the distance formula behind it can be replaced - including by the future learned-embeddings model - without touching any other module.
+
+• jukebox.py hides HOW THE WALK IS CHOSEN.
+
+The stable interface is "give me the next beat index"; the future Reinforcement Learning walk policy replaces the inside, not the interface.
+
+• mashup.py hides HOW TWO SONGS BECOME ONE.
+
+Stretching, shifting, stems, and mixing are internal; the interface is two inputs, one rendered file, one report.
+
+• web.py, cli.py, gui.py hide NOTHING and decide NOTHING.
+
+Faces translate clicks and keystrokes into engine calls; this is the Tenth Commandment as architecture.
+
+
+TECHNOLOGY CHOICES
+
+• Python 3.12 - the language of the pipeline and the whole engine.
+
+• librosa 0.11 - beat tracking, MFCC, chroma, onset strength; the heart of the self-hosted pipeline.
+
+• numpy and soundfile - sample math and audio file writing.
+
+• ffmpeg and ffplay (system programs) - universal decoding and simple audition playback.
+
+• yt-dlp (system program) - the explicit, user-requested YouTube download.
+
+• rubberband (system program) - high-quality time-stretch and pitch-shift for the mash-up engine.
+
+• Demucs (already installed, OPTIONAL at runtime) - neural stem separation for stem mash-ups.
+
+• Flask - the localhost web server; the browser side uses the Web Audio interface and a canvas arc diagram, in plain JavaScript with no build step.
+
+• GTK 3 via PyGObject - the Ubuntu GUI, because GTK 3 is what the target machine provides today.
+
+
+DATA MODEL - THE ANALYSIS RECORD (JSON)
+
+  {
+    "source": path, "duration": seconds, "tempo": bpm,
+    "key": {"tonic": "A", "mode": "minor", "camelot": "8A"},
+    "beats": [start times in seconds, ...],
+    "graph": [[ [target beat, distance], ... ] one list per beat],
+    "version": 1
+  }
+
+The record is cached at ~/.cache/ai_music_blender/<hash>.json, where the hash is of the audio file bytes, so re-analysis is automatic when the audio changes and instant when it does not.
+
+
+DEPLOYMENT
+
+There is no deployment; that is the point.
+
+The repository is cloned, dependencies are installed once, and everything runs locally on ccai2 (Ubuntu Studio 24.04).
+
+bin/ai-music-blender is the single launcher for all faces.
+
+
+FUTURE FACES (Windows, Mac, iPhone, Android)
+
+The engine-and-faces split is the porting plan: the web face already runs in any browser pointed at a local server, and each future native face wraps the same engine, exactly as the GTK face does.
+
+
+ARCHITECTURE REFLECTION
+
+The riskiest interface is the analysis record, because every module reads it; it therefore carries a version field from day one so future pipelines can evolve it without silent breakage.
+
+GTK 3 over GTK 4 was decided by facts on the ground (the target machine); because the GUI is a thin face, the cost of upgrading later is confined to one file.
+
+
+END OF ARCHITECTURE VERSION 1

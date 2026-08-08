@@ -1,0 +1,203 @@
+================================================================================
+                        AI MUSIC BLENDER — VISION DOCUMENT (v2)
+================================================================================
+Date: 2026-08-07  (v2: adds explicit fresh-repo + vendored-snapshot setup steps)
+Authors: ccai user + Claude (Claude Code)
+Target dev machine: ccai2 (Ubuntu Studio 24.04)
+Delivered via: the ccai <-> ccai2 Syncthing channel (to_ccai2 -> ~/incoming)
+
+--------------------------------------------------------------------------------
+1. THE STORY SO FAR
+--------------------------------------------------------------------------------
+This project began with a simple question: "Where did the Infinite Jukebox go?"
+
+The Infinite Jukebox (originally on Echo Nest Labs) took a song, chopped it up
+on the beat, built a graph of beats that sound alike, and then played the song
+FOREVER by randomly jumping between similar beats. It died when Echo Nest Labs
+went away. It was resurrected as The Eternal Jukebox, which itself broke in
+mid-2023 when Spotify changed its API, and was revived again at eternalbox.dev.
+
+Then we actually went and tested the survivors (2026-08-07):
+
+  * infiniby.com  — the "spiritual successor" that takes YouTube links.
+    Frontend loads, but POST /api/analyze returns 404 "Application not found".
+    The analysis backend has been undeployed. Every song fails.
+
+  * eternalbox.dev — Cloudflare 522, origin server not responding. Whole site
+    down. Retried; same result.
+
+Every hosted incarnation of this beloved idea is currently dead or broken, and
+every death traces back to the same root cause: DEPENDENCE ON SOMEONE ELSE'S
+SERVER OR API (Echo Nest, then Spotify, then somebody's abandoned backend).
+
+Conclusion: we clone it, we own it, and we make the analysis pipeline OURS so
+it can never die on us again. And while we're in there, we make it smarter.
+
+--------------------------------------------------------------------------------
+2. WHAT WE ARE CLONING AND WHY
+--------------------------------------------------------------------------------
+Root clone repo (the ancestor we build on):
+
+    https://github.com/EternalBox/EternalJukebox
+
+This is the open-source rehosting of the Infinite Jukebox. It contains the
+complete working core: beat-graph construction, the iconic arc-diagram
+visualization, and the infinite random-walk player. That core logic is proven
+and beloved — we do NOT rewrite it, we adopt it and extend around it.
+
+GOLDEN RULE: the original Infinite Jukebox functionality must keep working,
+unmodified in behavior, at every stage of this project. All new features are
+additive — new modules, new entry points, new modes — never edits that change
+what the classic mode does.
+
+REPO STRATEGY (decided): FRESH REPO + VENDORED SNAPSHOT — not a GitHub fork.
+Rationale: GitHub deprioritizes forks (hidden from search, no contribution-
+graph credit, "forked from" framing), and this project diverges heavily from
+upstream (new Python ML pipeline, mash-up engine, GTK app around a Kotlin
+core), so upstream-merge convenience decays fast. A fresh repo reads as YOUR
+project on a resume. Attribution lives in the README + preserved LICENSE.
+
+Setup steps (run on ccai2):
+
+  1. Create and clone the repo:
+
+       gh repo create AI_Music_Blender --description "Artificial Intelligence (AI) Music Blender" --public --clone
+
+     (Use --private instead of --public if preferred.)
+
+  2. Vendor a clean snapshot of EternalJukebox (no nested .git):
+
+       cd AI_Music_Blender
+       git clone --depth 1 https://github.com/EternalBox/EternalJukebox vendor/EternalJukebox
+       rm -rf vendor/EternalJukebox/.git
+
+  3. Preserve attribution — keep vendor/EternalJukebox/LICENSE intact, and
+     state in the top-level README that the jukebox core is vendored from
+     https://github.com/EternalBox/EternalJukebox with a link and thanks.
+
+  4. Commit the snapshot as its own commit before any modifications:
+
+       git add vendor && git commit -m "Vendor EternalJukebox snapshot (upstream: EternalBox/EternalJukebox)"
+
+     A pristine-snapshot first commit makes every later diff against the
+     original core reviewable — this is also how we enforce the golden rule.
+
+--------------------------------------------------------------------------------
+3. THE BIG FIX: SELF-HOSTED AI ANALYSIS PIPELINE
+--------------------------------------------------------------------------------
+The project's historical fatal flaw was the Spotify/Echo Nest analysis API.
+We replace it entirely with our own local ML pipeline:
+
+  * Beat & downbeat tracking........... librosa / madmom
+  * Timbre & pitch features............ MFCCs + chroma per beat
+  * Key & tempo estimation............. chroma-based key detection
+  * Section / structure detection...... self-similarity segmentation
+  * (Later) stem separation............ Demucs — vocals / drums / bass / other
+
+Input: any audio file, or a YouTube link (downloaded locally, analyzed
+locally). No external analysis API. Nothing to deprecate. Nothing to die.
+
+This is Resume Attack #1: "Replaced a deprecated commercial audio-analysis API
+with a self-hosted ML pipeline." A genuinely strong full-stack ML story.
+
+--------------------------------------------------------------------------------
+4. THE AI RESUME PROJECT ATTACK (planned AI upgrades)
+--------------------------------------------------------------------------------
+Beyond the pipeline replacement, in rough order of ambition:
+
+  a) LEARNED BEAT EMBEDDINGS — replace hand-tuned beat-similarity distance
+     with a small contrastive/triplet model trained so "sounds seamless to a
+     human ear" is the learned metric. Adjacent beats give free positive
+     training pairs. Baseline vs. learned metric, with listenable A/B results.
+
+  b) RL / MDP WALK POLICY — frame infinite playback as a Markov decision
+     process: reward smooth transitions, penalize repetition and stuck loops.
+     Classic algorithm -> learned policy narrative.
+
+  c) NATURAL-LANGUAGE STEERING — "keep it mellow", "build to the drop and
+     stay there" -> an LLM maps requests to walk parameters (energy bias,
+     section weights). Cheap to build, fantastic demo.
+
+  d) GENERATIVE PATCHING (stretch goal) — where no good jump exists,
+     synthesize a short transition with a small neural audio model so any two
+     sections become connectable.
+
+Fun extras on the list: chaos slider (jump probability), chorus gravity,
+shareable deterministic walk seeds, upgraded visualizations (force-directed /
+WebGL alongside the classic arc diagram — never replacing it).
+
+--------------------------------------------------------------------------------
+5. THE_AI_MASHUP_MACHINE — MASH-UP MODE
+--------------------------------------------------------------------------------
+A new, additive mode: take TWO songs and create a mash-up.
+
+The three hard problems and our answers:
+  1) TEMPO — time-stretch without pitch shift (rubberband / phase vocoder);
+     keep stretches under ~8% by preferring compatible pairs.
+  2) KEY/HARMONY — chroma-based key detection + Camelot-wheel harmonic
+     compatibility scoring; pitch-shift +/- 1-2 semitones for near-matches.
+  3) FREQUENCY COLLISION — Demucs stem separation, then mash STEMS:
+     vocals from Song A over the instrumental of Song B, with EQ ducking.
+
+Pipeline sketch:
+
+  Song A -> beats/downbeats -> key+chroma -> stems -+
+                                                    +-> compatibility scorer
+  Song B -> beats/downbeats -> key+chroma -> stems -+        |
+                                                     alignment engine
+                                                (downbeats & 8/16-bar phrases)
+                                                             |
+                                                       mix renderer
+
+And the crown jewel: mash-ups that PLAY IN THE AI-MUSIC-BLENDER — the rendered
+mash-up (or the paired beat-graph of both songs) feeds back into the infinite
+jukebox engine, so a two-song mash-up can play forever, drifting between both
+songs through harmonically compatible sections. Infinite mash-up radio.
+
+Compatibility scoring is Resume Attack #2: train a "mashability" model — the
+genuinely novel research-flavored piece of this project.
+
+Legal note: runs on the user's own files / local downloads, renders locally,
+nothing hosted or distributed. Keep it that way.
+
+--------------------------------------------------------------------------------
+6. THREE WAYS TO RUN IT
+--------------------------------------------------------------------------------
+  1. COMMAND LINE
+       ai-music-blender jukebox  File1                 # classic infinite mode
+       ai-music-blender mashup   File1 File2           # The_AI_Mashup_Machine
+       ai-music-blender jukebox  <YouTube-URL>         # fetch + analyze + play
+     (File1 for Infinite Jukebox; File1 + File2 for The_AI_Mashup_Machine.)
+
+  2. WEB PAGE INTERFACE — localhost for now. The EternalJukebox already ships
+     a web UI; we extend it with the mash-up mode and local-pipeline backend.
+     No public hosting, no accounts, no API keys.
+
+  3. UBUNTU GUI APP — our first native Ubuntu desktop app! Target: Ubuntu
+     Studio 24.04 (ccai2's OS — fitting, since Ubuntu Studio is the audio
+     production flavor). Recommended stack: GTK4 + libadwaita via PyGObject
+     (Python, same language as the ML pipeline; native GNOME look; GStreamer
+     for audio playback; and Ubuntu Studio ships the low-latency audio stack).
+     Alternative if we want the arc-diagram canvas for free: wrap the web UI
+     in a WebKitGTK window. Decide at build time; the CLI and web UI come
+     first so the GUI is a thin shell over a working engine.
+
+  INPUTS (all modes): local audio files or YouTube links.
+       Infinite Jukebox mode........ File1
+       The_AI_Mashup_Machine........ File1 + File2
+
+--------------------------------------------------------------------------------
+7. BUILD ORDER (proposed)
+--------------------------------------------------------------------------------
+  Phase 0  Create repo; vendor EternalJukebox; get classic mode running
+           locally, untouched. (Prove the golden rule from day one.)
+  Phase 1  Local analysis pipeline (librosa) producing the same beat-graph
+           format the Jukebox expects; YouTube-link ingestion.
+  Phase 2  CLI entry points; localhost web UI wired to the local pipeline.
+  Phase 3  Mash-up engine v1: tempo/key matching + stem separation + renderer.
+  Phase 4  Mash-ups playing inside the infinite engine (mash-up radio).
+  Phase 5  Learned embeddings + mashability model (the resume centerpieces).
+  Phase 6  Ubuntu GUI app.
+
+The Jukebox is dead. Long live the AI Music Blender.
+================================================================================

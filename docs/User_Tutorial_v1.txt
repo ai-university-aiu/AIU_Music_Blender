@@ -1,0 +1,114 @@
+AI MUSIC BLENDER - USER TUTORIAL - VERSION 1
+
+For the beginner, learner, layperson, newcomer, and novice.
+
+
+WHAT THIS PROGRAM IS
+
+AI Music Blender takes a song and plays it FOREVER.
+
+It listens to the song on your own computer, finds the beats (the steady pulse), finds beats that sound alike, and then plays the song while occasionally jumping between look-alike beats - so the song flows on and on and never ends.
+
+It can also take TWO songs and blend them into a mash-up (one song's singing over the other song's band), and that mash-up can play forever too.
+
+Everything happens on your own computer.
+
+No account, no internet service, no company that can shut it down.
+
+
+WHAT YOU NEED (one-time setup, on Ubuntu)
+
+Open a terminal (the black window where you type commands) and run:
+
+  sudo apt install ffmpeg rubberband-cli yt-dlp python3-gi gir1.2-gtk-3.0
+
+  pip3 install --user --break-system-packages librosa soundfile flask numpy
+
+"pip3" is the installer for Python add-ons; "sudo apt install" is Ubuntu's installer for system programs.
+
+Optional, for the fancier stem mash-ups (splitting a song into voice and instruments):
+
+  pip3 install --user --break-system-packages demucs
+
+
+THE THREE WAYS TO RUN IT
+
+WAY 1: THE COMMAND LINE
+
+All commands start with bin/ai-music-blender (run from the project folder).
+
+• See everything it can do:
+
+  bin/ai-music-blender --help
+
+• Look inside a song (tempo, key, beats, and how many jump points were found):
+
+  bin/ai-music-blender analyze MySong.mp3
+
+• Play a song forever (press Ctrl and C together to stop):
+
+  bin/ai-music-blender jukebox MySong.mp3
+
+• Save two minutes of the forever-version as a file instead of playing it:
+
+  bin/ai-music-blender jukebox MySong.mp3 --render forever.wav --length 120
+
+• Make the walk wilder or calmer with the chaos setting (0.0 is calm, 1.0 is wild):
+
+  bin/ai-music-blender jukebox MySong.mp3 --chaos 0.5
+
+• Get the exact same forever-walk every time by giving a seed number (share the number with a friend and they hear your walk):
+
+  bin/ai-music-blender jukebox MySong.mp3 --seed 42
+
+• Use a YouTube link instead of a file (it downloads the audio to your computer first):
+
+  bin/ai-music-blender jukebox "https://www.youtube.com/watch?v=..."
+
+• Blend two songs into a mash-up:
+
+  bin/ai-music-blender mashup SongA.mp3 SongB.mp3 -o blend.wav
+
+• The crown jewel - make the mash-up play forever:
+
+  bin/ai-music-blender jukebox blend.wav
+
+WAY 2: THE WEB PAGE
+
+• Start the local web server:
+
+  bin/ai-music-blender web
+
+• Open your browser to:
+
+  http://localhost:8765
+
+"localhost" means your own computer; nothing is on the internet.
+
+• Pick a song, watch the famous circle-and-arcs picture appear (each arc is a possible jump), press play, and watch the jumps light up as you listen.
+
+WAY 3: THE UBUNTU APP
+
+• Start the app:
+
+  bin/ai-music-blender gui
+
+• A normal desktop window opens: choose a song for forever-play, or choose two songs for a mash-up, set the chaos slider, and press the buttons.
+
+
+QUESTIONS A NEWCOMER ASKS
+
+• Where do downloaded and analyzed files go?
+
+Analyses are remembered in ~/.cache/ai_music_blender so a song is only studied once; it is always safe to delete that folder.
+
+• Is this legal?
+
+It runs on your own files and your own local downloads, renders on your own machine, and shares nothing; keep it that way.
+
+• Why did my two songs blend badly?
+
+Some songs fight each other (very different speeds or clashing keys); the mashup command prints a compatibility report so you can see why, and choosing songs with closer tempos usually helps.
+
+
+END OF USER TUTORIAL VERSION 1

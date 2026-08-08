@@ -1,0 +1,210 @@
+<!-- The browser side of the localhost web face: the classic arc diagram and an
+     infinite Web Audio walker that follows the beat graph exactly as jukebox.py does. -->
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- Name the page. -->
+  <title>AI Music Blender</title>
+  <!-- Style the page in the crimson-to-gold family palette. -->
+  <style>
+    /* Paint the page dark crimson with warm gold text. */
+    body { background: #3a0000; color: #ffce59; font-family: sans-serif; text-align: center; }
+    /* Style the headline. */
+    h1 { color: #ff933a; margin-bottom: 0.2em; }
+    /* Style the controls row. */
+    .controls { margin: 1em; }
+    /* Style the buttons and inputs. */
+    button, input { background: #7c0300; color: #ffce59; border: 1px solid #c02b18;
+                    padding: 0.4em 0.8em; border-radius: 6px; }
+    /* Style the status line. */
+    #status { color: #f26d1f; min-height: 1.5em; }
+  </style>
+</head>
+<body>
+  <!-- Show the project name. -->
+  <h1>AI Music Blender</h1>
+  <!-- Show the tagline. -->
+  <p>The self-hosted infinite jukebox. Nothing to deprecate. Nothing to die.</p>
+  <!-- Provide the song chooser and the walk controls. -->
+  <div class="controls">
+    <!-- Let the user pick a local audio file. -->
+    <input type="file" id="file_input" accept="audio/*">
+    <!-- Let the user set the chaos (jump probability). -->
+    <label>Chaos <input type="range" id="chaos" min="0" max="1" step="0.05" value="0.25"></label>
+    <!-- Start and stop the infinite walk. -->
+    <button id="play_button" disabled>Play forever</button>
+    <button id="stop_button" disabled>Stop</button>
+  </div>
+  <!-- Report progress and results here. -->
+  <div id="status">Choose a song to analyze it locally.</div>
+  <!-- Draw the classic arc diagram on this canvas. -->
+  <canvas id="arc_canvas" width="900" height="520"></canvas>
+
+  <script>
+    // Hold the current analysis record.
+    let record = null;
+    // Hold the decoded audio buffer.
+    let audioBuffer = null;
+    // Hold the Web Audio context.
+    let audioContext = null;
+    // Hold the walker's state: the current beat and the stop flag.
+    let currentBeat = 0, walking = false, nextTimer = null;
+    // Find the page elements once.
+    const fileInput = document.getElementById("file_input");
+    const chaosSlider = document.getElementById("chaos");
+    const playButton = document.getElementById("play_button");
+    const stopButton = document.getElementById("stop_button");
+    const statusLine = document.getElementById("status");
+    const canvas = document.getElementById("arc_canvas");
+    const paint = canvas.getContext("2d");
+
+    // When a file is chosen, send it to the local server for analysis.
+    fileInput.addEventListener("change", async () => {
+      // Take the chosen file.
+      const file = fileInput.files[0];
+      // Do nothing if the chooser was cancelled.
+      if (!file) return;
+      // Tell the user analysis is running.
+      statusLine.textContent = "Analyzing locally (first time can take a minute)...";
+      // Build the upload form.
+      const form = new FormData();
+      // Attach the file.
+      form.append("file", file);
+      // Post the file to the analyze route.
+      const answer = await fetch("/analyze", { method: "POST", body: form });
+      // Keep the analysis record.
+      record = await answer.json();
+      // Fetch the audio bytes back from the server.
+      const audioBytes = await (await fetch("/audio/" + record.audio_key)).arrayBuffer();
+      // Create the audio context on first use.
+      audioContext = audioContext || new AudioContext();
+      // Decode the audio for beat-accurate playback.
+      audioBuffer = await audioContext.decodeAudioData(audioBytes);
+      // Report what the pipeline found.
+      statusLine.textContent = "Tempo " + record.tempo.toFixed(1) + " BPM, key "
+        + record.key.tonic + " " + record.key.mode + ", " + record.beats.length
+        + " beats, " + record.graph.flat().length + " jump edges.";
+      // Draw the arc diagram.
+      drawArcs(-1);
+      // Enable the play button.
+      playButton.disabled = false;
+    });
+
+    // Compute a beat's position on the diagram's baseline.
+    function beatPosition(beatIndex) {
+      // Spread the beats along a horizontal baseline.
+      return 40 + (canvas.width - 80) * beatIndex / (record.beats.length - 1);
+    }
+
+    // Draw the classic arc diagram, highlighting the active beat's edges.
+    function drawArcs(activeBeat) {
+      // Clear the canvas.
+      paint.clearRect(0, 0, canvas.width, canvas.height);
+      // Choose the baseline height.
+      const baseline = canvas.height - 40;
+      // Draw the baseline.
+      paint.strokeStyle = "#c02b18";
+      paint.beginPath();
+      paint.moveTo(40, baseline);
+      paint.lineTo(canvas.width - 40, baseline);
+      paint.stroke();
+      // Draw every jump edge as an arc over the baseline.
+      for (let beat = 0; beat < record.graph.length; beat++) {
+        // Walk this beat's edges.
+        for (const [target, distance] of record.graph[beat]) {
+          // Highlight the active beat's edges in gold; others glow ember.
+          paint.strokeStyle = (beat === activeBeat) ? "#ffce59" : "rgba(240,109,31,0.25)";
+          // Find both ends on the baseline.
+          const from = beatPosition(beat), to = beatPosition(target);
+          // Make the arc height follow the jump span.
+          const height = Math.min(baseline - 20, Math.abs(to - from) * 0.5);
+          // Draw the arc as a curve.
+          paint.beginPath();
+          paint.moveTo(from, baseline);
+          paint.quadraticCurveTo((from + to) / 2, baseline - height, to, baseline);
+          paint.stroke();
+        }
+      }
+      // Draw the active beat marker.
+      if (activeBeat >= 0) {
+        // Paint the marker gold.
+        paint.fillStyle = "#ffce59";
+        // Draw the marker dot.
+        paint.beginPath();
+        paint.arc(beatPosition(activeBeat), baseline, 6, 0, 2 * Math.PI);
+        paint.fill();
+      }
+    }
+
+    // Return the end time of a beat (the next beat's start, or the song's end).
+    function beatEnd(beatIndex) {
+      // Use the next beat's start when there is one.
+      return (beatIndex + 1 < record.beats.length) ? record.beats[beatIndex + 1] : record.duration;
+    }
+
+    // Choose the next beat exactly as the engine's walker does.
+    function chooseNextBeat(beatIndex) {
+      // Look up this beat's jump edges.
+      const edges = record.graph[beatIndex];
+      // At the final beat, jump back into the song so it never ends.
+      if (beatIndex >= record.beats.length - 1)
+        return edges.length ? edges[0][0] : Math.floor(record.beats.length / 2);
+      // With probability chaos, take a similarity-weighted jump edge.
+      if (edges.length && Math.random() < parseFloat(chaosSlider.value)) {
+        // Turn distances into weights favoring similar targets.
+        const weights = edges.map(([, d]) => 1 / (0.001 + d));
+        // Sum the weights for the draw.
+        const total = weights.reduce((a, b) => a + b, 0);
+        // Draw a point in the weight range.
+        let draw = Math.random() * total;
+        // Walk the edges until the draw is spent.
+        for (let i = 0; i < edges.length; i++) { draw -= weights[i]; if (draw <= 0) return edges[i][0]; }
+      }
+      // Otherwise simply advance to the next beat.
+      return beatIndex + 1;
+    }
+
+    // Play one beat span and schedule the next, forever.
+    function playBeat(beatIndex) {
+      // Stop quietly if the user pressed stop.
+      if (!walking) return;
+      // Create a source for this beat span.
+      const source = audioContext.createBufferSource();
+      // Give the source the song's audio.
+      source.buffer = audioBuffer;
+      // Connect the source to the speakers.
+      source.connect(audioContext.destination);
+      // Compute this beat's start and length.
+      const start = record.beats[beatIndex], length = beatEnd(beatIndex) - start;
+      // Play exactly this beat span.
+      source.start(0, start, length);
+      // Redraw the diagram with this beat active.
+      drawArcs(beatIndex);
+      // Choose the next beat with the engine's rules.
+      const next = chooseNextBeat(beatIndex);
+      // Schedule the next beat to start when this one ends.
+      nextTimer = setTimeout(() => playBeat(next), length * 1000);
+    }
+
+    // Start the infinite walk when play is pressed.
+    playButton.addEventListener("click", () => {
+      // Mark the walk as running.
+      walking = true;
+      // Swap the button states.
+      playButton.disabled = true; stopButton.disabled = false;
+      // Begin at beat zero.
+      playBeat(0);
+    });
+
+    // Stop the walk when stop is pressed.
+    stopButton.addEventListener("click", () => {
+      // Mark the walk as stopped.
+      walking = false;
+      // Cancel any scheduled beat.
+      clearTimeout(nextTimer);
+      // Swap the button states back.
+      playButton.disabled = false; stopButton.disabled = true;
+    });
+  </script>
+</body>
+</html>

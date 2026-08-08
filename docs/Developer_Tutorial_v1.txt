@@ -1,0 +1,91 @@
+AI MUSIC BLENDER - DEVELOPER TUTORIAL - VERSION 1
+
+For the newcomer developer who wants to understand, run, test, and extend the system.
+
+
+READ FIRST
+
+• CONSTITUTION.md - the rules of the repository, especially the Golden Rule (classic mode is sacred, all changes additive) and the mirrored-documents rule.
+
+• docs/AI_Music_Blender_Vision_Document_v2.txt - the story, the plan, and the repo strategy (fresh repo, vendored snapshot).
+
+• The DSPARCD Fileset - docs/ai_music_blender_1_definition through 7_demonstration - the design record this code answers to.
+
+
+THE LAYOUT
+
+  ai_music_blender/        the engine (the only place decisions live)
+    ingest.py              turns "a file path or YouTube link" into a local audio path
+    analysis.py            librosa pipeline: beats, MFCC, chroma, key, beat graph; JSON cache
+    jukebox.py             the infinite walk: live audition and file rendering
+    mashup.py              tempo/key matching, optional Demucs stems, mix rendering
+    cli.py                 the command line face
+    web.py                 the Flask localhost face
+    templates/index.html   the browser side: arc diagram canvas + Web Audio playback
+    gui.py                 the GTK 3 face
+  bin/ai-music-blender     the launcher
+  tests/                   synthetic-audio tests (no copyrighted material, no network)
+  vendor/EternalJukebox    pristine snapshot of the ancestor; reference only, never imported
+  docs/                    the DSPARCD Fileset, tutorials, vision, build log; old versions in docs/archive/
+
+
+THE ONE DATA STRUCTURE TO KNOW: THE ANALYSIS RECORD
+
+Everything flows through the JSON analysis record produced by analysis.analyze_song:
+
+  source, duration, tempo, key {tonic, mode, camelot}, beats [seconds...],
+  graph [per beat: [[target_beat, distance], ...]], version
+
+It is cached at ~/.cache/ai_music_blender/<sha1-of-file>.json.
+
+The graph is the product; the walker and the web page are just two ways of following its edges.
+
+
+HOW EACH MODULE WORKS, IN ONE BREATH EACH
+
+• ingest.py - if the input starts with http, run yt-dlp into the cache and return the downloaded path; otherwise verify and return the given path.
+
+• analysis.py - librosa beat_track finds beats; per-beat MFCC and chroma vectors are averaged BETWEEN beats; distances are a weighted MFCC+chroma metric with a bar-position penalty; each beat keeps its nearest below-threshold non-neighbor beats as jump edges; key comes from correlating whole-song chroma against the Krumhansl major and minor profiles.
+
+• jukebox.py - the walk: advance beat by beat; with probability chaos, take a jump edge (weighted toward smaller distances); at song end, jump to the best-matching earlier beat; rendering concatenates beat spans with a short equal-power crossfade at every jump.
+
+• mashup.py - compatibility = small tempo stretch + Camelot-wheel key neighborhood; rubberband stretches both songs to a common tempo; a one-or-two-semitone pitch shift aligns near-matching keys; with --stems and Demucs present, vocals of A ride over the instrumental of B; alignment happens at downbeats on an eight-beat phrase.
+
+• Faces - cli.py (argparse), web.py (Flask, localhost only), gui.py (GTK 3); all three only call engine functions, per the Tenth Commandment.
+
+
+RUNNING THE TESTS
+
+  cd AI_Music_Blender
+  python3 -m unittest discover tests -v
+
+The tests generate click tracks and tones with numpy, then assert the acceptance scenarios of the Specification (tempo within tolerance, graph edges across repetitions, seeded-walk determinism, render length, mash-up rendering, web endpoints).
+
+The classic-mode tests are the Golden Rule regression: they must pass after every change, forever.
+
+
+HOW TO EXTEND WITHOUT BREAKING THE RULES
+
+1. Add capability to the ENGINE first, behind the existing interfaces (a new similarity metric goes inside analysis.py; a new walk policy goes inside jukebox.py; the analysis-record format is versioned if it must grow).
+
+2. Expose it from the faces second, as new flags or buttons - never by changing what the classic commands do.
+
+3. Update the DSPARCD Fileset with incremented versions, move the old versions to docs/archive/ with git mv, and bump both tutorials (the Sixth Commandment).
+
+4. Put an English Readable Code comment above every line you write (the Fourth Commandment), keep files at 500 lines or fewer and functions at 50 lines or fewer.
+
+5. Run the tests; a red Golden Rule regression stops the change, full stop.
+
+
+WHERE THE PLANNED AI UPGRADES PLUG IN
+
+• Learned beat embeddings replace the distance function inside analysis.py (the graph format does not change).
+
+• The Reinforcement Learning walk policy replaces choose_next_beat inside jukebox.py.
+
+• Natural-language steering maps text to walk parameters in a new engine module, exposed as a flag and a text box.
+
+• The mashability model replaces score_compatibility inside mashup.py.
+
+
+END OF DEVELOPER TUTORIAL VERSION 1

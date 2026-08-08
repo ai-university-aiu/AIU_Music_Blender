@@ -1,0 +1,99 @@
+AI MUSIC BLENDER - DSPARCD PHASE 2 - SPECIFICATION - VERSION 1
+
+Date: 2026-08-07
+
+Every requirement below traces to the concept and principles in ai_music_blender_1_definition_v1.txt.
+
+
+FUNCTIONAL REQUIREMENTS - ANALYSIS (traces to: Self-host everything)
+
+F1. The system accepts any local audio file that ffmpeg can decode (mp3, wav, flac, ogg, m4a, and more).
+
+F2. The system accepts a YouTube link, downloads the audio locally with yt-dlp, and then analyzes it locally.
+
+F3. The analysis detects beats (the steady pulse positions of the song) and the tempo in Beats Per Minute (BPM).
+
+F4. The analysis computes, for every beat, timbre features (Mel-Frequency Cepstral Coefficients, MFCCs - a compact description of tone color) and pitch features (chroma - the strength of each of the twelve musical pitch classes).
+
+F5. The analysis estimates the musical key of the song from the chroma features.
+
+F6. The analysis builds a beat graph: for every beat, a list of other beats that sound similar enough to jump to, each with a similarity distance.
+
+F7. Analysis results are cached on disk as JavaScript Object Notation (JSON), so a song is analyzed once and replayed instantly thereafter.
+
+
+FUNCTIONAL REQUIREMENTS - INFINITE JUKEBOX MODE (traces to: The classic mode is sacred)
+
+F8. Given one song, the system performs an infinite random walk: it plays beats in order, and at each beat, with some probability, jumps to a similar beat instead of the next one.
+
+F9. The walk never plays outside the song and never gets permanently stuck; it always has the fallback of simply advancing to the next beat, and it loops from the end back into the body of the song.
+
+F10. A chaos control (0.0 to 1.0) sets the jump probability.
+
+F11. A walk can be made deterministic with a seed number, so a favorite infinite walk can be reproduced and shared as a seed.
+
+F12. The walk can be auditioned live (played to the speakers) or rendered to an audio file of any requested length.
+
+
+FUNCTIONAL REQUIREMENTS - THE_AI_MASHUP_MACHINE (traces to: the crown jewel bold decision)
+
+F13. Given two songs, the system scores their compatibility from tempo distance and key distance (Camelot-wheel harmonic neighborhood - a DJ convention that arranges keys in a circle of mixable neighbors).
+
+F14. The mash-up engine time-stretches one or both songs to a common tempo without changing pitch, preferring stretches under about eight percent.
+
+F15. The mash-up engine may pitch-shift one song by one or two semitones when that turns a near-match of keys into a match.
+
+F16. When Demucs (a neural stem separator) is available, the engine can split songs into vocals, drums, bass, and other, and mash STEMS: the vocal of Song A over the instrumental of Song B.
+
+F17. The rendered mash-up is written as an audio file, and it can be fed back into the Infinite Jukebox mode, so a mash-up can play forever (infinite mash-up radio).
+
+
+FUNCTIONAL REQUIREMENTS - THE THREE FACES (traces to: One engine, three faces)
+
+F18. Command line: ai-music-blender jukebox FILE_OR_URL, ai-music-blender mashup FILE1 FILE2, ai-music-blender analyze FILE, ai-music-blender web, ai-music-blender gui.
+
+F19. Web page: a localhost-only web server presents the classic arc-diagram visualization (beats around the rim, jump edges as arcs), live playback with visible jumps, and the mash-up mode.
+
+F20. Ubuntu GUI app: a native GTK window (PyGObject) that opens files, runs both modes, and plays the result; a thin face over the same engine.
+
+
+NON-FUNCTIONAL REQUIREMENTS
+
+N1. No network calls during analysis or playback of local files; the only network use in the whole system is the explicit YouTube download the user asks for (traces to: Self-host everything, Legality).
+
+N2. Analysis of a typical four-minute song completes in under sixty seconds on the target machine (ccai2, Ubuntu Studio 24.04).
+
+N3. Every source file is 500 lines or fewer; every function is 50 lines or fewer; no hardcoded secrets (there are no secrets at all in this system).
+
+N4. Every line of code carries an English Readable Code (ERC) comment immediately above it (traces to: the Fourth Commandment).
+
+N5. The web server binds to localhost only, by default on port 8765.
+
+N6. Heavy optional dependencies (Demucs) degrade gracefully: if absent, the feature reports itself unavailable and everything else still works.
+
+
+ACCEPTANCE TEST SCENARIOS
+
+T1. Analyzing a generated click-track audio file finds a tempo within ten percent of the true tempo.
+
+T2. The beat graph of a song with a repeated section contains at least one jump edge between the repetitions.
+
+T3. A seeded walk of one hundred steps, run twice, produces the identical beat sequence.
+
+T4. Rendering a sixty-second walk produces an audio file within one second of the requested length.
+
+T5. A mash-up of two generated tones at different tempos renders without error and reports the applied stretch ratios.
+
+T6. The web server answers the front page and the analysis endpoint for a test file on localhost.
+
+T7. The classic mode still passes T1 through T4 after every later feature lands (the Golden Rule, as a test).
+
+
+SPECIFICATION REFLECTION
+
+The requirements deliberately freeze the ancestors' proven shape (beats, graph, random walk, arc diagram) and add only what the Definition promises: local analysis, mash-ups, and three faces.
+
+Requirement F17 (mash-ups feeding the infinite engine) is the one that makes the system more than the sum of its ancestors, and it costs almost nothing because both modes share one audio-and-graph representation - that sharing is a Specification-level decision made on purpose.
+
+
+END OF SPECIFICATION VERSION 1

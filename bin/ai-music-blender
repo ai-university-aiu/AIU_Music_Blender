@@ -1,0 +1,12 @@
+#!/usr/bin/env python3
+# This is the single launcher for all faces of AI Music Blender.
+# Import the path tools so the engine package is found from anywhere.
+import os
+# Import the module search path list.
+import sys
+# Add the repository root (the launcher's parent's parent) to the search path.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Import the command line face.
+from ai_music_blender.cli import main
+# Hand control to the command line face.
+main()
