@@ -1,4 +1,4 @@
-AI MUSIC BLENDER - DEVELOPER TUTORIAL - VERSION 1
+AIU MUSIC BLENDER - DEVELOPER TUTORIAL - VERSION 1
 
 For the newcomer developer who wants to understand, run, test, and extend the system.
 
@@ -7,7 +7,7 @@ READ FIRST
 
 • CONSTITUTION.md - the rules of the repository, especially the Golden Rule (classic mode is sacred, all changes additive) and the mirrored-documents rule.
 
-• docs/AI_Music_Blender_Vision_Document_v2.txt - the story, the plan, and the repo strategy (fresh repo, vendored snapshot).
+• docs/AIU_Music_Blender_Vision_Document_v2.txt - the story, the plan, and the repo strategy (fresh repo, vendored snapshot).
 
 • The DSPARCD Fileset - docs/ai_music_blender_1_definition through 7_demonstration - the design record this code answers to.
 
@@ -56,7 +56,7 @@ HOW EACH MODULE WORKS, IN ONE BREATH EACH
 
 RUNNING THE TESTS
 
-  cd AI_Music_Blender
+  cd AIU_Music_Blender
   python3 -m unittest discover tests -v
 
 The tests generate click tracks and tones with numpy, then assert the acceptance scenarios of the Specification (tempo within tolerance, graph edges across repetitions, seeded-walk determinism, render length, mash-up rendering, web endpoints).

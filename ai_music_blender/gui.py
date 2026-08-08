@@ -24,7 +24,7 @@ class BlenderWindow(Gtk.Window):
     # Define how the window is built.
     def __init__(self):
         # Create the window with the project title.
-        super().__init__(title="AI Music Blender")
+        super().__init__(title="AIU Music Blender")
         # Give the window a comfortable default size.
         self.set_default_size(560, 320)
         # Track the player process so Stop can end it.

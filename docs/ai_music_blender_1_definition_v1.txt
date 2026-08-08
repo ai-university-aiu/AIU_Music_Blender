@@ -1,11 +1,11 @@
-AI MUSIC BLENDER - DSPARCD PHASE 1 - DEFINITION - VERSION 1
+AIU MUSIC BLENDER - DSPARCD PHASE 1 - DEFINITION - VERSION 1
 
 Date: 2026-08-07
 
 
 WHAT IT IS
 
-AI Music Blender is a self-hosted, local-first resurrection and extension of the Infinite Jukebox: it analyzes songs on the user's own machine, builds a beat-similarity graph, plays any song forever by jumping between similar beats, and - the extension - blends TWO songs into mash-ups that can themselves play forever.
+AIU Music Blender is a self-hosted, local-first resurrection and extension of the Infinite Jukebox: it analyzes songs on the user's own machine, builds a beat-similarity graph, plays any song forever by jumping between similar beats, and - the extension - blends TWO songs into mash-ups that can themselves play forever.
 
 It is a fun tool, a music toy, and an Artificial Intelligence (AI) resume project, all at once.
 

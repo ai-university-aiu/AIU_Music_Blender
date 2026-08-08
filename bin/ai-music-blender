@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# This is the single launcher for all faces of AI Music Blender.
+# This is the single launcher for all faces of AIU Music Blender.
 # Import the path tools so the engine package is found from anywhere.
 import os
 # Import the module search path list.

@@ -1,8 +1,8 @@
-AIU MUSIC BLENDER - DSPARCD PHASE 5 - REFINEMENT - VERSION 2
+AIU MUSIC BLENDER - DSPARCD PHASE 5 - REFINEMENT - VERSION 4
 
 Date: 2026-08-07
 
-(Version 2 supersedes version 1, now in docs/archive/; it adds Iteration 2.)
+(Version 4 supersedes version 3, now in docs/archive/; it adds Iteration 4.)
 
 
 HOW REFINEMENT WORKS ON THIS PROJECT
@@ -30,6 +30,26 @@ Iteration 2 (2026-08-07): Web page chaos slider labeling, by owner request.
 
 • Engine behavior is unchanged; this is a face-only change, so the Golden Rule regression is untouched by construction, and the web tests (scenario T6) stay green.
 
+Iteration 3 (2026-08-07): Web page control layout, by owner observation.
+
+• The owner saw the chaos label wrap onto a different line from its slider on a narrow screen, separating a label from the thing it labels.
+
+• The controls now stack one per line (song chooser, then the chaos row, then the play and stop buttons), and the chaos label, slider, and live value are held together as one flexible row that centers and wraps as a unit.
+
+• Face-only change again; the web tests (scenario T6) stay green.
+
+Iteration 4 (2026-08-07): Web page information cards, button states, and YouTube input, by owner request.
+
+• Tempo and Key info cards now appear after analysis, showing the detected beats per minute and the detected key with its Camelot code, styled as warm cards under the controls.
+
+• The Play and Stop buttons now say their state: "Play forever" becomes "Playing forever..." while walking, and "Stop" rests as "Stopped"; disabled buttons dim so state is visible at a glance.
+
+• A "YouTube URL:" text box now sits above the file chooser inside the same red group rectangle; pressing Enter or the "Fetch & analyze" button downloads the audio locally (yt-dlp) and analyzes it through the same pipeline.
+
+• The tagline "Nothing to deprecate. Nothing to die." was removed from the page at the owner's request.
+
+• Face-only changes; the web tests (scenario T6) stay green.
+
 
 PLANNED REFINEMENTS (the resume attacks, in order)
 
@@ -51,4 +71,4 @@ The wickedest problem so far is that "sounds seamless" is perceptual: the simila
 Iteration 2 taught a small interface lesson: a probability control without a visible number invites guessing; showing the value costs three lines and removes the guess.
 
 
-END OF REFINEMENT VERSION 2
+END OF REFINEMENT VERSION 4

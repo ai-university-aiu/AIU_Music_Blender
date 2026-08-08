@@ -27,8 +27,8 @@ class WebTests(unittest.TestCase):
         answer = client.get("/")
         # Assert the page answered successfully.
         self.assertEqual(answer.status_code, 200)
-        # Assert the page is the AI Music Blender page.
-        self.assertIn(b"AI Music Blender", answer.data)
+        # Assert the page is the AIU Music Blender page.
+        self.assertIn(b"AIU Music Blender", answer.data)
 
     # T6, part two: the analyze endpoint analyzes an uploaded song.
     def test_analyze_endpoint(self):

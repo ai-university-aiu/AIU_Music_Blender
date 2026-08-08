@@ -1,11 +1,11 @@
-AI MUSIC BLENDER - USER TUTORIAL - VERSION 2
+AIU MUSIC BLENDER - USER TUTORIAL - VERSION 2
 
 For the beginner, learner, layperson, newcomer, and novice.
 
 
 WHAT THIS PROGRAM IS
 
-AI Music Blender takes a song and plays it FOREVER.
+AIU Music Blender takes a song and plays it FOREVER.
 
 It listens to the song on your own computer, finds the beats (the steady pulse), finds beats that sound alike, and then plays the song while occasionally jumping between look-alike beats - so the song flows on and on and never ends.
 

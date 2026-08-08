@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="docs/images/banner_placeholder.png" alt="AI Music Blender banner" width="600">
+<img src="docs/images/banner_placeholder.png" alt="AIU Music Blender banner" width="600">
 
-# AI Music Blender
+# AIU Music Blender
 
 **The self-hosted infinite jukebox and mash-up machine.**
 
@@ -14,7 +14,7 @@
 
 ## What it is
 
-AI Music Blender resurrects and extends the beloved **Infinite Jukebox**: it analyzes a song **entirely on your own machine**, builds a graph of beats that sound alike, and plays the song **forever** by jumping between similar beats.
+AIU Music Blender resurrects and extends the beloved **Infinite Jukebox**: it analyzes a song **entirely on your own machine**, builds a graph of beats that sound alike, and plays the song **forever** by jumping between similar beats.
 
 Then it goes further: **The_AI_Mashup_Machine** blends TWO songs (tempo-matched, key-matched, optionally stem-separated) into a mash-up — and the mash-up itself can play forever. Infinite mash-up radio.
 
@@ -55,7 +55,7 @@ python3 -m unittest discover tests                    # verify: 8 tests, no netw
 - [docs/User_Tutorial_v1.txt](docs/User_Tutorial_v1.txt) — for the newcomer user
 - [docs/Developer_Tutorial_v1.txt](docs/Developer_Tutorial_v1.txt) — for the newcomer developer
 - The DSPARCD Fileset — [Definition](docs/ai_music_blender_1_definition_v1.txt) · [Specification](docs/ai_music_blender_2_specification_v1.txt) · [Pseudocode](docs/ai_music_blender_3_pseudocode_v1.txt) · [Architecture](docs/ai_music_blender_4_architecture_v1.txt) · [Refinement](docs/ai_music_blender_5_refinement_v1.txt) · [Completion](docs/ai_music_blender_6_completion_v1.txt) · [Demonstration](docs/ai_music_blender_7_demonstration_v1.txt)
-- [docs/AI_Music_Blender_Vision_Document_v2.txt](docs/AI_Music_Blender_Vision_Document_v2.txt) — the story and the plan
+- [docs/AIU_Music_Blender_Vision_Document_v2.txt](docs/AIU_Music_Blender_Vision_Document_v2.txt) — the story and the plan
 
 ## Attribution
 
@@ -63,12 +63,12 @@ The jukebox core idea is vendored as a pristine reference snapshot from [Eternal
 
 ## Legal
 
-AI Music Blender runs on your own audio files and your own local downloads, renders locally, and hosts and distributes nothing. Keep it that way.
+AIU Music Blender runs on your own audio files and your own local downloads, renders locally, and hosts and distributes nothing. Keep it that way.
 
 ---
 
 <div align="center">
 
-*The Jukebox is dead. Long live the AI Music Blender.*
+*The Jukebox is dead. Long live the AIU Music Blender.*
 
 </div>

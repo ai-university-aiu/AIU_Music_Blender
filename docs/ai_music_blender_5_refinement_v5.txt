@@ -1,8 +1,8 @@
-AI MUSIC BLENDER - DSPARCD PHASE 5 - REFINEMENT - VERSION 4
+AIU MUSIC BLENDER - DSPARCD PHASE 5 - REFINEMENT - VERSION 5
 
 Date: 2026-08-07
 
-(Version 4 supersedes version 3, now in docs/archive/; it adds Iteration 4.)
+(Version 5 supersedes version 4, now in docs/archive/; it adds Iteration 5.)
 
 
 HOW REFINEMENT WORKS ON THIS PROJECT
@@ -50,6 +50,16 @@ Iteration 4 (2026-08-07): Web page information cards, button states, and YouTube
 
 • Face-only changes; the web tests (scenario T6) stay green.
 
+Iteration 5 (2026-08-07): The project is renamed AIU_Music_Blender, by owner instruction.
+
+• The GitHub repository was renamed from AI_Music_Blender to AIU_Music_Blender (GitHub redirects the old name), and the local folder was renamed to match.
+
+• Every instance of "AI_Music_Blender", "AI Music Blender", and "AI MUSIC BLENDER" across the documents, code comments, web page, README, and CONSTITUTION now reads AIU; the web page heading now says "AIU Music Blender".
+
+• The lowercase engine package name (ai_music_blender), the launcher name (ai-music-blender), and the vendored ancestor snapshot are unchanged: the first two were not part of the instruction and keep every command working, and the vendor snapshot stays pristine by design.
+
+• The full test suite stays green after the rename.
+
 
 PLANNED REFINEMENTS (the resume attacks, in order)
 
@@ -71,4 +81,4 @@ The wickedest problem so far is that "sounds seamless" is perceptual: the simila
 Iteration 2 taught a small interface lesson: a probability control without a visible number invites guessing; showing the value costs three lines and removes the guess.
 
 
-END OF REFINEMENT VERSION 4
+END OF REFINEMENT VERSION 5

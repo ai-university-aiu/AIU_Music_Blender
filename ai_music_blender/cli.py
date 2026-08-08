@@ -18,7 +18,7 @@ def build_parser():
     # Create the top-level parser with the program's name and story.
     parser = argparse.ArgumentParser(
         prog="ai-music-blender",
-        description="AI Music Blender: the self-hosted infinite jukebox and mash-up machine.")
+        description="AIU Music Blender: the self-hosted infinite jukebox and mash-up machine.")
     # Create the sub-command holder.
     commands = parser.add_subparsers(dest="command", required=True)
     # Define the analyze sub-command.

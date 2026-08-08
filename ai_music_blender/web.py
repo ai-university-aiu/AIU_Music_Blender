@@ -91,6 +91,6 @@ def mashup_route():
 # Define the function that starts the localhost-only server.
 def run_web(port=8765):
     # Announce the address on the console.
-    print("AI Music Blender web page: http://localhost:%d  (Ctrl+C to stop)" % port)
+    print("AIU Music Blender web page: http://localhost:%d  (Ctrl+C to stop)" % port)
     # Run the server, bound to localhost only, per the Ninth Commandment.
     application.run(host="127.0.0.1", port=port, debug=False)

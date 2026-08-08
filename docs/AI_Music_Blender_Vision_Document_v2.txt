@@ -1,5 +1,5 @@
 ================================================================================
-                        AI MUSIC BLENDER — VISION DOCUMENT (v2)
+                        AIU MUSIC BLENDER — VISION DOCUMENT (v2)
 ================================================================================
 Date: 2026-08-07  (v2: adds explicit fresh-repo + vendored-snapshot setup steps)
 Authors: ccai user + Claude (Claude Code)
@@ -61,13 +61,13 @@ Setup steps (run on ccai2):
 
   1. Create and clone the repo:
 
-       gh repo create AI_Music_Blender --description "Artificial Intelligence (AI) Music Blender" --public --clone
+       gh repo create AIU_Music_Blender --description "Artificial Intelligence (AI) Music Blender" --public --clone
 
      (Use --private instead of --public if preferred.)
 
   2. Vendor a clean snapshot of EternalJukebox (no nested .git):
 
-       cd AI_Music_Blender
+       cd AIU_Music_Blender
        git clone --depth 1 https://github.com/EternalBox/EternalJukebox vendor/EternalJukebox
        rm -rf vendor/EternalJukebox/.git
 
@@ -199,5 +199,5 @@ nothing hosted or distributed. Keep it that way.
   Phase 5  Learned embeddings + mashability model (the resume centerpieces).
   Phase 6  Ubuntu GUI app.
 
-The Jukebox is dead. Long live the AI Music Blender.
+The Jukebox is dead. Long live the AIU Music Blender.
 ================================================================================

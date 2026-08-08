@@ -1,4 +1,4 @@
-BUILDING AI MUSIC BLENDER - THE BUILD LOG - VERSION 1
+BUILDING AIU MUSIC BLENDER - THE BUILD LOG - VERSION 1
 
 An append-only chronicle, voiced as a scientific paper and as a story.
 
@@ -58,7 +58,7 @@ The end-to-end smoke test ran the whole promise: analyze, render a forever-walk,
 
 The Jukebox is dead.
 
-Long live the AI Music Blender.
+Long live the AIU Music Blender.
 
 
 END OF BUILD LOG VERSION 1 (append below this line in future sessions)
