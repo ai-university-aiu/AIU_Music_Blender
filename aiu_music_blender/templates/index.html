@@ -540,6 +540,37 @@
     // The audio key each rectangle most recently produced (nothing yet).
     const saveKeys = { one: null, two: null, three: null, four: null,
                        five: null, six: null, seven: null };
+    // The analysis record each rectangle most recently produced - so each rectangle's
+    // Play Forever plays ITS OWN track (drums in the beat rectangle, bass in the bass
+    // rectangle, and so on), never whatever happened to load last.
+    const loadedRecords = { one: null, two: null, three: null, four: null,
+                            five: null, six: null, seven: null };
+    // Already-decoded audio, kept by audio key so switching rectangles is instant.
+    const decodedBuffers = {};
+
+    // Refresh every play button: armed only when its own rectangle has a track.
+    function refreshPlayButtons() {
+      // Walk all seven rectangles' play buttons.
+      Object.keys(loadedRecords).forEach((rect) => {
+        // Find this rectangle's play button by its name.
+        const play = rectanglePlayButton(rect);
+        // Arm it only when the walk is idle and this rectangle holds a track.
+        if (!walking) play.disabled = !loadedRecords[rect];
+      });
+    }
+
+    // Find one rectangle's play button (the first rectangle's has the plain name).
+    function rectanglePlayButton(rect) {
+      // Answer the plain name for rectangle one, the patterned name for the rest.
+      return document.getElementById(rect === "one" ? "play_button"
+                                                    : "play_" + rect + "_button");
+    }
+
+    // Find one rectangle's chaos slider (the first rectangle's has the plain name).
+    function rectangleChaosSlider(rect) {
+      // Answer the plain name for rectangle one, the patterned name for the rest.
+      return document.getElementById(rect === "one" ? "chaos" : "chaos_" + rect);
+    }
 
     // Arm one rectangle's save buttons for the track it just produced.
     function armSave(rectangle, audioKey) {
@@ -577,6 +608,8 @@
       if (!answer.ok) { statusLine.textContent = "Analysis failed - check the input."; return; }
       // Load the record the server returned.
       await loadRecord(await answer.json());
+      // Remember this track as the Song Blender's own.
+      loadedRecords.one = record;
       // Fill the Song Blender's metric cards.
       showMetrics("one", record);
       // Say the song is ready.
@@ -595,17 +628,12 @@
       audioContext = audioContext || new AudioContext();
       // Decode the audio for beat-accurate playback.
       audioBuffer = await audioContext.decodeAudioData(audioBytes);
+      // Remember the decoded audio by its key, so replaying it later is instant.
+      decodedBuffers[newRecord.audio_key] = audioBuffer;
       // Draw the arc diagram.
       drawArcs(-1);
-      // Enable every rectangle's play button.
-      playButton.disabled = false;
-      // Enable the mash-up rectangle's play button too.
-      playTwoButton.disabled = false;
-      // Enable the instrumental rectangle's play button too.
-      playThreeButton.disabled = false;
-      // Enable the four stem extractor rectangles' play buttons too.
-      ["four", "five", "six", "seven"].forEach((rect) =>
-        { document.getElementById("play_" + rect + "_button").disabled = false; });
+      // Arm each rectangle's play button only if that rectangle holds a track.
+      refreshPlayButtons();
     }
 
     // When a file is chosen, send it to the local server for analysis.
@@ -717,6 +745,8 @@
         const blended = await answer.json();
         // Load the mash-up into the Song Blender above, ready to play forever.
         await loadRecord(blended.record);
+        // Remember the blend as the Mash-Up Blender's own track.
+        loadedRecords.two = blended.record;
         // Fill the Mash-Up Blender's metric cards from the finished blend.
         showMetrics("two", blended.record);
         // Arm the Mash-Up Blender's save buttons for this blend.
@@ -882,7 +912,14 @@
       }
     }
 
-    // Put both rectangles' play and stop buttons into the same state together.
+    // Report whether a given play button's rectangle holds a track of its own.
+    function ownsTrack(playElement) {
+      // Walk the rectangles to find the one owning this play button.
+      return Object.keys(loadedRecords).some((rect) =>
+        rectanglePlayButton(rect) === playElement && loadedRecords[rect]);
+    }
+
+    // Put every rectangle's play and stop buttons into the same walking state together.
     function setButtonsWalking(nowWalking) {
       // Walk every play button with its partner stop button.
       [[playButton, stopButton], [playTwoButton, stopTwoButton],
@@ -890,8 +927,9 @@
        ...["four", "five", "six", "seven"].map((rect) =>
          [document.getElementById("play_" + rect + "_button"),
           document.getElementById("stop_" + rect + "_button")])].forEach(([play, stop]) => {
-        // A running walk disables play and arms stop; a stopped walk does the reverse.
-        play.disabled = nowWalking;
+        // A running walk disables every play; a resting play arms only where its
+        // own rectangle holds a track.
+        play.disabled = nowWalking || !ownsTrack(play);
         // Label the play button with its state.
         play.textContent = nowWalking ? "Playing Forever..." : "Play Forever";
         // Arm or rest the stop button.
@@ -901,10 +939,27 @@
       });
     }
 
-    // Start the infinite walk, reading chaos from the rectangle whose Play was pressed.
-    function startWalk(fromSlider) {
+    // Start the infinite walk of ONE rectangle's own track, steered by its own slider.
+    async function startWalk(rect) {
+      // Take this rectangle's own track.
+      const ownRecord = loadedRecords[rect];
+      // Refuse quietly if this rectangle has not produced a track yet.
+      if (!ownRecord) return;
+      // Switch the player to this rectangle's track.
+      record = ownRecord;
+      // Decode this track's audio now if it has not been decoded yet.
+      if (!decodedBuffers[ownRecord.audio_key]) {
+        // Fetch the audio bytes from the server.
+        const audioBytes = await (await fetch("/audio/" + ownRecord.audio_key)).arrayBuffer();
+        // Decode and remember them.
+        decodedBuffers[ownRecord.audio_key] = await audioContext.decodeAudioData(audioBytes);
+      }
+      // Use this track's decoded audio.
+      audioBuffer = decodedBuffers[ownRecord.audio_key];
+      // Redraw the arc diagram for this track.
+      drawArcs(-1);
       // Remember which slider steers this walk.
-      activeChaosSlider = fromSlider;
+      activeChaosSlider = rectangleChaosSlider(rect);
       // Mark the walk as running.
       walking = true;
       // Put both rectangles' buttons into the running state.
@@ -933,12 +988,12 @@
       setButtonsWalking(false);
     }
 
-    // The Song Blender's play starts a walk steered by its own slider.
-    playButton.addEventListener("click", () => startWalk(chaosSlider));
-    // The Mash-Up Blender's play starts a walk steered by ITS own slider.
-    playTwoButton.addEventListener("click", () => startWalk(chaosTwoSlider));
-    // The Instrumental Blender's play starts a walk steered by ITS own slider.
-    playThreeButton.addEventListener("click", () => startWalk(chaosThreeSlider));
+    // The Song Blender's play starts a walk of ITS OWN track.
+    playButton.addEventListener("click", () => startWalk("one"));
+    // The Mash-Up Blender's play starts a walk of ITS OWN track.
+    playTwoButton.addEventListener("click", () => startWalk("two"));
+    // The Instrumental Blender's play starts a walk of ITS OWN track.
+    playThreeButton.addEventListener("click", () => startWalk("three"));
     // Any rectangle's stop ends the walk.
     stopButton.addEventListener("click", stopWalk);
     // The mash-up rectangle's stop does the same.
@@ -963,9 +1018,9 @@
       // Show the slider's live value beside it.
       slider.addEventListener("input", () =>
         { sliderValue.textContent = parseFloat(slider.value).toFixed(2); });
-      // This rectangle's play starts a walk steered by ITS own slider.
+      // This rectangle's play starts a walk of ITS OWN track.
       document.getElementById("play_" + rect + "_button")
-        .addEventListener("click", () => startWalk(slider));
+        .addEventListener("click", () => startWalk(rect));
       // This rectangle's stop ends the walk.
       document.getElementById("stop_" + rect + "_button")
         .addEventListener("click", stopWalk);
@@ -1000,6 +1055,8 @@
           await loadRecord(allStems[stem]);
           // Populate every rectangle in the family and raise its ready flag.
           STEM_RECTANGLES.forEach(([familyRect, familyStem]) => {
+            // Remember that rectangle's OWN stem as its playable track.
+            loadedRecords[familyRect] = allStems[familyStem];
             // Fill that rectangle's metric cards from its own stem.
             showMetrics(familyRect, allStems[familyStem]);
             // Arm that rectangle's save buttons for its own stem.
@@ -1007,6 +1064,8 @@
             // Raise the little ready flag beside that rectangle's title.
             document.getElementById("ready_" + familyRect).style.display = "inline-block";
           });
+          // Arm every rectangle's play button that now holds a track.
+          refreshPlayButtons();
           // Report success in this rectangle.
           status.textContent = "Extracted! Only " + noun + " is loaded here - and all "
             + "four stem rectangles are now ready.";
@@ -1057,6 +1116,8 @@
         const instrumentalRecord = await answer.json();
         // Load the vocal-free record into the shared player.
         await loadRecord(instrumentalRecord);
+        // Remember the instrumental as this rectangle's own track.
+        loadedRecords.three = instrumentalRecord;
         // Fill the Instrumental Blender's metric cards (its Vocals card should sit near zero).
         showMetrics("three", instrumentalRecord);
         // Arm the Instrumental Blender's save buttons for this track.
