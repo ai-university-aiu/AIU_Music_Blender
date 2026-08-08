@@ -27,6 +27,13 @@
     .group h2 { margin: 0.1em 0 0.5em 0; color: #ff933a; font-size: 1.15em; }
     /* Dim disabled buttons so their state is visible at a glance. */
     button:disabled { opacity: 0.45; }
+    /* The little spinning working indicator: a gold ring with one bright edge. */
+    .spinner { display: inline-block; width: 0.85em; height: 0.85em;
+               border: 2px solid rgba(255, 206, 89, 0.3); border-top-color: #ffce59;
+               border-radius: 50%; vertical-align: -0.1em; margin-right: 0.45em;
+               animation: spin 0.9s linear infinite; }
+    /* Turn the ring around and around. */
+    @keyframes spin { to { transform: rotate(360deg); } }
     /* Style the info card row. */
     .cards { display: flex; justify-content: center; gap: 1em; margin: 0.8em; }
     /* Style each info card. */
@@ -253,8 +260,8 @@
       }
       // Show the work on the button itself.
       blendButton.disabled = true;
-      // Change the button label to the state.
-      blendButton.textContent = "Blending...";
+      // Change the button label to the state, with the little spinning working indicator.
+      blendButton.innerHTML = '<span class="spinner"></span>Blending...';
       // Warn that two downloads plus blending takes a few minutes the first time.
       mashupStatus.textContent = "Downloading both songs, matching tempo and key, "
         + "blending (a few minutes the first time)...";
