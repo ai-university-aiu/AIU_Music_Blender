@@ -94,6 +94,11 @@
     </div>
     <!-- Report progress, beats, and edges here, inside the same rectangle. -->
     <div id="status">Choose a song to analyze it locally.</div>
+    <!-- The bottom row: save this rectangle's track to the local filesystem. -->
+    <div class="row">
+      <button id="save_wav_one" disabled>SAVE TO WAV</button>
+      <button id="save_mp3_one" disabled>SAVE TO MP3</button>
+    </div>
   </div>
 
   <!-- The second big rounded-corner group rectangle: the two-song mash-up blender. -->
@@ -135,6 +140,11 @@
     <!-- Report mash-up progress and the honest compatibility report here. -->
     <div id="mashup_status">Paste two songs, then blend; the result loads into the
       AIU Song Blender above so it can play forever.</div>
+    <!-- The bottom row: save this rectangle's blend to the local filesystem. -->
+    <div class="row">
+      <button id="save_wav_two" disabled>SAVE TO WAV</button>
+      <button id="save_mp3_two" disabled>SAVE TO MP3</button>
+    </div>
   </div>
 
   <!-- The third big rounded-corner group rectangle: one song, vocals stripped, blended. -->
@@ -163,6 +173,11 @@
     <!-- Report the vocal stripping progress here. -->
     <div id="instrumental_status">This box strips out ALL vocals from the track given,
       before it is fed to the blender.</div>
+    <!-- The bottom row: save this rectangle's instrumental to the local filesystem. -->
+    <div class="row">
+      <button id="save_wav_three" disabled>SAVE TO WAV</button>
+      <button id="save_mp3_three" disabled>SAVE TO MP3</button>
+    </div>
   </div>
   <!-- Draw the classic arc diagram on this canvas. -->
   <canvas id="arc_canvas" width="900" height="520"></canvas>
@@ -233,12 +248,52 @@
     // The slider the running walk reads its chaos from (set by whichever Play was pressed).
     let activeChaosSlider = chaosSlider;
 
+    // Each rectangle's save buttons, and the audio key of the track each rectangle made.
+    const saveButtons = {
+      one: [document.getElementById("save_wav_one"), document.getElementById("save_mp3_one")],
+      two: [document.getElementById("save_wav_two"), document.getElementById("save_mp3_two")],
+      three: [document.getElementById("save_wav_three"), document.getElementById("save_mp3_three")]};
+    // The audio key each rectangle most recently produced (nothing yet).
+    const saveKeys = { one: null, two: null, three: null };
+
+    // Arm one rectangle's save buttons for the track it just produced.
+    function armSave(rectangle, audioKey) {
+      // Remember the track this rectangle made.
+      saveKeys[rectangle] = audioKey;
+      // Enable both of the rectangle's save buttons.
+      saveButtons[rectangle].forEach((button) => { button.disabled = false; });
+    }
+
+    // Download one rectangle's track in the asked-for format, via the local server.
+    function saveTrack(rectangle, fileFormat) {
+      // Do nothing if this rectangle has not produced a track yet.
+      if (!saveKeys[rectangle]) return;
+      // Build an invisible download link to the export route.
+      const link = document.createElement("a");
+      // Point the link at the converted file.
+      link.href = "/export/" + saveKeys[rectangle] + "/" + fileFormat;
+      // Ask the browser to save rather than navigate.
+      link.download = "";
+      // Click the link to start the download into the user's filesystem.
+      link.click();
+    }
+
+    // Wire every rectangle's save buttons to their downloads.
+    Object.keys(saveButtons).forEach((rectangle) => {
+      // The first button saves to wav.
+      saveButtons[rectangle][0].addEventListener("click", () => saveTrack(rectangle, "wav"));
+      // The second button saves to mp3.
+      saveButtons[rectangle][1].addEventListener("click", () => saveTrack(rectangle, "mp3"));
+    });
+
     // Finish any analysis: unwrap the server's answer and load the record.
     async function finishAnalysis(answer) {
       // Refuse gracefully if the server reported a problem.
       if (!answer.ok) { statusLine.textContent = "Analysis failed - check the input."; return; }
       // Load the record the server returned.
       await loadRecord(await answer.json());
+      // Arm the Song Blender's save buttons for this track.
+      armSave("one", record.audio_key);
     }
 
     // Load one analysis record: keep it, decode its audio, fill the cards, draw the arcs.
@@ -367,6 +422,8 @@
         const blended = await answer.json();
         // Load the mash-up into the Song Blender above, ready to play forever.
         await loadRecord(blended.record);
+        // Arm the Mash-Up Blender's save buttons for this blend.
+        armSave("two", blended.record.audio_key);
         // Show the honest compatibility report.
         mashupStatus.textContent = (blended.report.mode === "append"
           ? "Appended SONG-2 onto SONG-1 as one big long song! "
@@ -612,8 +669,12 @@
         const answer = await fetch("/instrumental", { method: "POST", body: form });
         // Refuse gracefully if the server reported a problem.
         if (!answer.ok) { instrumentalStatus.textContent = "Stripping failed - check the link."; return; }
+        // Unwrap the vocal-free record.
+        const instrumentalRecord = await answer.json();
         // Load the vocal-free record into the shared player.
-        await loadRecord(await answer.json());
+        await loadRecord(instrumentalRecord);
+        // Arm the Instrumental Blender's save buttons for this track.
+        armSave("three", instrumentalRecord.audio_key);
         // Report success in this rectangle.
         instrumentalStatus.textContent = "Vocals stripped! The instrumental is loaded "
           + "- press Play Forever.";

@@ -3,6 +3,8 @@
 
 # Import the operating system path tools.
 import os
+# Import the subprocess tools for the ffmpeg converter.
+import subprocess
 # Import the Flask web framework pieces we use.
 from flask import Flask, request, jsonify, send_file, render_template
 # Import the engine's cache folder helper.
@@ -111,6 +113,31 @@ def instrumental_route():
     AUDIO_PATHS[key] = output_path
     # Return the playable record.
     return jsonify(dict(record, audio_key=key))
+
+
+# Define the route that converts a loaded track to wav or mp3 and sends it as a download.
+@application.route("/export/<key>/<file_format>")
+def export_route(key, file_format):
+    # Allow only the two supported formats.
+    if file_format not in ("wav", "mp3"):
+        # Refuse anything else.
+        return ("Unsupported format", 400)
+    # Look up the audio path for this key.
+    source = AUDIO_PATHS.get(key)
+    # Refuse unknown keys.
+    if source is None:
+        # Answer with a not-found error.
+        return ("Unknown audio key", 404)
+    # Build the converted file's cache path.
+    converted = os.path.join(cache_directory(), "export_" + key + "." + file_format)
+    # Convert with ffmpeg only if this exact export is not already cached.
+    if not os.path.isfile(converted):
+        # Run ffmpeg quietly to convert the source to the requested format.
+        subprocess.run(["ffmpeg", "-loglevel", "quiet", "-y", "-i", source, converted],
+                       check=True)
+    # Send the file as a browser download with a friendly name.
+    return send_file(converted, as_attachment=True,
+                     download_name="aiu_music_blender_" + key[:8] + "." + file_format)
 
 
 # Define the function that starts the localhost-only server.
