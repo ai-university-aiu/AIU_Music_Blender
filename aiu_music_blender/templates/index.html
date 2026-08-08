@@ -188,6 +188,13 @@
         youtubeButton.textContent = "Fetch & analyze";
       }
     }
+    // If this page was opened as a plain file, there is no server behind it; say so plainly.
+    if (window.location.protocol === "file:") {
+      // Explain the situation and the remedy on the status line.
+      statusLine.textContent = "This page was opened as a file, so no engine is behind it. "
+        + "Run 'bin/aiu-music-blender web' in a terminal, then open http://localhost:8765";
+    }
+
     // Analyze the link when the button is pressed.
     youtubeButton.addEventListener("click", analyzeYoutube);
     // Analyze the link when Enter is pressed in the box.

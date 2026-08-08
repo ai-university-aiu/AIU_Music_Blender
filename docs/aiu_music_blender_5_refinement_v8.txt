@@ -1,0 +1,104 @@
+AIU MUSIC BLENDER - DSPARCD PHASE 5 - REFINEMENT - VERSION 8
+
+Date: 2026-08-07
+
+(Version 8 supersedes version 7, now in docs/archive/; it adds Iteration 8.)
+
+
+HOW REFINEMENT WORKS ON THIS PROJECT
+
+Build in small tested steps; every improvement is recorded here, and every recorded improvement names the test that proves it.
+
+The Golden Rule is enforced as a regression: the classic-mode tests (T1 through T4 of the Specification) must stay green after every change, forever.
+
+
+ITERATION LOG
+
+Iteration 1 (2026-08-07): First working build.
+
+• The analysis pipeline, beat graph, jukebox walk, renderer, mash-up engine, and all three faces were built to Specification version 1, with the test suite of scenarios T1 through T7.
+
+• Decision refined during building: per-beat features average the frames BETWEEN beats (not at the beat instant), because a beat is a span of sound, not a point; this noticeably improves jump seamlessness on synthetic tests.
+
+• Decision refined during building: jump edges exclude the three nearest neighbor beats on each side, because trivially-adjacent jumps are inaudible non-events that crowd out interesting edges.
+
+• Decision refined during building: the walk's end-of-song fallback jumps to the BEST-MATCHING earlier beat rather than beat zero, so the loop point is musical rather than mechanical.
+
+Iteration 2 (2026-08-07): Web page chaos slider labeling, by owner request.
+
+• The chaos slider on the web page now carries a text label ("Chaos (jump probability):"), a hover tooltip explaining what the probability means, and a live numeric readout that updates as the slider is dragged.
+
+• Engine behavior is unchanged; this is a face-only change, so the Golden Rule regression is untouched by construction, and the web tests (scenario T6) stay green.
+
+Iteration 3 (2026-08-07): Web page control layout, by owner observation.
+
+• The owner saw the chaos label wrap onto a different line from its slider on a narrow screen, separating a label from the thing it labels.
+
+• The controls now stack one per line (song chooser, then the chaos row, then the play and stop buttons), and the chaos label, slider, and live value are held together as one flexible row that centers and wraps as a unit.
+
+• Face-only change again; the web tests (scenario T6) stay green.
+
+Iteration 4 (2026-08-07): Web page information cards, button states, and YouTube input, by owner request.
+
+• Tempo and Key info cards now appear after analysis, showing the detected beats per minute and the detected key with its Camelot code, styled as warm cards under the controls.
+
+• The Play and Stop buttons now say their state: "Play forever" becomes "Playing forever..." while walking, and "Stop" rests as "Stopped"; disabled buttons dim so state is visible at a glance.
+
+• A "YouTube URL:" text box now sits above the file chooser inside the same red group rectangle; pressing Enter or the "Fetch & analyze" button downloads the audio locally (yt-dlp) and analyzes it through the same pipeline.
+
+• The tagline "Nothing to deprecate. Nothing to die." was removed from the page at the owner's request.
+
+• Face-only changes; the web tests (scenario T6) stay green.
+
+Iteration 5 (2026-08-07): The project is renamed AIU_Music_Blender, by owner instruction.
+
+• The GitHub repository was renamed from AI_Music_Blender to AIU_Music_Blender (GitHub redirects the old name), and the local folder was renamed to match.
+
+• Every instance of "AI_Music_Blender", "AI Music Blender", and "AI MUSIC BLENDER" across the documents, code comments, web page, README, and CONSTITUTION now reads AIU; the web page heading now says "AIU Music Blender".
+
+• The lowercase engine package name (aiu_music_blender), the launcher name (aiu-music-blender), and the vendored ancestor snapshot are unchanged: the first two were not part of the instruction and keep every command working, and the vendor snapshot stays pristine by design.
+
+• The full test suite stays green after the rename.
+
+Iteration 6 (2026-08-07): The lowercase names complete the rename, by owner instruction.
+
+• The engine package is renamed ai_music_blender to aiu_music_blender, the launcher is renamed bin/ai-music-blender to bin/aiu-music-blender, and the DSPARCD Fileset document files (current and archived) are renamed to the aiu_music_blender_ prefix, all with git mv so history follows.
+
+• Every import, test, document reference, command example, and the program's own help name were updated to match; the analysis cache folder moved to ~/.cache/aiu_music_blender with its contents preserved, so no song needs re-analysis.
+
+• The vendored EternalJukebox snapshot remains pristine, as always.
+
+• The full test suite (8 tests) and the launcher help both pass after the rename.
+
+Iteration 7 (2026-08-07): The Fetch button now shows its work, by owner bug report.
+
+• The owner pasted a YouTube link, pressed Fetch & analyze, and saw nothing happen; server-side reproduction showed the pipeline itself succeeding (HTTP 200), pointing at two interface faults rather than an engine fault.
+
+• Fault one: a YouTube fetch takes a minute or more, and the only feedback was small status text; the button now disables itself and reads "Fetching..." for the whole round trip, restoring itself afterward.
+
+• Fault two: a network or server failure (for example, a web server process started before the renames and still running dead code) was silent; every failure is now caught and printed on the status line, including a reminder to check that bin/aiu-music-blender web is running.
+
+• Face-only change; the web tests (scenario T6) stay green.
+
+
+PLANNED REFINEMENTS (the resume attacks, in order)
+
+• Learned beat embeddings: replace the hand-weighted MFCC-plus-chroma distance with a small contrastive model; the analysis-record interface does not change (the Architecture planned for this).
+
+• Reinforcement Learning walk policy: reward smooth transitions and coverage, penalize stuck loops; replaces the inside of the walker only.
+
+• Natural-language steering: map "keep it mellow" to chaos, energy bias, and section weights.
+
+• Mashability model: learn compatibility scoring from rendered examples, replacing the rule-based tempo-and-Camelot score.
+
+• Generative patching (stretch): synthesize short transitions where no good jump exists.
+
+
+REFINEMENT REFLECTION
+
+The wickedest problem so far is that "sounds seamless" is perceptual: the similarity threshold was set by ear on rendered walks, and the honest fix is the learned-embeddings refinement, which makes the human ear the training signal instead of a hand-tuned constant.
+
+Iteration 2 taught a small interface lesson: a probability control without a visible number invites guessing; showing the value costs three lines and removes the guess.
+
+
+END OF REFINEMENT VERSION 8
