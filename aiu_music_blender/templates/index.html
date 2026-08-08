@@ -294,11 +294,12 @@
       blendButton.disabled = true;
       // Change the button label to the state, with the little spinning working indicator.
       blendButton.innerHTML = '<span class="spinner"></span>Blending...';
-      // Say which vocals will be in the blend, and warn about the slow parts.
-      mashupStatus.textContent = "Downloading, matching tempo and key"
-        + ((vocalsOne.checked && vocalsTwo.checked) ? ""
-           : ", separating stems (adds a few minutes)")
-        + ", blending...";
+      // Say what kind of blend this will be, and warn about the slow parts.
+      mashupStatus.textContent = (vocalsOne.checked && vocalsTwo.checked)
+        ? "Downloading, matching tempo and key, appending SONG-2 onto SONG-1 "
+          + "as one big long song..."
+        : "Downloading, matching tempo and key, separating stems "
+          + "(adds a few minutes), blending...";
       // Guard the whole round trip so every failure is shown, never silent.
       try {
         // Build the form carrying both links.
@@ -320,13 +321,15 @@
         // Load the mash-up into the Song Blender above, ready to play forever.
         await loadRecord(blended.record);
         // Show the honest compatibility report.
-        mashupStatus.textContent = "Blended! Compatibility "
-          + blended.report.compatibility.score.toFixed(3)
+        mashupStatus.textContent = (blended.report.mode === "append"
+          ? "Appended SONG-2 onto SONG-1 as one big long song! "
+          : "Blended! ")
+          + "Compatibility " + blended.report.compatibility.score.toFixed(3)
           + " (stretch " + (blended.report.compatibility.stretch * 100).toFixed(1)
           + "%, key shift " + blended.report.key_shift_applied
           + "). Vocals: SONG-1 " + (blended.report.vocals_a ? "on" : "off")
           + ", SONG-2 " + (blended.report.vocals_b ? "on" : "off")
-          + ". Loaded into the AIU Song Blender above - press Play forever.";
+          + ". Loaded and ready - press Play Forever.";
       // Surface any network or server failure.
       } catch (problem) {
         // Show the failure instead of doing nothing.

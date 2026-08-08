@@ -116,7 +116,9 @@ def trim_to_first_beat(samples, record, time_ratio):
 def render_mashup(path_a, path_b, output_path, use_stems=False,
                   vocals_a=None, vocals_b=None):
     # Each song's vocals can be kept or dropped independently:
-    #   vocals_a True,  vocals_b True .... plain blend of both full songs;
+    #   vocals_a True,  vocals_b True .... APPEND: SONG-2 (with vocals) joins onto the end of
+    #                                      SONG-1 (with vocals), tempo- and key-conformed, making
+    #                                      one big long song for the blender's beat graph;
     #   vocals_a True,  vocals_b False ... SONG-1's vocal over SONG-2's instrumental (classic);
     #   vocals_a False, vocals_b True .... SONG-2's vocal over SONG-1's instrumental;
     #   vocals_a False, vocals_b False ... both instrumentals (karaoke blend).
@@ -159,15 +161,23 @@ def render_mashup(path_a, path_b, output_path, use_stems=False,
         conformed_b = os.path.join(work_folder, "conformed_b.wav")
         # Stretch part B with rubberband, with no pitch shift.
         rubberband(part_b_path, conformed_b, ratio_b, 0)
-        # Load, align, and mix the two conformed parts.
-        mix = mix_parts(conformed_a, conformed_b, record_a, record_b,
-                        ratio_a, ratio_b, gain_a, gain_b)
+        # With both vocals kept, append song B onto the end of song A as one long song;
+        # otherwise align and mix the two parts on top of each other.
+        if vocals_a and vocals_b:
+            # Join the two conformed full songs end to end.
+            mix = append_parts(conformed_a, conformed_b)
+        # Every other choice overlays the two parts.
+        else:
+            # Load, align, and mix the two conformed parts.
+            mix = mix_parts(conformed_a, conformed_b, record_a, record_b,
+                            ratio_a, ratio_b, gain_a, gain_b)
     # Write the mix to the output audio file.
     soundfile.write(output_path, mix, SAMPLE_RATE)
     # Return the honest report of what was done.
     return {"compatibility": compatibility, "target_tempo": round(target_tempo, 2),
             "stretch_a": round(ratio_a, 4), "stretch_b": round(ratio_b, 4),
             "key_shift_applied": semitones_a, "stems": not (vocals_a and vocals_b),
+            "mode": "append" if (vocals_a and vocals_b) else "mix",
             "vocals_a": vocals_a, "vocals_b": vocals_b, "output": output_path}
 
 
@@ -216,6 +226,32 @@ def song_part(path, work_folder, want_vocals):
     vocals, instrumental = separate_stems(path, work_folder)
     # Return the stem this song was asked for.
     return vocals if want_vocals else instrumental
+
+
+# Define the length of the seam crossfade, in seconds, when songs are appended.
+APPEND_CROSSFADE_SECONDS = 0.5
+
+
+# Define the helper that appends part B onto the end of part A with a smooth seam.
+def append_parts(conformed_a, conformed_b):
+    # Load the conformed part A.
+    samples_a = load_mono(conformed_a)
+    # Load the conformed part B.
+    samples_b = load_mono(conformed_b)
+    # Compute the seam crossfade length in samples.
+    fade = int(APPEND_CROSSFADE_SECONDS * SAMPLE_RATE)
+    # Fall back to a plain join if either song is too short to crossfade.
+    if len(samples_a) <= fade or len(samples_b) <= fade:
+        # Join the songs end to end with no seam blending.
+        return numpy.concatenate([samples_a, samples_b])
+    # Build the equal-power fade-out curve for the end of song A.
+    fade_out = numpy.cos(numpy.linspace(0, numpy.pi / 2, fade)) ** 2
+    # Build the matching fade-in curve for the start of song B.
+    fade_in = 1.0 - fade_out
+    # Blend song A's tail with song B's head into one seam.
+    seam = samples_a[-fade:] * fade_out + samples_b[:fade] * fade_in
+    # Join song A's body, the seam, and song B's remainder into one big long song.
+    return numpy.concatenate([samples_a[:-fade], seam, samples_b[fade:]])
 
 
 # Define the helper that aligns the two conformed parts at their first beats and mixes them.
