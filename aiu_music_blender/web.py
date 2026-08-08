@@ -12,7 +12,7 @@ from .ingest import cache_directory, local_audio_path
 # Import the engine's analysis function and cache key.
 from .analysis import analyze_song, cache_key
 # Import the engine's mash-up renderer.
-from .mashup import render_mashup, render_instrumental, render_stem, STEM_NAMES
+from .mashup import render_mashup, render_instrumental, render_all_stems, STEM_NAMES
 
 # Create the Flask application, pointing at our templates folder.
 application = Flask(__name__, template_folder="templates")
@@ -161,29 +161,56 @@ def export_route(key, file_format):
                      download_name="aiu_music_blender_" + key[:8] + "." + file_format)
 
 
-# Define the route that extracts one stem only (drums, bass, vocals, or other) from a song.
+# Define a helper that produces ALL FOUR stem records for a song, separating ONCE:
+# Demucs makes every stem in one run, so asking for one stem fills all four caches.
+def stem_records(path):
+    # Name every stem's cached track by the stem and the source song's cache key.
+    key = cache_key(path)
+    # Build the four cache paths.
+    outputs = {name: os.path.join(cache_directory(), name + "_" + key + ".wav")
+               for name in STEM_NAMES}
+    # Find the stems not yet cached.
+    missing = {name: p for name, p in outputs.items() if not os.path.isfile(p)}
+    # Separate once to fill every missing stem.
+    if missing:
+        # Render all missing stems from one Demucs run.
+        render_all_stems(path, missing)
+    # Build the playable record for every stem.
+    records = {}
+    # Walk the four stems.
+    for name, output_path in outputs.items():
+        # Analyze this stem-only track (cached after the first time).
+        record = analyze_song(output_path)
+        # Remember the track's audio for the audio route.
+        stem_key = cache_key(output_path)
+        # Store the mapping.
+        AUDIO_PATHS[stem_key] = output_path
+        # Keep the record with its audio key.
+        records[name] = dict(record, audio_key=stem_key)
+    # Return all four records.
+    return records
+
+
+# Define the route that returns ALL FOUR stem records for a song, separating once.
+@application.route("/stems", methods=["POST"])
+def stems_route():
+    # Resolve the song from its upload or its link.
+    path = resolve_song("file", "input")
+    # Return every stem's playable record.
+    return jsonify(stem_records(path))
+
+
+# Define the route that returns one stem only, built on the same one-run helper.
 @application.route("/stem/<stem_name>", methods=["POST"])
 def stem_route(stem_name):
     # Allow only the four real stem names.
     if stem_name not in STEM_NAMES:
         # Refuse anything else.
         return ("Unknown stem", 400)
-    # Resolve the song from its upload or its link.
-    path = resolve_song("file", "input")
-    # Name the cached stem-only track by the stem and the source song's cache key.
-    output_path = os.path.join(cache_directory(), stem_name + "_" + cache_key(path) + ".wav")
-    # Extract the stem only if it is not already cached.
-    if not os.path.isfile(output_path):
-        # Render the stem-only track.
-        render_stem(path, output_path, stem_name)
-    # Analyze the stem-only track so it can play in the infinite engine.
-    record = analyze_song(output_path)
-    # Remember the track's audio for the audio route.
-    key = cache_key(output_path)
-    # Store the mapping.
-    AUDIO_PATHS[key] = output_path
-    # Return the playable record.
-    return jsonify(dict(record, audio_key=key))
+    # Resolve the song and build all four records (one separation fills every cache).
+    records = stem_records(resolve_song("file", "input"))
+    # Return the asked-for stem's playable record.
+    return jsonify(records[stem_name])
 
 
 # Define the older beat route as the drums case of the general stem route.

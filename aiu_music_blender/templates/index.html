@@ -25,6 +25,17 @@
              border: 1px solid #c02b18; border-radius: 14px; }
     /* Style the title inside the top of each group rectangle. */
     .group h2 { margin: 0.1em 0 0.5em 0; color: #ff933a; font-size: 1.15em; }
+    /* Style the all-encompassing super-group rectangle around the four stem extractors. */
+    .supergroup { margin: 1em auto; max-width: 700px; padding: 0.8em;
+                  border: 2px solid #ff933a; border-radius: 18px; }
+    /* Style the super-group's own title. */
+    .supergroup > h2 { margin: 0.1em 0 0.1em 0; color: #ffce59; font-size: 1.25em; }
+    /* Style the super-group's explanation line. */
+    .supergroup > p { margin: 0.2em 0 0.6em 0; color: #f26d1f; font-size: 0.9em; }
+    /* Style the little ready flag beside a stem rectangle's title (hidden until ready). */
+    .ready_flag { display: none; background: #7c0300; border: 1px solid #ffce59;
+                  color: #ffce59; border-radius: 999px; padding: 0.1em 0.6em;
+                  font-size: 0.7em; vertical-align: middle; margin-left: 0.5em; }
     /* Dim disabled buttons so their state is visible at a glance. */
     button:disabled { opacity: 0.45; }
     /* The little spinning working indicator: a gold ring with one bright edge. */
@@ -228,20 +239,29 @@
     </div>
   </div>
 
+  <!-- The all-encompassing super-group: the four stem extractors are one family,
+       because Demucs separates every song into exactly these four stems in ONE run. -->
+  <div class="supergroup">
+    <!-- The super-group's title. -->
+    <h2>AIU Stem Extractor Blenders</h2>
+    <!-- The super-group's explanation. -->
+    <p>One extraction separates ALL FOUR stems at once - extract any one below,
+      and every rectangle in this family lights up ready.</p>
+
   <!-- The fourth big rounded-corner group rectangle: one song, beat only, blended. -->
   <div class="group">
-    <!-- The title inside the top of the rectangle. -->
-    <h2>AIU Beat Extractor Blender</h2>
+    <!-- The title inside the top of the rectangle, with its ready flag. -->
+    <h2>AIU Beat Extractor Blender<span class="ready_flag" id="ready_four">ready</span></h2>
     <!-- Row one: the song's YouTube link, extracted and analyzed on Enter or button press. -->
     <div class="row">
-      <label for="beats_input">YouTube URL:</label>
-      <input type="text" id="beats_input" size="34"
+      <label for="extract_input_four">YouTube URL:</label>
+      <input type="text" id="extract_input_four" size="34"
              placeholder="https://www.youtube.com/watch?v=...">
-      <button id="beats_button">Extract beat &amp; analyze</button>
+      <button id="extract_button_four">Extract drums &amp; analyze</button>
     </div>
     <!-- Row two: the song as a local file instead (the file wins if both are given). -->
     <div class="row">
-      <input type="file" id="beats_file" accept="audio/*">
+      <input type="file" id="extract_file_four" accept="audio/*">
     </div>
     <!-- Row three: the beat extractor's own chaos label, slider, and live value. -->
     <div class="row">
@@ -265,7 +285,7 @@
       <div class="card"><h3>Vocals</h3><p id="vocal_value_four"></p></div>
     </div>
     <!-- Report the beat extraction progress here. -->
-    <div id="beats_status">This box extracts ONLY THE BEAT (the drums) from the track
+    <div id="extract_status_four">This box extracts ONLY THE BEAT (the drums) from the track
       given, before it is fed to the blender.</div>
     <!-- The bottom row: save this rectangle's beat-only track to the local filesystem. -->
     <div class="row">
@@ -276,7 +296,7 @@
   <!-- The AIU Bass Extractor Blender group rectangle: one song, bass stem only, blended. -->
   <div class="group">
     <!-- The title inside the top of the rectangle. -->
-    <h2>AIU Bass Extractor Blender</h2>
+    <h2>AIU Bass Extractor Blender<span class="ready_flag" id="ready_five">ready</span></h2>
     <!-- Row one: the song's YouTube link, extracted and analyzed on Enter or button press. -->
     <div class="row">
       <label for="extract_input_five">YouTube URL:</label>
@@ -321,7 +341,7 @@
   <!-- The AIU Vocal Extractor Blender group rectangle: one song, vocals stem only, blended. -->
   <div class="group">
     <!-- The title inside the top of the rectangle. -->
-    <h2>AIU Vocal Extractor Blender</h2>
+    <h2>AIU Vocal Extractor Blender<span class="ready_flag" id="ready_six">ready</span></h2>
     <!-- Row one: the song's YouTube link, extracted and analyzed on Enter or button press. -->
     <div class="row">
       <label for="extract_input_six">YouTube URL:</label>
@@ -366,7 +386,7 @@
   <!-- The AIU Other Extractor Blender group rectangle: one song, other stem only, blended. -->
   <div class="group">
     <!-- The title inside the top of the rectangle. -->
-    <h2>AIU Other Extractor Blender</h2>
+    <h2>AIU Other Extractor Blender<span class="ready_flag" id="ready_seven">ready</span></h2>
     <!-- Row one: the song's YouTube link, extracted and analyzed on Enter or button press. -->
     <div class="row">
       <label for="extract_input_seven">YouTube URL:</label>
@@ -407,6 +427,9 @@
       <button id="save_wav_seven" disabled>SAVE TO WAV</button>
       <button id="save_mp3_seven" disabled>SAVE TO MP3</button>
     </div>
+  </div>
+
+  <!-- Close the all-encompassing super-group. -->
   </div>
 
   <!-- Draw the classic arc diagram on this canvas. -->
@@ -502,20 +525,6 @@
       // Write the slider's value, always with two decimals, into its value label.
       chaosThreeValue.textContent = parseFloat(chaosThreeSlider.value).toFixed(2);
     });
-    // Find the beat extractor rectangle's elements.
-    const beatsInput = document.getElementById("beats_input");
-    const beatsFile = document.getElementById("beats_file");
-    const beatsButton = document.getElementById("beats_button");
-    const beatsStatus = document.getElementById("beats_status");
-    const chaosFourSlider = document.getElementById("chaos_four");
-    const chaosFourValue = document.getElementById("chaos_four_value");
-    const playFourButton = document.getElementById("play_four_button");
-    const stopFourButton = document.getElementById("stop_four_button");
-    // Whenever the beat extractor's slider moves, show its current value beside it.
-    chaosFourSlider.addEventListener("input", () => {
-      // Write the slider's value, always with two decimals, into its value label.
-      chaosFourValue.textContent = parseFloat(chaosFourSlider.value).toFixed(2);
-    });
     // The slider the running walk reads its chaos from (set by whichever Play was pressed).
     let activeChaosSlider = chaosSlider;
 
@@ -594,10 +603,8 @@
       playTwoButton.disabled = false;
       // Enable the instrumental rectangle's play button too.
       playThreeButton.disabled = false;
-      // Enable the beat extractor rectangle's play button too.
-      playFourButton.disabled = false;
-      // Enable the three stem extractor rectangles' play buttons too.
-      ["five", "six", "seven"].forEach((rect) =>
+      // Enable the four stem extractor rectangles' play buttons too.
+      ["four", "five", "six", "seven"].forEach((rect) =>
         { document.getElementById("play_" + rect + "_button").disabled = false; });
     }
 
@@ -879,8 +886,8 @@
     function setButtonsWalking(nowWalking) {
       // Walk every play button with its partner stop button.
       [[playButton, stopButton], [playTwoButton, stopTwoButton],
-       [playThreeButton, stopThreeButton], [playFourButton, stopFourButton],
-       ...["five", "six", "seven"].map((rect) =>
+       [playThreeButton, stopThreeButton],
+       ...["four", "five", "six", "seven"].map((rect) =>
          [document.getElementById("play_" + rect + "_button"),
           document.getElementById("stop_" + rect + "_button")])].forEach(([play, stop]) => {
         // A running walk disables play and arms stop; a stopped walk does the reverse.
@@ -932,83 +939,20 @@
     playTwoButton.addEventListener("click", () => startWalk(chaosTwoSlider));
     // The Instrumental Blender's play starts a walk steered by ITS own slider.
     playThreeButton.addEventListener("click", () => startWalk(chaosThreeSlider));
-    // The Beat Extractor Blender's play starts a walk steered by ITS own slider.
-    playFourButton.addEventListener("click", () => startWalk(chaosFourSlider));
     // Any rectangle's stop ends the walk.
     stopButton.addEventListener("click", stopWalk);
     // The mash-up rectangle's stop does the same.
     stopTwoButton.addEventListener("click", stopWalk);
     // The instrumental rectangle's stop does the same.
     stopThreeButton.addEventListener("click", stopWalk);
-    // The beat extractor rectangle's stop does the same.
-    stopFourButton.addEventListener("click", stopWalk);
 
-    // Extract only the beat from the given song and load it into the shared player.
-    async function analyzeBeats() {
-      // Take the pasted link.
-      const link = beatsInput.value.trim();
-      // Take the chosen file (a chosen file wins over a pasted link).
-      const file = beatsFile.files[0];
-      // Ask again when neither a file nor a link was given.
-      if (!link && !file) {
-        // Explain what is needed.
-        beatsStatus.textContent = "Give the song a link or a file first.";
-        // Stop here.
-        return;
-      }
-      // Show the work on the button itself.
-      beatsButton.disabled = true;
-      // Change the button label to the state, with the spinning working indicator.
-      beatsButton.innerHTML = '<span class="spinner"></span>Extracting...';
-      // Tell the user the download, extraction, and analysis are running.
-      beatsStatus.textContent = "Fetching the song, extracting ONLY THE BEAT "
-        + "(a few minutes the first time), then analyzing...";
-      // Guard the whole round trip so every failure is shown, never silent.
-      try {
-        // Build the form carrying the song.
-        const form = new FormData();
-        // Attach the song as a file when chosen, otherwise as its link.
-        if (file) form.append("file", file); else form.append("input", link);
-        // Post the song to the beats route.
-        const answer = await fetch("/beats", { method: "POST", body: form });
-        // Refuse gracefully if the server reported a problem.
-        if (!answer.ok) { beatsStatus.textContent = "Extraction failed - check the input."; return; }
-        // Unwrap the beat-only record.
-        const beatsRecord = await answer.json();
-        // Load the beat-only record into the shared player.
-        await loadRecord(beatsRecord);
-        // Fill the Beat Extractor's metric cards.
-        showMetrics("four", beatsRecord);
-        // Arm the Beat Extractor's save buttons for this track.
-        armSave("four", beatsRecord.audio_key);
-        // Report success in this rectangle.
-        beatsStatus.textContent = "Beat extracted! The drums are loaded "
-          + "- press Play Forever.";
-      // Surface any network or server failure.
-      } catch (problem) {
-        // Show the failure instead of doing nothing.
-        beatsStatus.textContent = "Could not reach the local server: " + problem;
-      // Always restore the button, success or failure.
-      } finally {
-        // Re-enable the button.
-        beatsButton.disabled = false;
-        // Restore the button label.
-        beatsButton.textContent = "Extract beat & analyze";
-      }
-    }
-    // Extract when the button is pressed.
-    beatsButton.addEventListener("click", analyzeBeats);
-    // Extract when Enter is pressed in the box.
-    beatsInput.addEventListener("keydown", (key) => {
-      // React only to the Enter key.
-      if (key.key === "Enter") analyzeBeats();
-    });
-    // Extract when a file is chosen.
-    beatsFile.addEventListener("change", () => { if (beatsFile.files[0]) analyzeBeats(); });
-
-    // Wire each stem extractor rectangle (bass, vocals, other) from one shared pattern.
-    [["five", "bass", "the bass line"], ["six", "vocals", "the vocal track"],
-     ["seven", "other", "the other parts"]].forEach(([rect, stem, noun]) => {
+    // The four stem rectangles as one family: name, stem, and what it holds.
+    const STEM_RECTANGLES = [["four", "drums", "the beat (the drums)"],
+                             ["five", "bass", "the bass line"],
+                             ["six", "vocals", "the vocal track"],
+                             ["seven", "other", "the other parts"]];
+    // Wire each stem extractor rectangle from one shared pattern.
+    STEM_RECTANGLES.forEach(([rect, stem, noun]) => {
       // Find this rectangle's elements by its name.
       const urlBox = document.getElementById("extract_input_" + rect);
       const fileBox = document.getElementById("extract_file_" + rect);
@@ -1046,20 +990,26 @@
           const form = new FormData();
           // Attach the song as a file when chosen, otherwise as its link.
           if (file) form.append("file", file); else form.append("input", link);
-          // Post the song to the general stem route.
-          const answer = await fetch("/stem/" + stem, { method: "POST", body: form });
+          // Post the song to the ALL-STEMS route: one separation makes all four.
+          const answer = await fetch("/stems", { method: "POST", body: form });
           // Refuse gracefully if the server reported a problem.
           if (!answer.ok) { status.textContent = "Extraction failed - check the input."; return; }
-          // Unwrap the stem-only record.
-          const stemRecord = await answer.json();
-          // Load the stem-only record into the shared player.
-          await loadRecord(stemRecord);
-          // Fill this rectangle's metric cards.
-          showMetrics(rect, stemRecord);
-          // Arm this rectangle's save buttons for the track.
-          armSave(rect, stemRecord.audio_key);
+          // Unwrap all four stem records.
+          const allStems = await answer.json();
+          // Load THIS rectangle's stem into the shared player.
+          await loadRecord(allStems[stem]);
+          // Populate every rectangle in the family and raise its ready flag.
+          STEM_RECTANGLES.forEach(([familyRect, familyStem]) => {
+            // Fill that rectangle's metric cards from its own stem.
+            showMetrics(familyRect, allStems[familyStem]);
+            // Arm that rectangle's save buttons for its own stem.
+            armSave(familyRect, allStems[familyStem].audio_key);
+            // Raise the little ready flag beside that rectangle's title.
+            document.getElementById("ready_" + familyRect).style.display = "inline-block";
+          });
           // Report success in this rectangle.
-          status.textContent = "Extracted! Only " + noun + " is loaded - press Play Forever.";
+          status.textContent = "Extracted! Only " + noun + " is loaded here - and all "
+            + "four stem rectangles are now ready.";
         // Surface any network or server failure.
         } catch (problem) {
           // Show the failure instead of doing nothing.

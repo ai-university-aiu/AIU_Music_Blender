@@ -130,6 +130,37 @@ def render_stem(path, output_path, stem_name):
     return output_path
 
 
+# Define the function that extracts MANY stems in ONE Demucs run: output_paths maps
+# stem names to destinations, and every one is written from the same separation.
+def render_all_stems(path, output_paths):
+    # Allow only the four real stem names.
+    for stem_name in output_paths:
+        # Refuse anything else.
+        if stem_name not in STEM_NAMES:
+            # Raise the clear error.
+            raise ValueError("Unknown stem: " + stem_name)
+    # Verify the stem separator is installed.
+    if not demucs_available():
+        # Raise the error the faces will show the user.
+        raise RuntimeError("Stem extraction needs Demucs, which is not installed; "
+                           "install with: pip3 install demucs")
+    # Do the separation work in a temporary folder that cleans itself up.
+    with tempfile.TemporaryDirectory() as work_folder:
+        # Run Demucs in full four-stem mode, once.
+        subprocess.run(["python3", "-m", "demucs", "-o", work_folder, path],
+                       check=True, capture_output=True)
+        # Name the song's stem folder the way Demucs names it.
+        song_name = os.path.splitext(os.path.basename(path))[0]
+        # Write every asked-for stem from the one separation.
+        for stem_name, output_path in output_paths.items():
+            # Build this stem's source path inside the separation folder.
+            stem_source = os.path.join(work_folder, "htdemucs", song_name, stem_name + ".wav")
+            # Write the stem-only track at the engine sample rate.
+            soundfile.write(output_path, load_mono(stem_source), SAMPLE_RATE)
+    # Return the map of written stems.
+    return output_paths
+
+
 # Define the beat-only extractor as the drums case of the general stem extractor.
 def render_beats(path, output_path):
     # Extract the drums stem.
