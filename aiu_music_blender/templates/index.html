@@ -63,6 +63,8 @@
                     padding: 0.4em 0.8em; border-radius: 6px; }
     /* Style the status line. */
     #status { color: #f26d1f; min-height: 1.5em; }
+    /* The visualizer is clickable, so show the pointing hand over it. */
+    #arc_canvas { cursor: pointer; }
   </style>
 </head>
 <body>
@@ -799,8 +801,21 @@
       return 40 + (canvas.width - 80) * beatIndex / (record.beats.length - 1);
     }
 
+    // The beat currently under the mouse (nothing yet), and the last active beat drawn.
+    let hoverBeat = -1, lastActiveBeat = -1;
+
+    // Find the beat nearest to a horizontal position on the canvas baseline.
+    function nearestBeatToX(x) {
+      // Run the beat-position math backwards to get a fractional beat number.
+      const fraction = (x - 40) / (canvas.width - 80) * (record.beats.length - 1);
+      // Clamp to a real beat index.
+      return Math.max(0, Math.min(record.beats.length - 1, Math.round(fraction)));
+    }
+
     // Draw the classic arc diagram, highlighting the active beat's edges.
     function drawArcs(activeBeat) {
+      // Remember the active beat so hover redraws keep it lit.
+      lastActiveBeat = activeBeat;
       // Clear the canvas.
       paint.clearRect(0, 0, canvas.width, canvas.height);
       // Choose the baseline height.
@@ -827,6 +842,15 @@
           paint.quadraticCurveTo((from + to) / 2, baseline - height, to, baseline);
           paint.stroke();
         }
+      }
+      // Draw the hovered beat as an outlined ring, showing where a click would land.
+      if (hoverBeat >= 0) {
+        // Outline the ring in ember.
+        paint.strokeStyle = "#f26d1f";
+        // Draw the ring.
+        paint.beginPath();
+        paint.arc(beatPosition(hoverBeat), canvas.height - 40, 8, 0, 2 * Math.PI);
+        paint.stroke();
       }
       // Draw the active beat marker.
       if (activeBeat >= 0) {
@@ -960,19 +984,66 @@
       drawArcs(-1);
       // Remember which slider steers this walk.
       activeChaosSlider = rectangleChaosSlider(rect);
+      // Begin walking from the first beat.
+      beginWalking(0);
+    }
+
+    // Begin (or restart) the walking machinery from a chosen beat.
+    function beginWalking(fromBeat) {
       // Mark the walk as running.
       walking = true;
-      // Put both rectangles' buttons into the running state.
+      // Put every rectangle's buttons into the running state.
       setButtonsWalking(true);
-      // Begin at beat zero, a breath from now on the audio clock.
-      scheduleBeat = 0;
+      // Begin at the chosen beat, a breath from now on the audio clock.
+      scheduleBeat = fromBeat;
       // Anchor the schedule to the audio clock.
       scheduleTime = audioContext.currentTime + 0.06;
       // Fill the queue immediately.
       pumpSchedule();
-      // Keep the queue topped up ten times a second.
+      // Keep the queue topped up ten times a second (restarting any earlier pump).
+      clearInterval(pumpTimer);
+      // Start the pump.
       pumpTimer = setInterval(pumpSchedule, 100);
     }
+
+    // Click anywhere on the visualizer to continue play from that spot.
+    canvas.addEventListener("click", (event) => {
+      // Do nothing before any track is loaded.
+      if (!record || !audioBuffer) return;
+      // Find where on the canvas the click landed.
+      const clickX = event.clientX - canvas.getBoundingClientRect().left;
+      // Find the nearest beat to the click.
+      const clickedBeat = nearestBeatToX(clickX);
+      // If a walk is running, silence the queued beats first.
+      if (walking) {
+        // Silence every queued source.
+        queuedSources.forEach((source) => { try { source.stop(); } catch (ignored) {} });
+        // Forget the silenced sources.
+        queuedSources = [];
+      }
+      // Continue (or start) playing forever from the clicked beat.
+      beginWalking(clickedBeat);
+    });
+
+    // Show, while hovering, the beat a click would land on.
+    canvas.addEventListener("mousemove", (event) => {
+      // Do nothing before any track is loaded.
+      if (!record) return;
+      // Find where on the canvas the mouse sits.
+      const mouseX = event.clientX - canvas.getBoundingClientRect().left;
+      // Remember the beat under the mouse.
+      hoverBeat = nearestBeatToX(mouseX);
+      // Redraw with the hover ring, keeping the active beat lit.
+      drawArcs(lastActiveBeat);
+    });
+
+    // Clear the hover ring when the mouse leaves the visualizer.
+    canvas.addEventListener("mouseleave", () => {
+      // Forget the hovered beat.
+      hoverBeat = -1;
+      // Redraw without the ring.
+      if (record) drawArcs(lastActiveBeat);
+    });
 
     // Stop the infinite walk, whichever rectangle asks.
     function stopWalk() {
