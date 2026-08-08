@@ -105,31 +105,38 @@
   <div class="group">
     <!-- The title inside the top of the rectangle. -->
     <h2>AIU Mash-Up Blender</h2>
-    <!-- Row one: the first song's YouTube link and its independent vocal choice. -->
+    <!-- Row one: the first song's YouTube link. -->
     <div class="row">
       <label for="song_one_input">SONG-1 YouTube URL:</label>
       <input type="text" id="song_one_input" size="30"
              placeholder="https://www.youtube.com/watch?v=...">
-      <label title="Include SONG-1's vocals in the blend.">
-        <input type="checkbox" id="vocals_one" checked> vocals</label>
     </div>
     <!-- Row two: the first song as a local file instead (the file wins if both are given). -->
     <div class="row">
       <label for="song_one_file">SONG-1 file:</label>
       <input type="file" id="song_one_file" accept="audio/*">
     </div>
-    <!-- Row three: the second song's YouTube link and its independent vocal choice. -->
+    <!-- Row three: the first song's vocal choice, on its own line - it applies to the
+         song itself, whichever way the song arrived. -->
+    <div class="row">
+      <label title="Include SONG-1's vocals in the blend.">
+        <input type="checkbox" id="vocals_one" checked> SONG-1 vocals</label>
+    </div>
+    <!-- Row four: the second song's YouTube link. -->
     <div class="row">
       <label for="song_two_input">SONG-2 YouTube URL:</label>
       <input type="text" id="song_two_input" size="30"
              placeholder="https://www.youtube.com/watch?v=...">
-      <label title="Include SONG-2's vocals in the blend.">
-        <input type="checkbox" id="vocals_two"> vocals</label>
     </div>
-    <!-- Row four: the second song as a local file instead (the file wins if both are given). -->
+    <!-- Row five: the second song as a local file instead (the file wins if both are given). -->
     <div class="row">
       <label for="song_two_file">SONG-2 file:</label>
       <input type="file" id="song_two_file" accept="audio/*">
+    </div>
+    <!-- Row six: the second song's vocal choice, on its own line for the same reason. -->
+    <div class="row">
+      <label title="Include SONG-2's vocals in the blend.">
+        <input type="checkbox" id="vocals_two"> SONG-2 vocals</label>
     </div>
     <!-- Row three: blend the two songs into one mash-up. -->
     <div class="row">
