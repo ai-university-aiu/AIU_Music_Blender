@@ -1,0 +1,80 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
+// KOTLIN NOTE
+// Kotlin is locked to 1.9.25 as the last version before K2 and Kotlin 2.0,
+// which is a larger change and we should wait until we're in a more stable position to upgrade.
+
+plugins {
+    id 'application'
+    id 'org.jetbrains.kotlin.jvm' version '1.9.25'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+mainClassName = 'org.abimon.eternalJukebox.EternalJukebox'
+
+sourceCompatibility = 11
+targetCompatibility = 11
+
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+}
+
+ext {
+//    See above for Kotlin being locked
+    kotlin_version = '1.9.25'
+
+//    Vert.x 4 changes things quite significantly; locking
+    vertx_version = '3.9.16'
+
+    jackson_version = '2.18.2'
+
+//    NewPipe should be pinned to master to ensure we always have the latest YT extractor.
+    new_pipe_extractor_version = 'master-SNAPSHOT'
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+//    Last version of kotlinx.coroutines on Kotlin 1.9
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1"
+
+    implementation "io.vertx:vertx-web:$vertx_version"
+    implementation "io.vertx:vertx-web-client:$vertx_version"
+    implementation "io.vertx:vertx-lang-kotlin:$vertx_version"
+    implementation "io.vertx:vertx-lang-kotlin-coroutines:$vertx_version"
+
+//    IMPORTANT: Upgrading H2 completely breaks existing databases and can corrupt them.
+//    Do NOT upgrade H2 unless a proper migration path is implemented
+    implementation "com.h2database:h2:1.4.196"
+    implementation 'com.mysql:mysql-connector-j:9.0.0'
+    implementation 'com.zaxxer:HikariCP:5.1.0'
+    implementation 'com.google.cloud.sql:mysql-socket-factory-connector-j-8:1.20.0'
+
+    implementation 'com.auth0:java-jwt:4.4.0'
+    implementation 'com.github.kittinunf.fuel:fuel:2.3.1'
+    implementation 'com.github.kittinunf.fuel:fuel-coroutines:2.3.1'
+
+    implementation 'ch.qos.logback:logback-classic:1.5.7'
+
+    implementation "com.fasterxml.jackson.core:jackson-core:$jackson_version"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
+    implementation "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jackson_version"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jackson_version"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jackson_version"
+    implementation "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
+    implementation "com.fasterxml.jackson.module:jackson-module-parameter-names:$jackson_version"
+
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
+
+    implementation 'com.jakewharton.fliptables:fliptables:1.1.1'
+
+    implementation "com.github.teamnewpipe:NewPipeExtractor:$new_pipe_extractor_version"
+}
+
+tasks.withType(KotlinCompile).configureEach {
+    kotlinOptions {
+        jvmTarget = '11'
+    }
+}

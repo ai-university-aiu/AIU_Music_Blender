@@ -1,0 +1,57 @@
+<script type="text/javascript">
+    var worker = new Worker('worker.js');
+    var callbacks = {};
+    var nextId = 1;
+    var isDocumentHidden = document.hidden || document.webkitHidden || false;
+
+    worker.onmessage = function (event) {
+        var id = event.data.id;
+        if (callbacks.hasOwnProperty(id)) {
+            var callback = callbacks[id];
+            callback();
+            delete callbacks[id];
+        }
+    };
+
+    var originalSetTimeout = window.setTimeout;
+    var originalClearTimeout = window.clearTimeout;
+
+    function workerSetTimeout(callback, delay) {
+        var id = -nextId++; // Use negative IDs for worker timeouts
+        callbacks[id] = function () {
+            callback.apply(null, Array.prototype.slice.call(arguments, 2));
+        };
+        worker.postMessage({command: 'setTimeout', id: id, delay: delay});
+        return id;
+    }
+
+    function customClearTimeout(id) {
+        if (id < 0 && callbacks.hasOwnProperty(id)) {
+            delete callbacks[id];
+            worker.postMessage({command: 'clearTimeout', id: id});
+        } else {
+            originalClearTimeout(id);
+        }
+    }
+
+    function customSetTimeout(callback, delay) {
+        var args = Array.prototype.slice.call(arguments, 2);
+        if (isDocumentHidden) {
+            return workerSetTimeout(function () {
+                callback.apply(null, args);
+            }, delay);
+        } else {
+            return originalSetTimeout.apply(null, arguments);
+        }
+    }
+
+    function handleVisibilityChange() {
+        isDocumentHidden = document.hidden || document.webkitHidden || false;
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('webkitvisibilitychange', handleVisibilityChange);
+
+    window.setTimeout = customSetTimeout;
+    window.clearTimeout = customClearTimeout;
+</script>
