@@ -113,13 +113,23 @@
       <label title="Include SONG-1's vocals in the blend.">
         <input type="checkbox" id="vocals_one" checked> vocals</label>
     </div>
-    <!-- Row two: the second song's YouTube link and its independent vocal choice. -->
+    <!-- Row two: the first song as a local file instead (the file wins if both are given). -->
+    <div class="row">
+      <label for="song_one_file">SONG-1 file:</label>
+      <input type="file" id="song_one_file" accept="audio/*">
+    </div>
+    <!-- Row three: the second song's YouTube link and its independent vocal choice. -->
     <div class="row">
       <label for="song_two_input">SONG-2 YouTube URL:</label>
       <input type="text" id="song_two_input" size="30"
              placeholder="https://www.youtube.com/watch?v=...">
       <label title="Include SONG-2's vocals in the blend.">
         <input type="checkbox" id="vocals_two"> vocals</label>
+    </div>
+    <!-- Row four: the second song as a local file instead (the file wins if both are given). -->
+    <div class="row">
+      <label for="song_two_file">SONG-2 file:</label>
+      <input type="file" id="song_two_file" accept="audio/*">
     </div>
     <!-- Row three: blend the two songs into one mash-up. -->
     <div class="row">
@@ -218,6 +228,9 @@
     // Find the mash-up rectangle's elements.
     const songOneInput = document.getElementById("song_one_input");
     const songTwoInput = document.getElementById("song_two_input");
+    // Find the mash-up rectangle's file choosers.
+    const songOneFile = document.getElementById("song_one_file");
+    const songTwoFile = document.getElementById("song_two_file");
     const vocalsOne = document.getElementById("vocals_one");
     const vocalsTwo = document.getElementById("vocals_two");
     const blendButton = document.getElementById("blend_button");
@@ -381,10 +394,14 @@
       const linkOne = songOneInput.value.trim();
       // Take the second link.
       const linkTwo = songTwoInput.value.trim();
-      // Ask for both songs when either box is empty.
-      if (!linkOne || !linkTwo) {
+      // Take both chosen files (a chosen file wins over a pasted link for its song).
+      const fileOne = songOneFile.files[0];
+      // Take the second chosen file.
+      const fileTwo = songTwoFile.files[0];
+      // Ask again when either song has neither a file nor a link.
+      if ((!linkOne && !fileOne) || (!linkTwo && !fileTwo)) {
         // Explain what is needed.
-        mashupStatus.textContent = "Paste BOTH song links first.";
+        mashupStatus.textContent = "Give BOTH songs a link or a file first.";
         // Stop here.
         return;
       }
@@ -404,12 +421,12 @@
           + "(adds a few minutes), blending...";
       // Guard the whole round trip so every failure is shown, never silent.
       try {
-        // Build the form carrying both links.
+        // Build the form carrying both songs.
         const form = new FormData();
-        // Attach the first song.
-        form.append("input_a", linkOne);
-        // Attach the second song.
-        form.append("input_b", linkTwo);
+        // Attach the first song as a file when chosen, otherwise as its link.
+        if (fileOne) form.append("file_a", fileOne); else form.append("input_a", linkOne);
+        // Attach the second song the same way.
+        if (fileTwo) form.append("file_b", fileTwo); else form.append("input_b", linkTwo);
         // Attach SONG-1's independent vocal choice.
         if (vocalsOne.checked) form.append("vocals_a", "on");
         // Attach SONG-2's independent vocal choice.

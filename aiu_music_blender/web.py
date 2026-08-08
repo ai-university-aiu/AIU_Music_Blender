@@ -69,13 +69,29 @@ def audio_route(key):
     return send_file(path)
 
 
-# Define the route that renders a mash-up of two local paths.
+# Define a helper that resolves one song from an upload or a link, whichever was sent.
+def resolve_song(file_key, form_key):
+    # If a file was uploaded under this key, save it into the cache folder.
+    if file_key in request.files:
+        # Take the uploaded file.
+        upload = request.files[file_key]
+        # Build a safe path in the cache folder for the upload.
+        saved_path = os.path.join(cache_directory(), "upload_" + os.path.basename(upload.filename))
+        # Save the upload.
+        upload.save(saved_path)
+        # Use the saved upload.
+        return saved_path
+    # Otherwise, resolve the pasted link or path.
+    return local_audio_path(request.form[form_key])
+
+
+# Define the route that renders a mash-up of two songs (each an upload or a link).
 @application.route("/mashup", methods=["POST"])
 def mashup_route():
-    # Resolve the first input to a local path.
-    path_a = local_audio_path(request.form["input_a"])
-    # Resolve the second input to a local path.
-    path_b = local_audio_path(request.form["input_b"])
+    # Resolve the first song from its file or link.
+    path_a = resolve_song("file_a", "input_a")
+    # Resolve the second song from its file or link.
+    path_b = resolve_song("file_b", "input_b")
     # Build the output path in the cache folder.
     output_path = os.path.join(cache_directory(), "web_mashup.wav")
     # Read each song's independent vocal choice from its checkbox.
