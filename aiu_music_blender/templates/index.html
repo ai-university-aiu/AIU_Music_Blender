@@ -82,7 +82,7 @@
     </div>
     <!-- Row four: start and stop the infinite walk. -->
     <div class="row">
-      <button id="play_button" disabled>Play forever</button>
+      <button id="play_button" disabled>Play Forever</button>
       <button id="stop_button" disabled>Stopped</button>
     </div>
     <!-- Show what the local pipeline found, one card per fact, inside the same rectangle. -->
@@ -119,6 +119,18 @@
     <!-- Row three: blend the two songs into one mash-up. -->
     <div class="row">
       <button id="blend_button">Blend the two songs</button>
+    </div>
+    <!-- Row four: the mash-up's own chaos label, slider, and live value. -->
+    <div class="row">
+      <label for="chaos_two">Chaos (jump probability):</label>
+      <input type="range" id="chaos_two" min="0" max="1" step="0.05" value="0.25"
+             title="How likely each beat is to jump to a look-alike beat: 0.0 never, 1.0 always.">
+      <span id="chaos_two_value">0.25</span>
+    </div>
+    <!-- Row five: the mash-up's own start and stop, so one rectangle covers one use. -->
+    <div class="row">
+      <button id="play_two_button" disabled>Play Forever</button>
+      <button id="stop_two_button" disabled>Stopped</button>
     </div>
     <!-- Report mash-up progress and the honest compatibility report here. -->
     <div id="mashup_status">Paste two songs, then blend; the result loads into the
@@ -167,6 +179,18 @@
     const vocalsTwo = document.getElementById("vocals_two");
     const blendButton = document.getElementById("blend_button");
     const mashupStatus = document.getElementById("mashup_status");
+    // Find the mash-up rectangle's own walk controls.
+    const chaosTwoSlider = document.getElementById("chaos_two");
+    const chaosTwoValue = document.getElementById("chaos_two_value");
+    const playTwoButton = document.getElementById("play_two_button");
+    const stopTwoButton = document.getElementById("stop_two_button");
+    // Whenever the mash-up slider moves, show its current value beside it.
+    chaosTwoSlider.addEventListener("input", () => {
+      // Write the slider's value, always with two decimals, into its value label.
+      chaosTwoValue.textContent = parseFloat(chaosTwoSlider.value).toFixed(2);
+    });
+    // The slider the running walk reads its chaos from (set by whichever Play was pressed).
+    let activeChaosSlider = chaosSlider;
 
     // Finish any analysis: unwrap the server's answer and load the record.
     async function finishAnalysis(answer) {
@@ -198,8 +222,10 @@
         + record.graph.flat().length + " jump edges. Ready.";
       // Draw the arc diagram.
       drawArcs(-1);
-      // Enable the play button.
+      // Enable both rectangles' play buttons.
       playButton.disabled = false;
+      // Enable the mash-up rectangle's play button too.
+      playTwoButton.disabled = false;
     }
 
     // When a file is chosen, send it to the local server for analysis.
@@ -390,8 +416,9 @@
       // At the final beat, jump back into the song so it never ends.
       if (beatIndex >= record.beats.length - 1)
         return edges.length ? edges[0][0] : Math.floor(record.beats.length / 2);
-      // With probability chaos, take a similarity-weighted jump edge.
-      if (edges.length && Math.random() < parseFloat(chaosSlider.value)) {
+      // With probability chaos (read live from whichever rectangle started the walk),
+      // take a similarity-weighted jump edge.
+      if (edges.length && Math.random() < parseFloat(activeChaosSlider.value)) {
         // Turn distances into weights favoring similar targets.
         const weights = edges.map(([, d]) => 1 / (0.001 + d));
         // Sum the weights for the draw.
@@ -449,13 +476,29 @@
       }
     }
 
-    // Start the infinite walk when play is pressed.
-    playButton.addEventListener("click", () => {
+    // Put both rectangles' play and stop buttons into the same state together.
+    function setButtonsWalking(nowWalking) {
+      // Walk every play button with its partner stop button.
+      [[playButton, stopButton], [playTwoButton, stopTwoButton]].forEach(([play, stop]) => {
+        // A running walk disables play and arms stop; a stopped walk does the reverse.
+        play.disabled = nowWalking;
+        // Label the play button with its state.
+        play.textContent = nowWalking ? "Playing Forever..." : "Play Forever";
+        // Arm or rest the stop button.
+        stop.disabled = !nowWalking;
+        // Label the stop button with its state.
+        stop.textContent = nowWalking ? "Stop" : "Stopped";
+      });
+    }
+
+    // Start the infinite walk, reading chaos from the rectangle whose Play was pressed.
+    function startWalk(fromSlider) {
+      // Remember which slider steers this walk.
+      activeChaosSlider = fromSlider;
       // Mark the walk as running.
       walking = true;
-      // Swap the button states, with the labels saying what is happening.
-      playButton.disabled = true; playButton.textContent = "Playing forever...";
-      stopButton.disabled = false; stopButton.textContent = "Stop";
+      // Put both rectangles' buttons into the running state.
+      setButtonsWalking(true);
       // Begin at beat zero, a breath from now on the audio clock.
       scheduleBeat = 0;
       // Anchor the schedule to the audio clock.
@@ -464,10 +507,10 @@
       pumpSchedule();
       // Keep the queue topped up ten times a second.
       pumpTimer = setInterval(pumpSchedule, 100);
-    });
+    }
 
-    // Stop the walk when stop is pressed.
-    stopButton.addEventListener("click", () => {
+    // Stop the infinite walk, whichever rectangle asks.
+    function stopWalk() {
       // Mark the walk as stopped.
       walking = false;
       // Stop the pump.
@@ -476,10 +519,18 @@
       queuedSources.forEach((source) => { try { source.stop(); } catch (ignored) {} });
       // Forget the silenced sources.
       queuedSources = [];
-      // Swap the button states back, with the labels saying what is happening.
-      playButton.disabled = false; playButton.textContent = "Play forever";
-      stopButton.disabled = true; stopButton.textContent = "Stopped";
-    });
+      // Put both rectangles' buttons into the resting state.
+      setButtonsWalking(false);
+    }
+
+    // The Song Blender's play starts a walk steered by its own slider.
+    playButton.addEventListener("click", () => startWalk(chaosSlider));
+    // The Mash-Up Blender's play starts a walk steered by ITS own slider.
+    playTwoButton.addEventListener("click", () => startWalk(chaosTwoSlider));
+    // Either rectangle's stop ends the walk.
+    stopButton.addEventListener("click", stopWalk);
+    // The mash-up rectangle's stop does the same.
+    stopTwoButton.addEventListener("click", stopWalk);
   </script>
 </body>
 </html>
