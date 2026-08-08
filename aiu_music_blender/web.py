@@ -76,8 +76,12 @@ def mashup_route():
     path_b = local_audio_path(request.form["input_b"])
     # Build the output path in the cache folder.
     output_path = os.path.join(cache_directory(), "web_mashup.wav")
-    # Render the mash-up without stems (the web face keeps version one simple).
-    report = render_mashup(path_a, path_b, output_path)
+    # Read each song's independent vocal choice from its checkbox.
+    vocals_a = request.form.get("vocals_a") == "on"
+    # Read the second song's vocal choice.
+    vocals_b = request.form.get("vocals_b") == "on"
+    # Render the mash-up with the chosen vocals.
+    report = render_mashup(path_a, path_b, output_path, vocals_a=vocals_a, vocals_b=vocals_b)
     # Analyze the rendered mash-up so it can play in the infinite engine immediately.
     record = analyze_song(output_path)
     # Remember the mash-up's audio for the audio route.

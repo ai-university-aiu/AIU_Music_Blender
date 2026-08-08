@@ -113,7 +113,21 @@ def trim_to_first_beat(samples, record, time_ratio):
 
 
 # Define the main entry: render a mash-up of two songs and return an honest report.
-def render_mashup(path_a, path_b, output_path, use_stems=False):
+def render_mashup(path_a, path_b, output_path, use_stems=False,
+                  vocals_a=None, vocals_b=None):
+    # Each song's vocals can be kept or dropped independently:
+    #   vocals_a True,  vocals_b True .... plain blend of both full songs;
+    #   vocals_a True,  vocals_b False ... SONG-1's vocal over SONG-2's instrumental (classic);
+    #   vocals_a False, vocals_b True .... SONG-2's vocal over SONG-1's instrumental;
+    #   vocals_a False, vocals_b False ... both instrumentals (karaoke blend).
+    # Translate the older stems flag when the explicit choices were not given.
+    if vocals_a is None:
+        # Song A keeps its vocals in both older modes.
+        vocals_a = True
+    # Translate the second choice the same way.
+    if vocals_b is None:
+        # In older stems mode song B lost its vocals; in the plain mode it kept them.
+        vocals_b = not use_stems
     # Analyze both songs.
     record_a = analyze_song(path_a)
     # Analyze the second song.
@@ -134,8 +148,9 @@ def render_mashup(path_a, path_b, output_path, use_stems=False):
     semitones_a = shift if abs(shift) <= MAX_KEY_SHIFT else 0
     # Do all intermediate work in a temporary folder that cleans itself up.
     with tempfile.TemporaryDirectory() as work_folder:
-        # Prepare the two source parts (whole songs, or stems when requested).
-        part_a_path, part_b_path = prepare_parts(path_a, path_b, work_folder, use_stems)
+        # Prepare the two source parts according to the per-song vocal choices.
+        part_a_path, part_b_path, gain_a, gain_b = prepare_parts(
+            path_a, path_b, work_folder, vocals_a, vocals_b)
         # Build the stretched-and-shifted version of part A.
         conformed_a = os.path.join(work_folder, "conformed_a.wav")
         # Stretch and shift part A with rubberband.
@@ -145,44 +160,66 @@ def render_mashup(path_a, path_b, output_path, use_stems=False):
         # Stretch part B with rubberband, with no pitch shift.
         rubberband(part_b_path, conformed_b, ratio_b, 0)
         # Load, align, and mix the two conformed parts.
-        mix = mix_parts(conformed_a, conformed_b, record_a, record_b, ratio_a, ratio_b, use_stems)
+        mix = mix_parts(conformed_a, conformed_b, record_a, record_b,
+                        ratio_a, ratio_b, gain_a, gain_b)
     # Write the mix to the output audio file.
     soundfile.write(output_path, mix, SAMPLE_RATE)
     # Return the honest report of what was done.
     return {"compatibility": compatibility, "target_tempo": round(target_tempo, 2),
             "stretch_a": round(ratio_a, 4), "stretch_b": round(ratio_b, 4),
-            "key_shift_applied": semitones_a, "stems": use_stems, "output": output_path}
+            "key_shift_applied": semitones_a, "stems": not (vocals_a and vocals_b),
+            "vocals_a": vocals_a, "vocals_b": vocals_b, "output": output_path}
 
 
-# Define the helper that prepares the two parts to be mixed (stems or whole songs).
-def prepare_parts(path_a, path_b, work_folder, use_stems):
-    # When stems are requested, verify the separator is installed.
-    if use_stems:
-        # Stop with a clear message if Demucs is missing.
-        if not demucs_available():
-            # Raise the error the faces will show the user.
-            raise RuntimeError("Stem mash-up requested but Demucs is not installed; "
-                               "install with: pip3 install demucs")
-        # Separate song A and keep its vocals.
-        vocals_a, _ = separate_stems(path_a, work_folder)
-        # Separate song B and keep its instrumental.
-        _, instrumental_b = separate_stems(path_b, work_folder)
-        # Return the vocal part of A and the instrumental part of B.
-        return vocals_a, instrumental_b
-    # Without stems, convert both whole songs to wav files for rubberband.
-    whole_a = os.path.join(work_folder, "whole_a.wav")
-    # Write song A's samples as a wav.
-    soundfile.write(whole_a, load_mono(path_a), SAMPLE_RATE)
-    # Build the wav path for song B.
-    whole_b = os.path.join(work_folder, "whole_b.wav")
-    # Write song B's samples as a wav.
-    soundfile.write(whole_b, load_mono(path_b), SAMPLE_RATE)
-    # Return the two whole-song parts.
-    return whole_a, whole_b
+# Define the helper that prepares the two parts to be mixed, per the vocal choices,
+# returning each part's path and its mixing gain.
+def prepare_parts(path_a, path_b, work_folder, vocals_a, vocals_b):
+    # When both songs keep their vocals, blend the two full songs (no separation needed).
+    if vocals_a and vocals_b:
+        # Prepare both whole songs.
+        return (whole_song_wav(path_a, work_folder, "a"),
+                whole_song_wav(path_b, work_folder, "b"),
+                PLAIN_BLEND_GAIN, PLAIN_BLEND_GAIN)
+    # Every other choice needs the stem separator; verify it is installed.
+    if not demucs_available():
+        # Raise the error the faces will show the user.
+        raise RuntimeError("Vocal selection needs Demucs, which is not installed; "
+                           "install with: pip3 install demucs")
+    # Prepare part A: its vocal stem when chosen, otherwise its instrumental.
+    part_a = song_part(path_a, work_folder, vocals_a)
+    # Prepare part B the same way.
+    part_b = song_part(path_b, work_folder, vocals_b)
+    # A lone vocal rides on top; an instrumental sits ducked beneath a vocal.
+    gain_a = VOCAL_GAIN if vocals_a else INSTRUMENTAL_GAIN
+    # Choose part B's gain the same way, but two instrumentals blend evenly.
+    gain_b = VOCAL_GAIN if vocals_b else (
+        PLAIN_BLEND_GAIN if not vocals_a else INSTRUMENTAL_GAIN)
+    # Two instrumentals also even out part A's gain.
+    gain_a = PLAIN_BLEND_GAIN if (not vocals_a and not vocals_b) else gain_a
+    # Return both parts with their gains.
+    return part_a, part_b, gain_a, gain_b
+
+
+# Define a helper that writes one whole song as a wav for rubberband.
+def whole_song_wav(path, work_folder, tag):
+    # Build the wav path for this song.
+    whole = os.path.join(work_folder, "whole_" + tag + ".wav")
+    # Write the song's samples as a wav.
+    soundfile.write(whole, load_mono(path), SAMPLE_RATE)
+    # Return the wav path.
+    return whole
+
+
+# Define a helper that returns one song's vocal stem or instrumental stem.
+def song_part(path, work_folder, want_vocals):
+    # Separate the song into its vocal and instrumental stems.
+    vocals, instrumental = separate_stems(path, work_folder)
+    # Return the stem this song was asked for.
+    return vocals if want_vocals else instrumental
 
 
 # Define the helper that aligns the two conformed parts at their first beats and mixes them.
-def mix_parts(conformed_a, conformed_b, record_a, record_b, ratio_a, ratio_b, use_stems):
+def mix_parts(conformed_a, conformed_b, record_a, record_b, ratio_a, ratio_b, gain_a, gain_b):
     # Load the conformed part A.
     samples_a = load_mono(conformed_a)
     # Load the conformed part B.
@@ -193,10 +230,6 @@ def mix_parts(conformed_a, conformed_b, record_a, record_b, ratio_a, ratio_b, us
     samples_b = trim_to_first_beat(samples_b, record_b, ratio_b)
     # Use the shorter part's length for the mix.
     length = min(len(samples_a), len(samples_b))
-    # Choose the gains: ducked stems, or an even blend of whole songs.
-    gain_a = VOCAL_GAIN if use_stems else PLAIN_BLEND_GAIN
-    # Choose the gain for part B.
-    gain_b = INSTRUMENTAL_GAIN if use_stems else PLAIN_BLEND_GAIN
     # Mix the aligned parts at the chosen gains.
     mix = samples_a[:length] * gain_a + samples_b[:length] * gain_b
     # Keep the mix inside the legal sample range.
