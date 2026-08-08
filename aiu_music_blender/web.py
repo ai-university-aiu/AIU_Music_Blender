@@ -12,7 +12,7 @@ from .ingest import cache_directory, local_audio_path
 # Import the engine's analysis function and cache key.
 from .analysis import analyze_song, cache_key
 # Import the engine's mash-up renderer.
-from .mashup import render_mashup, render_instrumental
+from .mashup import render_mashup, render_instrumental, render_beats
 
 # Create the Flask application, pointing at our templates folder.
 application = Flask(__name__, template_folder="templates")
@@ -159,6 +159,27 @@ def export_route(key, file_format):
     # Send the file as a browser download with a friendly name.
     return send_file(converted, as_attachment=True,
                      download_name="aiu_music_blender_" + key[:8] + "." + file_format)
+
+
+# Define the route that extracts only the beat (the drums stem) from one song.
+@application.route("/beats", methods=["POST"])
+def beats_route():
+    # Resolve the song from its upload or its link.
+    path = resolve_song("file", "input")
+    # Name the cached beat-only track by the source song's cache key.
+    output_path = os.path.join(cache_directory(), "beats_" + cache_key(path) + ".wav")
+    # Extract the beat only if this song's drums are not already cached.
+    if not os.path.isfile(output_path):
+        # Render the beat-only track.
+        render_beats(path, output_path)
+    # Analyze the beat-only track so it can play in the infinite engine.
+    record = analyze_song(output_path)
+    # Remember the track's audio for the audio route.
+    key = cache_key(output_path)
+    # Store the mapping.
+    AUDIO_PATHS[key] = output_path
+    # Return the playable record.
+    return jsonify(dict(record, audio_key=key))
 
 
 # Define the function that starts the localhost-only server.

@@ -227,6 +227,52 @@
       <button id="save_mp3_three" disabled>SAVE TO MP3</button>
     </div>
   </div>
+
+  <!-- The fourth big rounded-corner group rectangle: one song, beat only, blended. -->
+  <div class="group">
+    <!-- The title inside the top of the rectangle. -->
+    <h2>AIU Beat Extractor Blender</h2>
+    <!-- Row one: the song's YouTube link, extracted and analyzed on Enter or button press. -->
+    <div class="row">
+      <label for="beats_input">YouTube URL:</label>
+      <input type="text" id="beats_input" size="34"
+             placeholder="https://www.youtube.com/watch?v=...">
+      <button id="beats_button">Extract beat &amp; analyze</button>
+    </div>
+    <!-- Row two: the song as a local file instead (the file wins if both are given). -->
+    <div class="row">
+      <input type="file" id="beats_file" accept="audio/*">
+    </div>
+    <!-- Row three: the beat extractor's own chaos label, slider, and live value. -->
+    <div class="row">
+      <label for="chaos_four">Chaos (jump probability):</label>
+      <input type="range" id="chaos_four" min="0" max="1" step="0.05" value="0.25"
+             title="How likely each beat is to jump to a look-alike beat: 0.0 never, 1.0 always.">
+      <span id="chaos_four_value">0.25</span>
+    </div>
+    <!-- Row four: the beat extractor's own start and stop. -->
+    <div class="row">
+      <button id="play_four_button" disabled>Play Forever</button>
+      <button id="stop_four_button" disabled>Stopped</button>
+    </div>
+    <!-- Show what the pipeline found in the extracted beat, one card per fact. -->
+    <div class="cards" id="cards_four">
+      <div class="card"><h3>Tempo</h3><p id="tempo_value_four"></p></div>
+      <div class="card"><h3>Key</h3><p id="key_value_four"></p></div>
+      <div class="card"><h3>Beats</h3><p id="beats_value_four"></p></div>
+      <div class="card"><h3>Jump Edges</h3><p id="edges_value_four"></p></div>
+      <div class="card"><h3>Length</h3><p id="length_value_four"></p></div>
+      <div class="card"><h3>Vocals</h3><p id="vocal_value_four"></p></div>
+    </div>
+    <!-- Report the beat extraction progress here. -->
+    <div id="beats_status">This box extracts ONLY THE BEAT (the drums) from the track
+      given, before it is fed to the blender.</div>
+    <!-- The bottom row: save this rectangle's beat-only track to the local filesystem. -->
+    <div class="row">
+      <button id="save_wav_four" disabled>SAVE TO WAV</button>
+      <button id="save_mp3_four" disabled>SAVE TO MP3</button>
+    </div>
+  </div>
   <!-- Draw the classic arc diagram on this canvas. -->
   <canvas id="arc_canvas" width="900" height="520"></canvas>
 
@@ -320,6 +366,20 @@
       // Write the slider's value, always with two decimals, into its value label.
       chaosThreeValue.textContent = parseFloat(chaosThreeSlider.value).toFixed(2);
     });
+    // Find the beat extractor rectangle's elements.
+    const beatsInput = document.getElementById("beats_input");
+    const beatsFile = document.getElementById("beats_file");
+    const beatsButton = document.getElementById("beats_button");
+    const beatsStatus = document.getElementById("beats_status");
+    const chaosFourSlider = document.getElementById("chaos_four");
+    const chaosFourValue = document.getElementById("chaos_four_value");
+    const playFourButton = document.getElementById("play_four_button");
+    const stopFourButton = document.getElementById("stop_four_button");
+    // Whenever the beat extractor's slider moves, show its current value beside it.
+    chaosFourSlider.addEventListener("input", () => {
+      // Write the slider's value, always with two decimals, into its value label.
+      chaosFourValue.textContent = parseFloat(chaosFourSlider.value).toFixed(2);
+    });
     // The slider the running walk reads its chaos from (set by whichever Play was pressed).
     let activeChaosSlider = chaosSlider;
 
@@ -327,9 +387,10 @@
     const saveButtons = {
       one: [document.getElementById("save_wav_one"), document.getElementById("save_mp3_one")],
       two: [document.getElementById("save_wav_two"), document.getElementById("save_mp3_two")],
-      three: [document.getElementById("save_wav_three"), document.getElementById("save_mp3_three")]};
+      three: [document.getElementById("save_wav_three"), document.getElementById("save_mp3_three")],
+      four: [document.getElementById("save_wav_four"), document.getElementById("save_mp3_four")]};
     // The audio key each rectangle most recently produced (nothing yet).
-    const saveKeys = { one: null, two: null, three: null };
+    const saveKeys = { one: null, two: null, three: null, four: null };
 
     // Arm one rectangle's save buttons for the track it just produced.
     function armSave(rectangle, audioKey) {
@@ -393,6 +454,8 @@
       playTwoButton.disabled = false;
       // Enable the instrumental rectangle's play button too.
       playThreeButton.disabled = false;
+      // Enable the beat extractor rectangle's play button too.
+      playFourButton.disabled = false;
     }
 
     // When a file is chosen, send it to the local server for analysis.
@@ -673,7 +736,7 @@
     function setButtonsWalking(nowWalking) {
       // Walk every play button with its partner stop button.
       [[playButton, stopButton], [playTwoButton, stopTwoButton],
-       [playThreeButton, stopThreeButton]].forEach(([play, stop]) => {
+       [playThreeButton, stopThreeButton], [playFourButton, stopFourButton]].forEach(([play, stop]) => {
         // A running walk disables play and arms stop; a stopped walk does the reverse.
         play.disabled = nowWalking;
         // Label the play button with its state.
@@ -723,12 +786,79 @@
     playTwoButton.addEventListener("click", () => startWalk(chaosTwoSlider));
     // The Instrumental Blender's play starts a walk steered by ITS own slider.
     playThreeButton.addEventListener("click", () => startWalk(chaosThreeSlider));
+    // The Beat Extractor Blender's play starts a walk steered by ITS own slider.
+    playFourButton.addEventListener("click", () => startWalk(chaosFourSlider));
     // Any rectangle's stop ends the walk.
     stopButton.addEventListener("click", stopWalk);
     // The mash-up rectangle's stop does the same.
     stopTwoButton.addEventListener("click", stopWalk);
     // The instrumental rectangle's stop does the same.
     stopThreeButton.addEventListener("click", stopWalk);
+    // The beat extractor rectangle's stop does the same.
+    stopFourButton.addEventListener("click", stopWalk);
+
+    // Extract only the beat from the given song and load it into the shared player.
+    async function analyzeBeats() {
+      // Take the pasted link.
+      const link = beatsInput.value.trim();
+      // Take the chosen file (a chosen file wins over a pasted link).
+      const file = beatsFile.files[0];
+      // Ask again when neither a file nor a link was given.
+      if (!link && !file) {
+        // Explain what is needed.
+        beatsStatus.textContent = "Give the song a link or a file first.";
+        // Stop here.
+        return;
+      }
+      // Show the work on the button itself.
+      beatsButton.disabled = true;
+      // Change the button label to the state, with the spinning working indicator.
+      beatsButton.innerHTML = '<span class="spinner"></span>Extracting...';
+      // Tell the user the download, extraction, and analysis are running.
+      beatsStatus.textContent = "Fetching the song, extracting ONLY THE BEAT "
+        + "(a few minutes the first time), then analyzing...";
+      // Guard the whole round trip so every failure is shown, never silent.
+      try {
+        // Build the form carrying the song.
+        const form = new FormData();
+        // Attach the song as a file when chosen, otherwise as its link.
+        if (file) form.append("file", file); else form.append("input", link);
+        // Post the song to the beats route.
+        const answer = await fetch("/beats", { method: "POST", body: form });
+        // Refuse gracefully if the server reported a problem.
+        if (!answer.ok) { beatsStatus.textContent = "Extraction failed - check the input."; return; }
+        // Unwrap the beat-only record.
+        const beatsRecord = await answer.json();
+        // Load the beat-only record into the shared player.
+        await loadRecord(beatsRecord);
+        // Fill the Beat Extractor's metric cards.
+        showMetrics("four", beatsRecord);
+        // Arm the Beat Extractor's save buttons for this track.
+        armSave("four", beatsRecord.audio_key);
+        // Report success in this rectangle.
+        beatsStatus.textContent = "Beat extracted! The drums are loaded "
+          + "- press Play Forever.";
+      // Surface any network or server failure.
+      } catch (problem) {
+        // Show the failure instead of doing nothing.
+        beatsStatus.textContent = "Could not reach the local server: " + problem;
+      // Always restore the button, success or failure.
+      } finally {
+        // Re-enable the button.
+        beatsButton.disabled = false;
+        // Restore the button label.
+        beatsButton.textContent = "Extract beat & analyze";
+      }
+    }
+    // Extract when the button is pressed.
+    beatsButton.addEventListener("click", analyzeBeats);
+    // Extract when Enter is pressed in the box.
+    beatsInput.addEventListener("keydown", (key) => {
+      // React only to the Enter key.
+      if (key.key === "Enter") analyzeBeats();
+    });
+    // Extract when a file is chosen.
+    beatsFile.addEventListener("change", () => { if (beatsFile.files[0]) analyzeBeats(); });
 
     // Strip the vocals from the pasted song and load the instrumental into the player.
     async function analyzeInstrumental() {

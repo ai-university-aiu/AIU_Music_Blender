@@ -94,6 +94,34 @@ def separate_stems(audio_path, work_folder):
             os.path.join(stem_folder, "no_vocals.wav"))
 
 
+# Define a helper that separates a song into all four stems and returns the drums path.
+def separate_drums(audio_path, work_folder):
+    # Run Demucs in full four-stem mode (drums, bass, other, vocals) into the work folder.
+    subprocess.run(["python3", "-m", "demucs", "-o", work_folder, audio_path],
+                   check=True, capture_output=True)
+    # Name the song's stem folder the way Demucs names it.
+    song_name = os.path.splitext(os.path.basename(audio_path))[0]
+    # Return the drums stem's path.
+    return os.path.join(work_folder, "htdemucs", song_name, "drums.wav")
+
+
+# Define the function that extracts ONLY THE BEAT (the drums stem) from one song.
+def render_beats(path, output_path):
+    # Verify the stem separator is installed.
+    if not demucs_available():
+        # Raise the error the faces will show the user.
+        raise RuntimeError("Beat extraction needs Demucs, which is not installed; "
+                           "install with: pip3 install demucs")
+    # Do the separation work in a temporary folder that cleans itself up.
+    with tempfile.TemporaryDirectory() as work_folder:
+        # Separate the song and keep only its drums stem.
+        drums = separate_drums(path, work_folder)
+        # Write the beat-only track at the engine sample rate.
+        soundfile.write(output_path, load_mono(drums), SAMPLE_RATE)
+    # Return where the beat-only track was written.
+    return output_path
+
+
 # Define a helper that loads a wav as mono samples at the engine sample rate.
 def load_mono(path):
     # Load the file with the analysis loader, which resamples and folds to mono.
