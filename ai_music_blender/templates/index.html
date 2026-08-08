@@ -11,8 +11,20 @@
     body { background: #3a0000; color: #ffce59; font-family: sans-serif; text-align: center; }
     /* Style the headline. */
     h1 { color: #ff933a; margin-bottom: 0.2em; }
-    /* Style the controls block. */
-    .controls { margin: 1em; }
+    /* Style the controls block as one red group rectangle. */
+    .controls { margin: 1em auto; max-width: 640px; padding: 0.8em;
+                border: 1px solid #c02b18; border-radius: 10px; }
+    /* Dim disabled buttons so their state is visible at a glance. */
+    button:disabled { opacity: 0.45; }
+    /* Style the info card row. */
+    .cards { display: flex; justify-content: center; gap: 1em; margin: 0.8em; }
+    /* Style each info card. */
+    .card { background: #590000; border: 1px solid #c02b18; border-radius: 10px;
+            padding: 0.6em 1.2em; min-width: 9em; display: none; }
+    /* Style the small heading inside a card. */
+    .card h3 { margin: 0 0 0.2em 0; color: #ff933a; font-size: 0.85em; }
+    /* Style the big value inside a card. */
+    .card p { margin: 0; color: #ffce59; font-size: 1.3em; }
     /* Give each control its own line, with the pieces of a row staying together. */
     .row { margin: 0.6em auto; display: flex; justify-content: center;
            align-items: center; gap: 0.5em; flex-wrap: wrap; }
@@ -27,25 +39,39 @@
   <!-- Show the project name. -->
   <h1>AI Music Blender</h1>
   <!-- Show the tagline. -->
-  <p>The self-hosted infinite jukebox. Nothing to deprecate. Nothing to die.</p>
+  <p>The self-hosted infinite jukebox.</p>
   <!-- Provide the song chooser and the walk controls, one control per line for narrow screens. -->
   <div class="controls">
-    <!-- Row one: let the user pick a local audio file. -->
+    <!-- Row one: let the user paste a YouTube link, analyzed on Enter or button press. -->
+    <div class="row">
+      <label for="youtube_input">YouTube URL:</label>
+      <input type="text" id="youtube_input" size="34"
+             placeholder="https://www.youtube.com/watch?v=...">
+      <button id="youtube_button">Fetch &amp; analyze</button>
+    </div>
+    <!-- Row two: let the user pick a local audio file instead. -->
     <div class="row">
       <input type="file" id="file_input" accept="audio/*">
     </div>
-    <!-- Row two: the chaos label, slider, and live value, kept together on one line. -->
+    <!-- Row three: the chaos label, slider, and live value, kept together on one line. -->
     <div class="row">
       <label for="chaos">Chaos (jump probability):</label>
       <input type="range" id="chaos" min="0" max="1" step="0.05" value="0.25"
              title="How likely each beat is to jump to a look-alike beat: 0.0 never, 1.0 always.">
       <span id="chaos_value">0.25</span>
     </div>
-    <!-- Row three: start and stop the infinite walk. -->
+    <!-- Row four: start and stop the infinite walk. -->
     <div class="row">
       <button id="play_button" disabled>Play forever</button>
-      <button id="stop_button" disabled>Stop</button>
+      <button id="stop_button" disabled>Stopped</button>
     </div>
+  </div>
+  <!-- Show what the local pipeline found, one card per fact. -->
+  <div class="cards">
+    <!-- The tempo info card. -->
+    <div class="card" id="tempo_card"><h3>Tempo</h3><p id="tempo_value"></p></div>
+    <!-- The key info card. -->
+    <div class="card" id="key_card"><h3>Key</h3><p id="key_value"></p></div>
   </div>
   <!-- Report progress and results here. -->
   <div id="status">Choose a song to analyze it locally.</div>
@@ -77,6 +103,42 @@
     const canvas = document.getElementById("arc_canvas");
     const paint = canvas.getContext("2d");
 
+    // Find the new page elements: the YouTube row and the info cards.
+    const youtubeInput = document.getElementById("youtube_input");
+    const youtubeButton = document.getElementById("youtube_button");
+    const tempoCard = document.getElementById("tempo_card");
+    const tempoValue = document.getElementById("tempo_value");
+    const keyCard = document.getElementById("key_card");
+    const keyValue = document.getElementById("key_value");
+
+    // Finish any analysis: keep the record, decode the audio, fill the cards, draw the arcs.
+    async function finishAnalysis(answer) {
+      // Refuse gracefully if the server reported a problem.
+      if (!answer.ok) { statusLine.textContent = "Analysis failed - check the input."; return; }
+      // Keep the analysis record.
+      record = await answer.json();
+      // Fetch the audio bytes back from the server.
+      const audioBytes = await (await fetch("/audio/" + record.audio_key)).arrayBuffer();
+      // Create the audio context on first use.
+      audioContext = audioContext || new AudioContext();
+      // Decode the audio for beat-accurate playback.
+      audioBuffer = await audioContext.decodeAudioData(audioBytes);
+      // Fill and show the tempo card.
+      tempoValue.textContent = record.tempo.toFixed(1) + " BPM";
+      tempoCard.style.display = "block";
+      // Fill and show the key card.
+      keyValue.textContent = record.key.tonic + " " + record.key.mode
+        + " (" + record.key.camelot + ")";
+      keyCard.style.display = "block";
+      // Report the rest on the status line.
+      statusLine.textContent = record.beats.length + " beats, "
+        + record.graph.flat().length + " jump edges. Ready.";
+      // Draw the arc diagram.
+      drawArcs(-1);
+      // Enable the play button.
+      playButton.disabled = false;
+    }
+
     // When a file is chosen, send it to the local server for analysis.
     fileInput.addEventListener("change", async () => {
       // Take the chosen file.
@@ -89,24 +151,31 @@
       const form = new FormData();
       // Attach the file.
       form.append("file", file);
-      // Post the file to the analyze route.
-      const answer = await fetch("/analyze", { method: "POST", body: form });
-      // Keep the analysis record.
-      record = await answer.json();
-      // Fetch the audio bytes back from the server.
-      const audioBytes = await (await fetch("/audio/" + record.audio_key)).arrayBuffer();
-      // Create the audio context on first use.
-      audioContext = audioContext || new AudioContext();
-      // Decode the audio for beat-accurate playback.
-      audioBuffer = await audioContext.decodeAudioData(audioBytes);
-      // Report what the pipeline found.
-      statusLine.textContent = "Tempo " + record.tempo.toFixed(1) + " BPM, key "
-        + record.key.tonic + " " + record.key.mode + ", " + record.beats.length
-        + " beats, " + record.graph.flat().length + " jump edges.";
-      // Draw the arc diagram.
-      drawArcs(-1);
-      // Enable the play button.
-      playButton.disabled = false;
+      // Post the file to the analyze route and finish.
+      finishAnalysis(await fetch("/analyze", { method: "POST", body: form }));
+    });
+
+    // Send a pasted YouTube link to the local server for download and analysis.
+    async function analyzeYoutube() {
+      // Take the pasted link.
+      const link = youtubeInput.value.trim();
+      // Do nothing when the box is empty.
+      if (!link) return;
+      // Tell the user the download and analysis are running.
+      statusLine.textContent = "Downloading locally, then analyzing...";
+      // Build the form carrying the link.
+      const form = new FormData();
+      // Attach the link as the input.
+      form.append("input", link);
+      // Post the link to the analyze route and finish.
+      finishAnalysis(await fetch("/analyze", { method: "POST", body: form }));
+    }
+    // Analyze the link when the button is pressed.
+    youtubeButton.addEventListener("click", analyzeYoutube);
+    // Analyze the link when Enter is pressed in the box.
+    youtubeInput.addEventListener("keydown", (key) => {
+      // React only to the Enter key.
+      if (key.key === "Enter") analyzeYoutube();
     });
 
     // Compute a beat's position on the diagram's baseline.
@@ -209,8 +278,9 @@
     playButton.addEventListener("click", () => {
       // Mark the walk as running.
       walking = true;
-      // Swap the button states.
-      playButton.disabled = true; stopButton.disabled = false;
+      // Swap the button states, with the labels saying what is happening.
+      playButton.disabled = true; playButton.textContent = "Playing forever...";
+      stopButton.disabled = false; stopButton.textContent = "Stop";
       // Begin at beat zero.
       playBeat(0);
     });
@@ -221,8 +291,9 @@
       walking = false;
       // Cancel any scheduled beat.
       clearTimeout(nextTimer);
-      // Swap the button states back.
-      playButton.disabled = false; stopButton.disabled = true;
+      // Swap the button states back, with the labels saying what is happening.
+      playButton.disabled = false; playButton.textContent = "Play forever";
+      stopButton.disabled = true; stopButton.textContent = "Stopped";
     });
   </script>
 </body>
