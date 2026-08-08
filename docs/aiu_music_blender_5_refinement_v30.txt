@@ -1,0 +1,312 @@
+AIU MUSIC BLENDER - DSPARCD PHASE 5 - REFINEMENT - VERSION 30
+
+Date: 2026-08-07
+
+(Version 30 supersedes version 29, now in docs/archive/; it adds Iteration 30.)
+
+
+HOW REFINEMENT WORKS ON THIS PROJECT
+
+Build in small tested steps; every improvement is recorded here, and every recorded improvement names the test that proves it.
+
+The Golden Rule is enforced as a regression: the classic-mode tests (T1 through T4 of the Specification) must stay green after every change, forever.
+
+
+ITERATION LOG
+
+Iteration 1 (2026-08-07): First working build.
+
+• The analysis pipeline, beat graph, jukebox walk, renderer, mash-up engine, and all three faces were built to Specification version 1, with the test suite of scenarios T1 through T7.
+
+• Decision refined during building: per-beat features average the frames BETWEEN beats (not at the beat instant), because a beat is a span of sound, not a point; this noticeably improves jump seamlessness on synthetic tests.
+
+• Decision refined during building: jump edges exclude the three nearest neighbor beats on each side, because trivially-adjacent jumps are inaudible non-events that crowd out interesting edges.
+
+• Decision refined during building: the walk's end-of-song fallback jumps to the BEST-MATCHING earlier beat rather than beat zero, so the loop point is musical rather than mechanical.
+
+Iteration 2 (2026-08-07): Web page chaos slider labeling, by owner request.
+
+• The chaos slider on the web page now carries a text label ("Chaos (jump probability):"), a hover tooltip explaining what the probability means, and a live numeric readout that updates as the slider is dragged.
+
+• Engine behavior is unchanged; this is a face-only change, so the Golden Rule regression is untouched by construction, and the web tests (scenario T6) stay green.
+
+Iteration 3 (2026-08-07): Web page control layout, by owner observation.
+
+• The owner saw the chaos label wrap onto a different line from its slider on a narrow screen, separating a label from the thing it labels.
+
+• The controls now stack one per line (song chooser, then the chaos row, then the play and stop buttons), and the chaos label, slider, and live value are held together as one flexible row that centers and wraps as a unit.
+
+• Face-only change again; the web tests (scenario T6) stay green.
+
+Iteration 4 (2026-08-07): Web page information cards, button states, and YouTube input, by owner request.
+
+• Tempo and Key info cards now appear after analysis, showing the detected beats per minute and the detected key with its Camelot code, styled as warm cards under the controls.
+
+• The Play and Stop buttons now say their state: "Play forever" becomes "Playing forever..." while walking, and "Stop" rests as "Stopped"; disabled buttons dim so state is visible at a glance.
+
+• A "YouTube URL:" text box now sits above the file chooser inside the same red group rectangle; pressing Enter or the "Fetch & analyze" button downloads the audio locally (yt-dlp) and analyzes it through the same pipeline.
+
+• The tagline "Nothing to deprecate. Nothing to die." was removed from the page at the owner's request.
+
+• Face-only changes; the web tests (scenario T6) stay green.
+
+Iteration 5 (2026-08-07): The project is renamed AIU_Music_Blender, by owner instruction.
+
+• The GitHub repository was renamed from AI_Music_Blender to AIU_Music_Blender (GitHub redirects the old name), and the local folder was renamed to match.
+
+• Every instance of "AI_Music_Blender", "AI Music Blender", and "AI MUSIC BLENDER" across the documents, code comments, web page, README, and CONSTITUTION now reads AIU; the web page heading now says "AIU Music Blender".
+
+• The lowercase engine package name (aiu_music_blender), the launcher name (aiu-music-blender), and the vendored ancestor snapshot are unchanged: the first two were not part of the instruction and keep every command working, and the vendor snapshot stays pristine by design.
+
+• The full test suite stays green after the rename.
+
+Iteration 6 (2026-08-07): The lowercase names complete the rename, by owner instruction.
+
+• The engine package is renamed ai_music_blender to aiu_music_blender, the launcher is renamed bin/ai-music-blender to bin/aiu-music-blender, and the DSPARCD Fileset document files (current and archived) are renamed to the aiu_music_blender_ prefix, all with git mv so history follows.
+
+• Every import, test, document reference, command example, and the program's own help name were updated to match; the analysis cache folder moved to ~/.cache/aiu_music_blender with its contents preserved, so no song needs re-analysis.
+
+• The vendored EternalJukebox snapshot remains pristine, as always.
+
+• The full test suite (8 tests) and the launcher help both pass after the rename.
+
+Iteration 7 (2026-08-07): The Fetch button now shows its work, by owner bug report.
+
+• The owner pasted a YouTube link, pressed Fetch & analyze, and saw nothing happen; server-side reproduction showed the pipeline itself succeeding (HTTP 200), pointing at two interface faults rather than an engine fault.
+
+• Fault one: a YouTube fetch takes a minute or more, and the only feedback was small status text; the button now disables itself and reads "Fetching..." for the whole round trip, restoring itself afterward.
+
+• Fault two: a network or server failure (for example, a web server process started before the renames and still running dead code) was silent; every failure is now caught and printed on the status line, including a reminder to check that bin/aiu-music-blender web is running.
+
+• Face-only change; the web tests (scenario T6) stay green.
+
+
+Iteration 9 (2026-08-07): No more cutting mid-vocal-phrase, by owner instruction, after the owner heard jumps chopping words in half.
+
+• Context matching: each pair's similarity distance now blends in the distances of the beats that FOLLOW them (one ahead at weight 0.6, two ahead at weight 0.3), so a jump prefers a landing whose continuation also matches; jumps migrate to phrase boundaries on their own.
+
+• Vocal awareness: the pipeline now measures per-beat vocal activity (harmonic energy in the 200 to 4000 Hertz band, via harmonic-percussive separation), stores it in the analysis record, and penalizes any jump into or out of a strongly singing beat, scaled to each song's own typical distance; the walker cuts on the breath, not on the word.
+
+• Sample-accurate web playback: the web page now schedules every beat on the Web Audio clock with a lookahead pump, instead of the drifting general-purpose timer; the per-beat gaps and smears are gone, and the chaos slider stays live.
+
+• The analysis record format is now version 2 (with the per-beat vocal list); older caches re-analyze automatically on first use, per the versioned-record design in the Architecture.
+
+• Measured on the owner's test song: jump-capable beats average 0.27 vocal activity against 0.34 for all beats - the graph's edges have already moved away from the singing.
+
+• The full test suite (8 tests) stays green.
+
+Iteration 10 (2026-08-07): The two-rectangle web layout, the mash-up controls, and the house font, by owner instruction.
+
+• The web page is now organized as two big rounded-corner group rectangles: "AIU Song Blender" (YouTube input, file chooser, chaos slider, play and stop, with the tempo card, key card, and the beats-and-edges notice moved INSIDE the rectangle), and below it "AIU Mash-Up Blender" (SONG-1 and SONG-2 YouTube inputs, a Blend button, and an honest status line).
+
+• Blending in the web page posts both links to the existing /mashup route; the finished mash-up loads straight into the Song Blender above - cards, arcs, and Play forever - so a blend can immediately play forever.
+
+• The house font, Source Code Pro (Adobe's open-source SIL-licensed face), is vendored into aiu_music_blender/static/fonts/ with its license and served from our OWN server, applied to all text including buttons and inputs; no outside font fetch at page load, per the self-hosting principle.
+
+• The web tests (scenario T6) stay green.
+
+Iteration 11 (2026-08-07): A spinning working indicator on the Blending button, by owner request.
+
+• While a blend runs, the button now shows a small spinning gold ring beside the word "Blending..." - drawn and animated purely with our own page styling (no images, no outside resources), so long blends visibly show the machine is working.
+
+• The button restores its plain label when the blend ends, success or failure; the web tests (scenario T6) stay green.
+
+Iteration 12 (2026-08-07): The spinner joins the Fetch button too, by owner approval.
+
+• The Fetch & analyze button in the Song Blender rectangle now shows the same spinning gold ring beside "Fetching..." while a download and analysis run, restoring its plain label when the work ends.
+
+• Same self-hosted styling as Iteration 11; the web tests (scenario T6) stay green.
+
+Iteration 13 (2026-08-07): Independent per-song vocal checkboxes, by owner instruction, so mash-ups need never have conflicting, overlapping, or simultaneous vocals.
+
+• The mash-up engine now takes an independent vocal choice for each song: both on gives the plain full-song blend; one on gives that song's vocal over the other's Demucs-separated instrumental (overlap impossible by construction); both off gives a karaoke blend of the two instrumentals.
+
+• The AIU Mash-Up Blender rectangle carries a "vocals" checkbox beside each song's link - SONG-1 checked and SONG-2 unchecked by default, the classic one-vocal mash-up - and the honest report now states which vocals are in the blend.
+
+• The older command line --stems flag still works, translated to SONG-1 vocals over SONG-2 instrumental; the engine's report gained vocals_a and vocals_b fields.
+
+• Any choice needing separation requires Demucs and warns about the extra minutes; the full test suite (8 tests) stays green.
+
+Iteration 14 (2026-08-07): The Mash-Up Blender gets its own walk controls, by owner instruction, so one rectangle covers one use.
+
+• The AIU Mash-Up Blender rectangle now carries its own chaos slider with live value, and its own Play Forever and Stop buttons, so a user who blends never has to leave the rectangle to listen.
+
+• Both rectangles drive the ONE shared player: whichever Play Forever is pressed steers the walk with ITS OWN slider (read live while playing), either Stop ends it, and the two button pairs mirror each other's state so the page never shows a contradiction.
+
+• Both rectangles' buttons now read in mixed case: "Play Forever", "Playing Forever...", "Stop", "Stopped".
+
+• Face-only change; the web tests (scenario T6) stay green.
+
+Iteration 15 (2026-08-07): Both-vocals-checked now APPENDS, by owner instruction.
+
+• When both vocal checkboxes are checked, the engine no longer overlays the two full songs; it appends SONG-2 (with vocals) onto the end of SONG-1 (with vocals) - both tempo-conformed to the common tempo and key-aligned - joined by a half-second equal-power seam, making one big long song.
+
+• That long song then feeds the blender like any other: its beat graph spans BOTH songs, so the infinite walk drifts between them through harmonically compatible sections - the vision document's "infinite mash-up radio" in its purest form.
+
+• The report gained a mode field ("append" or "mix"), and the web page says which happened; the overlay behaviors of the other three checkbox combinations are unchanged.
+
+• Proven end to end on synthetic songs (two twenty-second songs became one 39.5-second long song), and the full test suite (8 tests) stays green.
+
+Iteration 16 (2026-08-07): Both-boxes-unchecked now makes the entire track instrumental only, by owner instruction.
+
+• With neither vocal checkbox checked, the engine now Demucs-separates BOTH songs, keeps only their instrumental stems, and appends them end to end - the same one-big-long-song shape as both-boxes-checked, but with no vocals anywhere in the track.
+
+• The append rule is now symmetrical: matching choices (both on, or both off) append one long song - with vocals, or vocal-free - while mismatched choices overlay one song's vocal on the other's instrumental.
+
+• The web page announces the vocal-free append before and after the work, and warns that stem separation adds a few minutes.
+
+• The full test suite (8 tests) stays green.
+
+Iteration 17 (2026-08-07): Both-boxes-unchecked corrected to an instrumental BLEND, by owner clarification.
+
+• The owner clarified the intended both-off behavior: step one, remove the vocals from both songs (Demucs); step two, BLEND the two now-instrumental tracks on top of each other into a single mash-up - no appending.
+
+• Iteration 16's append-both-instrumentals behavior is reverted; appending is once again exclusive to both-boxes-checked. The blend uses the even instrumental gains from Iteration 13.
+
+• The web page's messages now say "blending the two instrumentals into one vocal-free mash-up" before, and "Blended both instrumentals into one vocal-free mash-up!" after.
+
+• The full test suite (8 tests) stays green.
+
+Iteration 18 (2026-08-07): The third rectangle, the AIU Vocal to Instrumental Blender, by owner instruction.
+
+• A third big rounded-corner rectangle sits below the first two, titled "AIU Vocal to Instrumental Blender" (renamed from "AIU Instrumental Blender" mid-build by the owner): one YouTube URL input with a Strip vocals & analyze button (spinner included), its own chaos slider with live value, and its own Play Forever and Stop buttons.
+
+• The engine gained render_instrumental (Demucs strips ALL vocals from one song), and the web face gained the /instrumental route, which caches each song's instrumental by the source's content hash so stripping runs once per song.
+
+• The stripped instrumental feeds the blender like any song - analyzed, arcs drawn, playable forever - and the third rectangle's buttons joined the shared mirrored button state, its slider steering the walk live when its Play Forever starts it.
+
+• Proven end to end: a synthetic song posted to /instrumental answered HTTP 200 with a playable analyzed record; the full test suite (8 tests) stays green.
+
+Iteration 19 (2026-08-07): SAVE TO WAV and SAVE TO MP3 buttons in every rectangle, by owner instruction.
+
+• Every large rectangle now carries, at its bottom, a SAVE TO WAV and a SAVE TO MP3 button, so a track the user likes can be saved to their local filesystem as a normal browser download.
+
+• Each rectangle's buttons save the track THAT rectangle produced (the analyzed song, the blend, or the stripped instrumental), armed the moment the rectangle produces one and disabled before that; the audio key of each rectangle's latest track is remembered independently.
+
+• The web face gained the /export route: ffmpeg converts the track to the asked-for format (cached per track and format, converted once), and it is sent as an attachment download with a friendly aiu_music_blender name.
+
+• Proven end to end: a test song exported as both formats with HTTP 200 and attachment headers (wav 430 kilobytes, mp3 39 kilobytes); the full test suite (8 tests) stays green.
+
+Iteration 20 (2026-08-07): Local file choosers for SONG-1 and SONG-2 in the Mash-Up Blender, by owner instruction.
+
+• The AIU Mash-Up Blender rectangle now offers each song a Choose File input beneath its YouTube URL row, so mash-ups can be made from local files, from links, or from one of each.
+
+• A chosen file wins over a pasted link for its song; the Blend button asks for "a link or a file" for each song before it will run.
+
+• The /mashup route gained upload handling through a shared resolve_song helper (file when sent, link otherwise), saving uploads into the cache exactly as the Song Blender's chooser does.
+
+• Proven end to end: two uploaded synthetic files blended through the route with HTTP 200; the full test suite (8 tests) stays green.
+
+Iteration 21 (2026-08-07): Each vocals checkbox moves to its own line, by owner instruction.
+
+• The SONG-1 and SONG-2 vocals checkboxes previously sat inside the YouTube URL rows, which made each look associated with that one input type; each now sits on its own line, labeled "SONG-1 vocals" and "SONG-2 vocals", below its song's URL and file rows.
+
+• The placement now says what is true: the vocal choice applies to the SONG itself, whichever way the song arrived (link or file).
+
+• Face-only change; the web tests (scenario T6) stay green.
+
+Iteration 22 (2026-08-07): The full metric card set in all three rectangles, by owner instruction.
+
+• Every rectangle now shows six metric cards for the track IT produced: Tempo (beats per minute), Key (with Camelot code), Beats, Jump Edges, Length (minutes and seconds), and Vocals (the average vocal activity of the track as a percentage - the new cool metric, straight from the per-beat vocal measurements of Iteration 9).
+
+• The cards appear when a rectangle produces a track and hold that rectangle's own numbers, so a blend's metrics sit in the Mash-Up Blender and an instrumental's in the Vocal to Instrumental Blender - where its Vocals card should satisfyingly read near zero.
+
+• The card row wraps gracefully on narrow screens; the old two-card block in the Song Blender was replaced by the shared six-card set, and the beats-and-edges text moved from the status line into the cards where it belongs.
+
+• Face-only change; the web tests (scenario T6) stay green.
+
+Iteration 23 (2026-08-07): Already-an-instrumental declarations, by owner instruction.
+
+• The Mash-Up Blender gained two checkboxes, each on its own line: "SONG-1 is already an instrumental" and "SONG-2 is already an instrumental"; a declared song is used as-is wherever its instrumental would be wanted, so the vocal-removal process is skipped for it - saving minutes and preventing double-processing of a track that has no vocals to remove.
+
+• The engine's prepare-parts step now checks for Demucs only when some song genuinely needs separation; the honest report gained already_instrumental fields, and the page's pre-blend message says when vocal removal is skipped.
+
+• Proven: a both-vocals-off blend with both songs declared instrumental completed in about one second (against minutes with separation); the full test suite (8 tests) stays green.
+
+Iteration 24 (2026-08-07): The fourth rectangle, the AIU Beat Extractor Blender, by owner instruction.
+
+• A fourth big rounded-corner rectangle sits below the other three: a YouTube URL input with an Extract beat & analyze button (spinner included, Enter key works), a Choose File input as the second input type (the file wins if both are given, and choosing a file starts extraction immediately), its own chaos slider with live value, its own Play Forever and Stop buttons, the six metric cards, and SAVE TO WAV and SAVE TO MP3 buttons - so the output played and saved is the beat only.
+
+• "The beat only" is the drums stem: the engine gained separate_drums (Demucs in full four-stem mode) and render_beats (drums stem written as the output track), and the web face gained the /beats route, which accepts a link or an upload and caches each song's extracted beat by content hash so extraction runs once per song.
+
+• The beat-only track feeds the blender like any song - analyzed, arcs drawn, playable forever with the rectangle's own chaos - and the rectangle joined the shared mirrored button state and per-rectangle save keys.
+
+• Proven end to end: a synthetic song uploaded to /beats answered HTTP 200 with a playable analyzed record; the full test suite (8 tests) stays green.
+
+Iteration 25 (2026-08-08): Three more extractor rectangles - bass, vocals, and other - by owner instruction, completing the full stem family.
+
+• The fifth, sixth, and seventh rectangles: "AIU Bass Extractor Blender" (the bass line only), "AIU Vocal Extractor Blender" (the vocal track only), and "AIU Other Extractor Blender" (the other parts - non-beat, non-bass, non-vocals - only). Each has the two input types (YouTube URL and browse-select file), its own chaos slider and Play Forever and Stop, the six metric cards, and SAVE TO WAV and SAVE TO MP3 - output, play, and save are that stem only.
+
+• Rather than triplicate the machinery, the engine's drums-only extractor was generalized into render_stem (any of Demucs's four stems), the /beats route became the drums case of a general /stem/<name> route (unknown stems refused with 400), and the three new rectangles are wired from ONE shared page pattern, each posting to its own stem.
+
+• Stem-only tracks cache by stem name and source content hash, extraction once per song per stem, and every extracted stem feeds the blender: analyzed, arcs drawn, infinitely playable.
+
+• Proven end to end: bass, vocals, and other each answered HTTP 200 with a playable record on a test song, and a made-up stem name was refused; the full test suite (8 tests) stays green.
+
+Iteration 26 (2026-08-08): The stem super-group - one extraction fills all four rectangles, by owner instruction.
+
+• Since Demucs separates every song into all four stems in ONE run, extracting any one stem now populates ALL FOUR extractor rectangles: metric cards filled, save buttons armed, and a little "ready" flag raised beside each title. The initiating rectangle's stem loads into the player; the other three are one Play Forever away.
+
+• The four stem rectangles are now visually one family: an all-encompassing super-group rectangle, titled "AIU Stem Extractor Blenders", wraps them with an explanation line ("extract any one below, and every rectangle in this family lights up ready").
+
+• Underneath: the engine gained render_all_stems (one Demucs run writes every asked-for stem), the web face gained the /stems route returning all four playable records, the per-stem /stem/<name> route now rides the same one-run helper (so even it fills every cache), and the beat rectangle's bespoke wiring was folded into the one shared extractor pattern.
+
+• Proven: one /stems call returned all four stems from one separation, and a second call answered from cache in under a tenth of a second; the full test suite (8 tests) stays green.
+
+Iteration 27 (2026-08-08): Each rectangle plays ITS OWN track, by owner bug report.
+
+• The bug: the page had ONE player track, so after a stem extraction the drums played from all four stem rectangles' Play Forever buttons - whatever loaded last played everywhere.
+
+• The fix: every rectangle now remembers its own produced track (drums in the beat rectangle, bass in the bass rectangle, vocals in the vocal rectangle, other in the other rectangle - and likewise the song, blend, and instrumental in rectangles one through three), and pressing a rectangle's Play Forever switches the player to THAT track before walking, steered by that rectangle's own chaos slider.
+
+• Decoded audio is cached per track, so switching rectangles is instant; a rectangle's play button arms only when that rectangle actually holds a track, instead of all buttons arming when anything loaded.
+
+• The web tests (scenario T6) stay green.
+
+Iteration 28 (2026-08-08): Click the visualizer to continue play from that spot, by owner request.
+
+• Clicking anywhere on the arc diagram lands on the nearest beat: a running walk silences its queued beats and continues from the clicked beat within a fraction of a second (chaos still live); an idle player with a loaded track starts playing forever from the clicked beat.
+
+• While hovering, an outlined ember ring shows the beat a click would land on, and the cursor becomes the pointing hand over the visualizer.
+
+• Under the hood, the walk-starting machinery was factored into beginWalking(fromBeat), shared by Play Forever (beat zero) and by clicks (the clicked beat); clicks land on beat boundaries by design, since jumps, arcs, and crossfades all live on the beat grid.
+
+• Face-only change; the web tests (scenario T6) stay green.
+
+Iteration 29 (2026-08-08): Jump on phrases, not single beats, by owner request - in all seven functional groups.
+
+• Every rectangle gained a "Jump on phrases, not single beats" checkbox, checked by default, beneath its chaos slider. A phrase is an 8-beat musical sentence (two 4-beat bars); with the box checked, the walk may only jump as a phrase ends, so musical thoughts finish before the walk wanders. Unchecked restores the classic any-beat jumping.
+
+• Like the chaos slider, the checkbox is per-rectangle and read LIVE: whichever rectangle started the walk, its box governs, and toggling it mid-play takes effect at the next decision.
+
+• The gate composes with everything already there: the graph's bar-position alignment, vocal-cut penalties, and context matching still choose WHERE jumps land; the phrase box decides WHEN jumping is allowed at all. Click-to-seek is unaffected (a deliberate click may land anywhere).
+
+• Face-only change; the web tests (scenario T6) stay green.
+
+Iteration 30 (2026-08-08): A Phrases metric card in every group, by owner request.
+
+• Every rectangle's card row gained a "Phrases" card beside Beats: the count of complete 8-beat musical sentences in the track (beats divided by eight, rounded down) - the natural companion to the new jump-on-phrases option, showing how many phrase-end jump opportunities a track offers.
+
+• Face-only change; the web tests (scenario T6) stay green.
+
+PLANNED REFINEMENTS (the resume attacks, in order)
+
+• Learned beat embeddings: replace the hand-weighted MFCC-plus-chroma distance with a small contrastive model; the analysis-record interface does not change (the Architecture planned for this).
+
+• Reinforcement Learning walk policy: reward smooth transitions and coverage, penalize stuck loops; replaces the inside of the walker only.
+
+• Natural-language steering: map "keep it mellow" to chaos, energy bias, and section weights.
+
+• Mashability model: learn compatibility scoring from rendered examples, replacing the rule-based tempo-and-Camelot score.
+
+• Generative patching (stretch): synthesize short transitions where no good jump exists.
+
+
+REFINEMENT REFLECTION
+
+The wickedest problem so far is that "sounds seamless" is perceptual: the similarity threshold was set by ear on rendered walks, and the honest fix is the learned-embeddings refinement, which makes the human ear the training signal instead of a hand-tuned constant.
+
+Iteration 2 taught a small interface lesson: a probability control without a visible number invites guessing; showing the value costs three lines and removes the guess.
+
+
+END OF REFINEMENT VERSION 30

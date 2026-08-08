@@ -110,6 +110,7 @@
       <div class="card"><h3>Tempo</h3><p id="tempo_value_one"></p></div>
       <div class="card"><h3>Key</h3><p id="key_value_one"></p></div>
       <div class="card"><h3>Beats</h3><p id="beats_value_one"></p></div>
+      <div class="card"><h3>Phrases</h3><p id="phrases_value_one"></p></div>
       <div class="card"><h3>Jump Edges</h3><p id="edges_value_one"></p></div>
       <div class="card"><h3>Length</h3><p id="length_value_one"></p></div>
       <div class="card"><h3>Vocals</h3><p id="vocal_value_one"></p></div>
@@ -197,6 +198,7 @@
       <div class="card"><h3>Tempo</h3><p id="tempo_value_two"></p></div>
       <div class="card"><h3>Key</h3><p id="key_value_two"></p></div>
       <div class="card"><h3>Beats</h3><p id="beats_value_two"></p></div>
+      <div class="card"><h3>Phrases</h3><p id="phrases_value_two"></p></div>
       <div class="card"><h3>Jump Edges</h3><p id="edges_value_two"></p></div>
       <div class="card"><h3>Length</h3><p id="length_value_two"></p></div>
       <div class="card"><h3>Vocals</h3><p id="vocal_value_two"></p></div>
@@ -245,6 +247,7 @@
       <div class="card"><h3>Tempo</h3><p id="tempo_value_three"></p></div>
       <div class="card"><h3>Key</h3><p id="key_value_three"></p></div>
       <div class="card"><h3>Beats</h3><p id="beats_value_three"></p></div>
+      <div class="card"><h3>Phrases</h3><p id="phrases_value_three"></p></div>
       <div class="card"><h3>Jump Edges</h3><p id="edges_value_three"></p></div>
       <div class="card"><h3>Length</h3><p id="length_value_three"></p></div>
       <div class="card"><h3>Vocals</h3><p id="vocal_value_three"></p></div>
@@ -306,6 +309,7 @@
       <div class="card"><h3>Tempo</h3><p id="tempo_value_four"></p></div>
       <div class="card"><h3>Key</h3><p id="key_value_four"></p></div>
       <div class="card"><h3>Beats</h3><p id="beats_value_four"></p></div>
+      <div class="card"><h3>Phrases</h3><p id="phrases_value_four"></p></div>
       <div class="card"><h3>Jump Edges</h3><p id="edges_value_four"></p></div>
       <div class="card"><h3>Length</h3><p id="length_value_four"></p></div>
       <div class="card"><h3>Vocals</h3><p id="vocal_value_four"></p></div>
@@ -357,6 +361,7 @@
       <div class="card"><h3>Tempo</h3><p id="tempo_value_five"></p></div>
       <div class="card"><h3>Key</h3><p id="key_value_five"></p></div>
       <div class="card"><h3>Beats</h3><p id="beats_value_five"></p></div>
+      <div class="card"><h3>Phrases</h3><p id="phrases_value_five"></p></div>
       <div class="card"><h3>Jump Edges</h3><p id="edges_value_five"></p></div>
       <div class="card"><h3>Length</h3><p id="length_value_five"></p></div>
       <div class="card"><h3>Vocals</h3><p id="vocal_value_five"></p></div>
@@ -408,6 +413,7 @@
       <div class="card"><h3>Tempo</h3><p id="tempo_value_six"></p></div>
       <div class="card"><h3>Key</h3><p id="key_value_six"></p></div>
       <div class="card"><h3>Beats</h3><p id="beats_value_six"></p></div>
+      <div class="card"><h3>Phrases</h3><p id="phrases_value_six"></p></div>
       <div class="card"><h3>Jump Edges</h3><p id="edges_value_six"></p></div>
       <div class="card"><h3>Length</h3><p id="length_value_six"></p></div>
       <div class="card"><h3>Vocals</h3><p id="vocal_value_six"></p></div>
@@ -459,6 +465,7 @@
       <div class="card"><h3>Tempo</h3><p id="tempo_value_seven"></p></div>
       <div class="card"><h3>Key</h3><p id="key_value_seven"></p></div>
       <div class="card"><h3>Beats</h3><p id="beats_value_seven"></p></div>
+      <div class="card"><h3>Phrases</h3><p id="phrases_value_seven"></p></div>
       <div class="card"><h3>Jump Edges</h3><p id="edges_value_seven"></p></div>
       <div class="card"><h3>Length</h3><p id="length_value_seven"></p></div>
       <div class="card"><h3>Vocals</h3><p id="vocal_value_seven"></p></div>
@@ -520,6 +527,8 @@
       write("key", rec.key.tonic + " " + rec.key.mode + " (" + rec.key.camelot + ")");
       // Show the beat count.
       write("beats", rec.beats.length);
+      // Show the phrase count (complete 8-beat musical sentences).
+      write("phrases", Math.floor(rec.beats.length / 8));
       // Show the jump edge count (the walk's choices).
       write("edges", rec.graph.flat().length);
       // Show the track length as minutes and seconds.
