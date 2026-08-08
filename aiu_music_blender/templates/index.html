@@ -220,8 +220,8 @@
       if (!link) return;
       // Show the work on the button itself so pressing it visibly does something.
       youtubeButton.disabled = true;
-      // Change the button label to the state.
-      youtubeButton.textContent = "Fetching...";
+      // Change the button label to the state, with the little spinning working indicator.
+      youtubeButton.innerHTML = '<span class="spinner"></span>Fetching...';
       // Tell the user the download and analysis are running (this can take a minute).
       statusLine.textContent = "Downloading locally, then analyzing (can take a minute)...";
       // Guard the whole round trip so every failure is shown, never silent.
