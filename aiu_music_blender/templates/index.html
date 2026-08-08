@@ -161,14 +161,32 @@
       const link = youtubeInput.value.trim();
       // Do nothing when the box is empty.
       if (!link) return;
-      // Tell the user the download and analysis are running.
-      statusLine.textContent = "Downloading locally, then analyzing...";
-      // Build the form carrying the link.
-      const form = new FormData();
-      // Attach the link as the input.
-      form.append("input", link);
-      // Post the link to the analyze route and finish.
-      finishAnalysis(await fetch("/analyze", { method: "POST", body: form }));
+      // Show the work on the button itself so pressing it visibly does something.
+      youtubeButton.disabled = true;
+      // Change the button label to the state.
+      youtubeButton.textContent = "Fetching...";
+      // Tell the user the download and analysis are running (this can take a minute).
+      statusLine.textContent = "Downloading locally, then analyzing (can take a minute)...";
+      // Guard the whole round trip so every failure is shown, never silent.
+      try {
+        // Build the form carrying the link.
+        const form = new FormData();
+        // Attach the link as the input.
+        form.append("input", link);
+        // Post the link to the analyze route and finish.
+        await finishAnalysis(await fetch("/analyze", { method: "POST", body: form }));
+      // Surface any network or server failure on the status line.
+      } catch (problem) {
+        // Show the failure instead of doing nothing.
+        statusLine.textContent = "Could not reach the local server: " + problem
+          + " - is 'bin/aiu-music-blender web' running?";
+      // Always restore the button, success or failure.
+      } finally {
+        // Re-enable the button.
+        youtubeButton.disabled = false;
+        // Restore the button label.
+        youtubeButton.textContent = "Fetch & analyze";
+      }
     }
     // Analyze the link when the button is pressed.
     youtubeButton.addEventListener("click", analyzeYoutube);
