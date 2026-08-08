@@ -298,6 +298,10 @@
       mashupStatus.textContent = (vocalsOne.checked && vocalsTwo.checked)
         ? "Downloading, matching tempo and key, appending SONG-2 onto SONG-1 "
           + "as one big long song..."
+        : (!vocalsOne.checked && !vocalsTwo.checked)
+        ? "Downloading, matching tempo and key, removing ALL vocals "
+          + "(stems add a few minutes), appending both instrumentals "
+          + "as one long instrumental track..."
         : "Downloading, matching tempo and key, separating stems "
           + "(adds a few minutes), blending...";
       // Guard the whole round trip so every failure is shown, never silent.
@@ -322,7 +326,9 @@
         await loadRecord(blended.record);
         // Show the honest compatibility report.
         mashupStatus.textContent = (blended.report.mode === "append"
-          ? "Appended SONG-2 onto SONG-1 as one big long song! "
+          ? (blended.report.vocals_a
+             ? "Appended SONG-2 onto SONG-1 as one big long song! "
+             : "Appended both instrumentals as one long, vocal-free track! ")
           : "Blended! ")
           + "Compatibility " + blended.report.compatibility.score.toFixed(3)
           + " (stretch " + (blended.report.compatibility.stretch * 100).toFixed(1)

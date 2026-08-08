@@ -121,7 +121,9 @@ def render_mashup(path_a, path_b, output_path, use_stems=False,
     #                                      one big long song for the blender's beat graph;
     #   vocals_a True,  vocals_b False ... SONG-1's vocal over SONG-2's instrumental (classic);
     #   vocals_a False, vocals_b True .... SONG-2's vocal over SONG-1's instrumental;
-    #   vocals_a False, vocals_b False ... both instrumentals (karaoke blend).
+    #   vocals_a False, vocals_b False ... APPEND, INSTRUMENTAL ONLY: the same one big long
+    #                                      song, but built from the two instrumental stems,
+    #                                      so the entire track carries no vocals at all.
     # Translate the older stems flag when the explicit choices were not given.
     if vocals_a is None:
         # Song A keeps its vocals in both older modes.
@@ -161,12 +163,12 @@ def render_mashup(path_a, path_b, output_path, use_stems=False,
         conformed_b = os.path.join(work_folder, "conformed_b.wav")
         # Stretch part B with rubberband, with no pitch shift.
         rubberband(part_b_path, conformed_b, ratio_b, 0)
-        # With both vocals kept, append song B onto the end of song A as one long song;
-        # otherwise align and mix the two parts on top of each other.
-        if vocals_a and vocals_b:
-            # Join the two conformed full songs end to end.
+        # When the two choices agree (both vocals, or both instrumental-only), append
+        # song B onto the end of song A as one long song; otherwise overlay the parts.
+        if vocals_a == vocals_b:
+            # Join the two conformed parts end to end.
             mix = append_parts(conformed_a, conformed_b)
-        # Every other choice overlays the two parts.
+        # A single vocal overlays the other song's instrumental.
         else:
             # Load, align, and mix the two conformed parts.
             mix = mix_parts(conformed_a, conformed_b, record_a, record_b,
@@ -177,7 +179,7 @@ def render_mashup(path_a, path_b, output_path, use_stems=False,
     return {"compatibility": compatibility, "target_tempo": round(target_tempo, 2),
             "stretch_a": round(ratio_a, 4), "stretch_b": round(ratio_b, 4),
             "key_shift_applied": semitones_a, "stems": not (vocals_a and vocals_b),
-            "mode": "append" if (vocals_a and vocals_b) else "mix",
+            "mode": "append" if (vocals_a == vocals_b) else "mix",
             "vocals_a": vocals_a, "vocals_b": vocals_b, "output": output_path}
 
 
