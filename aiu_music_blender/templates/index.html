@@ -273,6 +273,142 @@
       <button id="save_mp3_four" disabled>SAVE TO MP3</button>
     </div>
   </div>
+  <!-- The AIU Bass Extractor Blender group rectangle: one song, bass stem only, blended. -->
+  <div class="group">
+    <!-- The title inside the top of the rectangle. -->
+    <h2>AIU Bass Extractor Blender</h2>
+    <!-- Row one: the song's YouTube link, extracted and analyzed on Enter or button press. -->
+    <div class="row">
+      <label for="extract_input_five">YouTube URL:</label>
+      <input type="text" id="extract_input_five" size="34"
+             placeholder="https://www.youtube.com/watch?v=...">
+      <button id="extract_button_five">Extract bass &amp; analyze</button>
+    </div>
+    <!-- Row two: the song as a local file instead (the file wins if both are given). -->
+    <div class="row">
+      <input type="file" id="extract_file_five" accept="audio/*">
+    </div>
+    <!-- Row three: this rectangle's own chaos label, slider, and live value. -->
+    <div class="row">
+      <label for="chaos_five">Chaos (jump probability):</label>
+      <input type="range" id="chaos_five" min="0" max="1" step="0.05" value="0.25"
+             title="How likely each beat is to jump to a look-alike beat: 0.0 never, 1.0 always.">
+      <span id="chaos_five_value">0.25</span>
+    </div>
+    <!-- Row four: this rectangle's own start and stop. -->
+    <div class="row">
+      <button id="play_five_button" disabled>Play Forever</button>
+      <button id="stop_five_button" disabled>Stopped</button>
+    </div>
+    <!-- Show what the pipeline found in the extracted stem, one card per fact. -->
+    <div class="cards" id="cards_five">
+      <div class="card"><h3>Tempo</h3><p id="tempo_value_five"></p></div>
+      <div class="card"><h3>Key</h3><p id="key_value_five"></p></div>
+      <div class="card"><h3>Beats</h3><p id="beats_value_five"></p></div>
+      <div class="card"><h3>Jump Edges</h3><p id="edges_value_five"></p></div>
+      <div class="card"><h3>Length</h3><p id="length_value_five"></p></div>
+      <div class="card"><h3>Vocals</h3><p id="vocal_value_five"></p></div>
+    </div>
+    <!-- Report the extraction progress here. -->
+    <div id="extract_status_five">This box extracts ONLY THE BASS LINE from the track
+      given, before it is fed to the blender.</div>
+    <!-- The bottom row: save this rectangle's stem-only track to the local filesystem. -->
+    <div class="row">
+      <button id="save_wav_five" disabled>SAVE TO WAV</button>
+      <button id="save_mp3_five" disabled>SAVE TO MP3</button>
+    </div>
+  </div>
+  <!-- The AIU Vocal Extractor Blender group rectangle: one song, vocals stem only, blended. -->
+  <div class="group">
+    <!-- The title inside the top of the rectangle. -->
+    <h2>AIU Vocal Extractor Blender</h2>
+    <!-- Row one: the song's YouTube link, extracted and analyzed on Enter or button press. -->
+    <div class="row">
+      <label for="extract_input_six">YouTube URL:</label>
+      <input type="text" id="extract_input_six" size="34"
+             placeholder="https://www.youtube.com/watch?v=...">
+      <button id="extract_button_six">Extract vocals &amp; analyze</button>
+    </div>
+    <!-- Row two: the song as a local file instead (the file wins if both are given). -->
+    <div class="row">
+      <input type="file" id="extract_file_six" accept="audio/*">
+    </div>
+    <!-- Row three: this rectangle's own chaos label, slider, and live value. -->
+    <div class="row">
+      <label for="chaos_six">Chaos (jump probability):</label>
+      <input type="range" id="chaos_six" min="0" max="1" step="0.05" value="0.25"
+             title="How likely each beat is to jump to a look-alike beat: 0.0 never, 1.0 always.">
+      <span id="chaos_six_value">0.25</span>
+    </div>
+    <!-- Row four: this rectangle's own start and stop. -->
+    <div class="row">
+      <button id="play_six_button" disabled>Play Forever</button>
+      <button id="stop_six_button" disabled>Stopped</button>
+    </div>
+    <!-- Show what the pipeline found in the extracted stem, one card per fact. -->
+    <div class="cards" id="cards_six">
+      <div class="card"><h3>Tempo</h3><p id="tempo_value_six"></p></div>
+      <div class="card"><h3>Key</h3><p id="key_value_six"></p></div>
+      <div class="card"><h3>Beats</h3><p id="beats_value_six"></p></div>
+      <div class="card"><h3>Jump Edges</h3><p id="edges_value_six"></p></div>
+      <div class="card"><h3>Length</h3><p id="length_value_six"></p></div>
+      <div class="card"><h3>Vocals</h3><p id="vocal_value_six"></p></div>
+    </div>
+    <!-- Report the extraction progress here. -->
+    <div id="extract_status_six">This box extracts ONLY THE VOCAL TRACK from the track
+      given, before it is fed to the blender.</div>
+    <!-- The bottom row: save this rectangle's stem-only track to the local filesystem. -->
+    <div class="row">
+      <button id="save_wav_six" disabled>SAVE TO WAV</button>
+      <button id="save_mp3_six" disabled>SAVE TO MP3</button>
+    </div>
+  </div>
+  <!-- The AIU Other Extractor Blender group rectangle: one song, other stem only, blended. -->
+  <div class="group">
+    <!-- The title inside the top of the rectangle. -->
+    <h2>AIU Other Extractor Blender</h2>
+    <!-- Row one: the song's YouTube link, extracted and analyzed on Enter or button press. -->
+    <div class="row">
+      <label for="extract_input_seven">YouTube URL:</label>
+      <input type="text" id="extract_input_seven" size="34"
+             placeholder="https://www.youtube.com/watch?v=...">
+      <button id="extract_button_seven">Extract other &amp; analyze</button>
+    </div>
+    <!-- Row two: the song as a local file instead (the file wins if both are given). -->
+    <div class="row">
+      <input type="file" id="extract_file_seven" accept="audio/*">
+    </div>
+    <!-- Row three: this rectangle's own chaos label, slider, and live value. -->
+    <div class="row">
+      <label for="chaos_seven">Chaos (jump probability):</label>
+      <input type="range" id="chaos_seven" min="0" max="1" step="0.05" value="0.25"
+             title="How likely each beat is to jump to a look-alike beat: 0.0 never, 1.0 always.">
+      <span id="chaos_seven_value">0.25</span>
+    </div>
+    <!-- Row four: this rectangle's own start and stop. -->
+    <div class="row">
+      <button id="play_seven_button" disabled>Play Forever</button>
+      <button id="stop_seven_button" disabled>Stopped</button>
+    </div>
+    <!-- Show what the pipeline found in the extracted stem, one card per fact. -->
+    <div class="cards" id="cards_seven">
+      <div class="card"><h3>Tempo</h3><p id="tempo_value_seven"></p></div>
+      <div class="card"><h3>Key</h3><p id="key_value_seven"></p></div>
+      <div class="card"><h3>Beats</h3><p id="beats_value_seven"></p></div>
+      <div class="card"><h3>Jump Edges</h3><p id="edges_value_seven"></p></div>
+      <div class="card"><h3>Length</h3><p id="length_value_seven"></p></div>
+      <div class="card"><h3>Vocals</h3><p id="vocal_value_seven"></p></div>
+    </div>
+    <!-- Report the extraction progress here. -->
+    <div id="extract_status_seven">This box extracts ONLY THE OTHER PARTS (non-beat, non-bass, non-vocals) from the track
+      given, before it is fed to the blender.</div>
+    <!-- The bottom row: save this rectangle's stem-only track to the local filesystem. -->
+    <div class="row">
+      <button id="save_wav_seven" disabled>SAVE TO WAV</button>
+      <button id="save_mp3_seven" disabled>SAVE TO MP3</button>
+    </div>
+  </div>
+
   <!-- Draw the classic arc diagram on this canvas. -->
   <canvas id="arc_canvas" width="900" height="520"></canvas>
 
@@ -388,9 +524,13 @@
       one: [document.getElementById("save_wav_one"), document.getElementById("save_mp3_one")],
       two: [document.getElementById("save_wav_two"), document.getElementById("save_mp3_two")],
       three: [document.getElementById("save_wav_three"), document.getElementById("save_mp3_three")],
-      four: [document.getElementById("save_wav_four"), document.getElementById("save_mp3_four")]};
+      four: [document.getElementById("save_wav_four"), document.getElementById("save_mp3_four")],
+      five: [document.getElementById("save_wav_five"), document.getElementById("save_mp3_five")],
+      six: [document.getElementById("save_wav_six"), document.getElementById("save_mp3_six")],
+      seven: [document.getElementById("save_wav_seven"), document.getElementById("save_mp3_seven")]};
     // The audio key each rectangle most recently produced (nothing yet).
-    const saveKeys = { one: null, two: null, three: null, four: null };
+    const saveKeys = { one: null, two: null, three: null, four: null,
+                       five: null, six: null, seven: null };
 
     // Arm one rectangle's save buttons for the track it just produced.
     function armSave(rectangle, audioKey) {
@@ -456,6 +596,9 @@
       playThreeButton.disabled = false;
       // Enable the beat extractor rectangle's play button too.
       playFourButton.disabled = false;
+      // Enable the three stem extractor rectangles' play buttons too.
+      ["five", "six", "seven"].forEach((rect) =>
+        { document.getElementById("play_" + rect + "_button").disabled = false; });
     }
 
     // When a file is chosen, send it to the local server for analysis.
@@ -736,7 +879,10 @@
     function setButtonsWalking(nowWalking) {
       // Walk every play button with its partner stop button.
       [[playButton, stopButton], [playTwoButton, stopTwoButton],
-       [playThreeButton, stopThreeButton], [playFourButton, stopFourButton]].forEach(([play, stop]) => {
+       [playThreeButton, stopThreeButton], [playFourButton, stopFourButton],
+       ...["five", "six", "seven"].map((rect) =>
+         [document.getElementById("play_" + rect + "_button"),
+          document.getElementById("stop_" + rect + "_button")])].forEach(([play, stop]) => {
         // A running walk disables play and arms stop; a stopped walk does the reverse.
         play.disabled = nowWalking;
         // Label the play button with its state.
@@ -859,6 +1005,80 @@
     });
     // Extract when a file is chosen.
     beatsFile.addEventListener("change", () => { if (beatsFile.files[0]) analyzeBeats(); });
+
+    // Wire each stem extractor rectangle (bass, vocals, other) from one shared pattern.
+    [["five", "bass", "the bass line"], ["six", "vocals", "the vocal track"],
+     ["seven", "other", "the other parts"]].forEach(([rect, stem, noun]) => {
+      // Find this rectangle's elements by its name.
+      const urlBox = document.getElementById("extract_input_" + rect);
+      const fileBox = document.getElementById("extract_file_" + rect);
+      const goButton = document.getElementById("extract_button_" + rect);
+      const status = document.getElementById("extract_status_" + rect);
+      const slider = document.getElementById("chaos_" + rect);
+      const sliderValue = document.getElementById("chaos_" + rect + "_value");
+      // Show the slider's live value beside it.
+      slider.addEventListener("input", () =>
+        { sliderValue.textContent = parseFloat(slider.value).toFixed(2); });
+      // This rectangle's play starts a walk steered by ITS own slider.
+      document.getElementById("play_" + rect + "_button")
+        .addEventListener("click", () => startWalk(slider));
+      // This rectangle's stop ends the walk.
+      document.getElementById("stop_" + rect + "_button")
+        .addEventListener("click", stopWalk);
+      // Extract this rectangle's stem and load it into the shared player.
+      async function extract() {
+        // Take the pasted link.
+        const link = urlBox.value.trim();
+        // Take the chosen file (a chosen file wins over a pasted link).
+        const file = fileBox.files[0];
+        // Ask again when neither was given.
+        if (!link && !file) { status.textContent = "Give the song a link or a file first."; return; }
+        // Show the work on the button itself, with the spinning working indicator.
+        goButton.disabled = true;
+        // Change the button label to the state.
+        goButton.innerHTML = '<span class="spinner"></span>Extracting...';
+        // Tell the user the download, extraction, and analysis are running.
+        status.textContent = "Fetching the song, extracting ONLY " + noun
+          + " (a few minutes the first time), then analyzing...";
+        // Guard the whole round trip so every failure is shown, never silent.
+        try {
+          // Build the form carrying the song.
+          const form = new FormData();
+          // Attach the song as a file when chosen, otherwise as its link.
+          if (file) form.append("file", file); else form.append("input", link);
+          // Post the song to the general stem route.
+          const answer = await fetch("/stem/" + stem, { method: "POST", body: form });
+          // Refuse gracefully if the server reported a problem.
+          if (!answer.ok) { status.textContent = "Extraction failed - check the input."; return; }
+          // Unwrap the stem-only record.
+          const stemRecord = await answer.json();
+          // Load the stem-only record into the shared player.
+          await loadRecord(stemRecord);
+          // Fill this rectangle's metric cards.
+          showMetrics(rect, stemRecord);
+          // Arm this rectangle's save buttons for the track.
+          armSave(rect, stemRecord.audio_key);
+          // Report success in this rectangle.
+          status.textContent = "Extracted! Only " + noun + " is loaded - press Play Forever.";
+        // Surface any network or server failure.
+        } catch (problem) {
+          // Show the failure instead of doing nothing.
+          status.textContent = "Could not reach the local server: " + problem;
+        // Always restore the button, success or failure.
+        } finally {
+          // Re-enable the button.
+          goButton.disabled = false;
+          // Restore the button label.
+          goButton.textContent = "Extract " + stem + " & analyze";
+        }
+      }
+      // Extract when the button is pressed.
+      goButton.addEventListener("click", extract);
+      // Extract when Enter is pressed in the box.
+      urlBox.addEventListener("keydown", (key) => { if (key.key === "Enter") extract(); });
+      // Extract when a file is chosen.
+      fileBox.addEventListener("change", () => { if (fileBox.files[0]) extract(); });
+    });
 
     // Strip the vocals from the pasted song and load the instrumental into the player.
     async function analyzeInstrumental() {

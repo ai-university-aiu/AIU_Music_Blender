@@ -94,32 +94,46 @@ def separate_stems(audio_path, work_folder):
             os.path.join(stem_folder, "no_vocals.wav"))
 
 
-# Define a helper that separates a song into all four stems and returns the drums path.
-def separate_drums(audio_path, work_folder):
+# Define the four stem names Demucs produces in full four-stem mode.
+STEM_NAMES = ("drums", "bass", "vocals", "other")
+
+
+# Define a helper that separates a song into all four stems and returns one stem's path.
+def separate_one_stem(audio_path, work_folder, stem_name):
     # Run Demucs in full four-stem mode (drums, bass, other, vocals) into the work folder.
     subprocess.run(["python3", "-m", "demucs", "-o", work_folder, audio_path],
                    check=True, capture_output=True)
     # Name the song's stem folder the way Demucs names it.
     song_name = os.path.splitext(os.path.basename(audio_path))[0]
-    # Return the drums stem's path.
-    return os.path.join(work_folder, "htdemucs", song_name, "drums.wav")
+    # Return the asked-for stem's path.
+    return os.path.join(work_folder, "htdemucs", song_name, stem_name + ".wav")
 
 
-# Define the function that extracts ONLY THE BEAT (the drums stem) from one song.
-def render_beats(path, output_path):
+# Define the function that extracts ONE STEM ONLY (drums, bass, vocals, or other) from a song.
+def render_stem(path, output_path, stem_name):
+    # Allow only the four real stem names.
+    if stem_name not in STEM_NAMES:
+        # Refuse anything else.
+        raise ValueError("Unknown stem: " + stem_name)
     # Verify the stem separator is installed.
     if not demucs_available():
         # Raise the error the faces will show the user.
-        raise RuntimeError("Beat extraction needs Demucs, which is not installed; "
+        raise RuntimeError("Stem extraction needs Demucs, which is not installed; "
                            "install with: pip3 install demucs")
     # Do the separation work in a temporary folder that cleans itself up.
     with tempfile.TemporaryDirectory() as work_folder:
-        # Separate the song and keep only its drums stem.
-        drums = separate_drums(path, work_folder)
-        # Write the beat-only track at the engine sample rate.
-        soundfile.write(output_path, load_mono(drums), SAMPLE_RATE)
-    # Return where the beat-only track was written.
+        # Separate the song and keep only the asked-for stem.
+        stem_path = separate_one_stem(path, work_folder, stem_name)
+        # Write the stem-only track at the engine sample rate.
+        soundfile.write(output_path, load_mono(stem_path), SAMPLE_RATE)
+    # Return where the stem-only track was written.
     return output_path
+
+
+# Define the beat-only extractor as the drums case of the general stem extractor.
+def render_beats(path, output_path):
+    # Extract the drums stem.
+    return render_stem(path, output_path, "drums")
 
 
 # Define a helper that loads a wav as mono samples at the engine sample rate.

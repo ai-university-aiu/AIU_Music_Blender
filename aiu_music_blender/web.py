@@ -12,7 +12,7 @@ from .ingest import cache_directory, local_audio_path
 # Import the engine's analysis function and cache key.
 from .analysis import analyze_song, cache_key
 # Import the engine's mash-up renderer.
-from .mashup import render_mashup, render_instrumental, render_beats
+from .mashup import render_mashup, render_instrumental, render_stem, STEM_NAMES
 
 # Create the Flask application, pointing at our templates folder.
 application = Flask(__name__, template_folder="templates")
@@ -161,18 +161,22 @@ def export_route(key, file_format):
                      download_name="aiu_music_blender_" + key[:8] + "." + file_format)
 
 
-# Define the route that extracts only the beat (the drums stem) from one song.
-@application.route("/beats", methods=["POST"])
-def beats_route():
+# Define the route that extracts one stem only (drums, bass, vocals, or other) from a song.
+@application.route("/stem/<stem_name>", methods=["POST"])
+def stem_route(stem_name):
+    # Allow only the four real stem names.
+    if stem_name not in STEM_NAMES:
+        # Refuse anything else.
+        return ("Unknown stem", 400)
     # Resolve the song from its upload or its link.
     path = resolve_song("file", "input")
-    # Name the cached beat-only track by the source song's cache key.
-    output_path = os.path.join(cache_directory(), "beats_" + cache_key(path) + ".wav")
-    # Extract the beat only if this song's drums are not already cached.
+    # Name the cached stem-only track by the stem and the source song's cache key.
+    output_path = os.path.join(cache_directory(), stem_name + "_" + cache_key(path) + ".wav")
+    # Extract the stem only if it is not already cached.
     if not os.path.isfile(output_path):
-        # Render the beat-only track.
-        render_beats(path, output_path)
-    # Analyze the beat-only track so it can play in the infinite engine.
+        # Render the stem-only track.
+        render_stem(path, output_path, stem_name)
+    # Analyze the stem-only track so it can play in the infinite engine.
     record = analyze_song(output_path)
     # Remember the track's audio for the audio route.
     key = cache_key(output_path)
@@ -180,6 +184,13 @@ def beats_route():
     AUDIO_PATHS[key] = output_path
     # Return the playable record.
     return jsonify(dict(record, audio_key=key))
+
+
+# Define the older beat route as the drums case of the general stem route.
+@application.route("/beats", methods=["POST"])
+def beats_route():
+    # Delegate to the general stem route with the drums stem.
+    return stem_route("drums")
 
 
 # Define the function that starts the localhost-only server.
