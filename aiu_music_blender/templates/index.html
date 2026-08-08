@@ -7,13 +7,24 @@
   <title>AIU Music Blender</title>
   <!-- Style the page in the crimson-to-gold family palette. -->
   <style>
-    /* Paint the page dark crimson with warm gold text. */
-    body { background: #3a0000; color: #ffce59; font-family: sans-serif; text-align: center; }
+    /* Load the house font, Source Code Pro, from our own server (never from the network). */
+    @font-face { font-family: "Source Code Pro"; font-weight: normal;
+                 src: url("/static/fonts/SourceCodePro-Regular.ttf") format("truetype"); }
+    /* Load the bold weight of the house font the same way. */
+    @font-face { font-family: "Source Code Pro"; font-weight: bold;
+                 src: url("/static/fonts/SourceCodePro-Bold.ttf") format("truetype"); }
+    /* Paint the page dark crimson with warm gold text, all in the house font. */
+    body { background: #3a0000; color: #ffce59;
+           font-family: "Source Code Pro", monospace; text-align: center; }
+    /* Give every control the house font too (buttons and inputs do not inherit it). */
+    button, input, select, textarea { font-family: "Source Code Pro", monospace; }
     /* Style the headline. */
     h1 { color: #ff933a; margin-bottom: 0.2em; }
-    /* Style the controls block as one red group rectangle. */
-    .controls { margin: 1em auto; max-width: 640px; padding: 0.8em;
-                border: 1px solid #c02b18; border-radius: 10px; }
+    /* Style each big rounded-corner group rectangle. */
+    .group { margin: 1em auto; max-width: 640px; padding: 0.8em;
+             border: 1px solid #c02b18; border-radius: 14px; }
+    /* Style the title inside the top of each group rectangle. */
+    .group h2 { margin: 0.1em 0 0.5em 0; color: #ff933a; font-size: 1.15em; }
     /* Dim disabled buttons so their state is visible at a glance. */
     button:disabled { opacity: 0.45; }
     /* Style the info card row. */
@@ -40,8 +51,10 @@
   <h1>AIU Music Blender</h1>
   <!-- Show the tagline. -->
   <p>The self-hosted infinite jukebox.</p>
-  <!-- Provide the song chooser and the walk controls, one control per line for narrow screens. -->
-  <div class="controls">
+  <!-- The first big rounded-corner group rectangle: the single-song infinite blender. -->
+  <div class="group">
+    <!-- The title inside the top of the rectangle. -->
+    <h2>AIU Song Blender</h2>
     <!-- Row one: let the user paste a YouTube link, analyzed on Enter or button press. -->
     <div class="row">
       <label for="youtube_input">YouTube URL:</label>
@@ -65,16 +78,41 @@
       <button id="play_button" disabled>Play forever</button>
       <button id="stop_button" disabled>Stopped</button>
     </div>
+    <!-- Show what the local pipeline found, one card per fact, inside the same rectangle. -->
+    <div class="cards">
+      <!-- The tempo info card. -->
+      <div class="card" id="tempo_card"><h3>Tempo</h3><p id="tempo_value"></p></div>
+      <!-- The key info card. -->
+      <div class="card" id="key_card"><h3>Key</h3><p id="key_value"></p></div>
+    </div>
+    <!-- Report progress, beats, and edges here, inside the same rectangle. -->
+    <div id="status">Choose a song to analyze it locally.</div>
   </div>
-  <!-- Show what the local pipeline found, one card per fact. -->
-  <div class="cards">
-    <!-- The tempo info card. -->
-    <div class="card" id="tempo_card"><h3>Tempo</h3><p id="tempo_value"></p></div>
-    <!-- The key info card. -->
-    <div class="card" id="key_card"><h3>Key</h3><p id="key_value"></p></div>
+
+  <!-- The second big rounded-corner group rectangle: the two-song mash-up blender. -->
+  <div class="group">
+    <!-- The title inside the top of the rectangle. -->
+    <h2>AIU Mash-Up Blender</h2>
+    <!-- Row one: the first song's YouTube link. -->
+    <div class="row">
+      <label for="song_one_input">SONG-1 YouTube URL:</label>
+      <input type="text" id="song_one_input" size="30"
+             placeholder="https://www.youtube.com/watch?v=...">
+    </div>
+    <!-- Row two: the second song's YouTube link. -->
+    <div class="row">
+      <label for="song_two_input">SONG-2 YouTube URL:</label>
+      <input type="text" id="song_two_input" size="30"
+             placeholder="https://www.youtube.com/watch?v=...">
+    </div>
+    <!-- Row three: blend the two songs into one mash-up. -->
+    <div class="row">
+      <button id="blend_button">Blend the two songs</button>
+    </div>
+    <!-- Report mash-up progress and the honest compatibility report here. -->
+    <div id="mashup_status">Paste two songs, then blend; the result loads into the
+      AIU Song Blender above so it can play forever.</div>
   </div>
-  <!-- Report progress and results here. -->
-  <div id="status">Choose a song to analyze it locally.</div>
   <!-- Draw the classic arc diagram on this canvas. -->
   <canvas id="arc_canvas" width="900" height="520"></canvas>
 
@@ -111,12 +149,24 @@
     const keyCard = document.getElementById("key_card");
     const keyValue = document.getElementById("key_value");
 
-    // Finish any analysis: keep the record, decode the audio, fill the cards, draw the arcs.
+    // Find the mash-up rectangle's elements.
+    const songOneInput = document.getElementById("song_one_input");
+    const songTwoInput = document.getElementById("song_two_input");
+    const blendButton = document.getElementById("blend_button");
+    const mashupStatus = document.getElementById("mashup_status");
+
+    // Finish any analysis: unwrap the server's answer and load the record.
     async function finishAnalysis(answer) {
       // Refuse gracefully if the server reported a problem.
       if (!answer.ok) { statusLine.textContent = "Analysis failed - check the input."; return; }
+      // Load the record the server returned.
+      await loadRecord(await answer.json());
+    }
+
+    // Load one analysis record: keep it, decode its audio, fill the cards, draw the arcs.
+    async function loadRecord(newRecord) {
       // Keep the analysis record.
-      record = await answer.json();
+      record = newRecord;
       // Fetch the audio bytes back from the server.
       const audioBytes = await (await fetch("/audio/" + record.audio_key)).arrayBuffer();
       // Create the audio context on first use.
@@ -188,6 +238,63 @@
         youtubeButton.textContent = "Fetch & analyze";
       }
     }
+    // Blend the two pasted songs into a mash-up, then load it into the Song Blender above.
+    async function blendSongs() {
+      // Take both pasted links.
+      const linkOne = songOneInput.value.trim();
+      // Take the second link.
+      const linkTwo = songTwoInput.value.trim();
+      // Ask for both songs when either box is empty.
+      if (!linkOne || !linkTwo) {
+        // Explain what is needed.
+        mashupStatus.textContent = "Paste BOTH song links first.";
+        // Stop here.
+        return;
+      }
+      // Show the work on the button itself.
+      blendButton.disabled = true;
+      // Change the button label to the state.
+      blendButton.textContent = "Blending...";
+      // Warn that two downloads plus blending takes a few minutes the first time.
+      mashupStatus.textContent = "Downloading both songs, matching tempo and key, "
+        + "blending (a few minutes the first time)...";
+      // Guard the whole round trip so every failure is shown, never silent.
+      try {
+        // Build the form carrying both links.
+        const form = new FormData();
+        // Attach the first song.
+        form.append("input_a", linkOne);
+        // Attach the second song.
+        form.append("input_b", linkTwo);
+        // Post both songs to the mashup route.
+        const answer = await fetch("/mashup", { method: "POST", body: form });
+        // Refuse gracefully if the server reported a problem.
+        if (!answer.ok) { mashupStatus.textContent = "Blend failed - check both links."; return; }
+        // Unwrap the report and the playable record.
+        const blended = await answer.json();
+        // Load the mash-up into the Song Blender above, ready to play forever.
+        await loadRecord(blended.record);
+        // Show the honest compatibility report.
+        mashupStatus.textContent = "Blended! Compatibility "
+          + blended.report.compatibility.score.toFixed(3)
+          + " (stretch " + (blended.report.compatibility.stretch * 100).toFixed(1)
+          + "%, key shift " + blended.report.key_shift_applied
+          + "). Loaded into the AIU Song Blender above - press Play forever.";
+      // Surface any network or server failure.
+      } catch (problem) {
+        // Show the failure instead of doing nothing.
+        mashupStatus.textContent = "Could not reach the local server: " + problem;
+      // Always restore the button, success or failure.
+      } finally {
+        // Re-enable the button.
+        blendButton.disabled = false;
+        // Restore the button label.
+        blendButton.textContent = "Blend the two songs";
+      }
+    }
+    // Blend when the button is pressed.
+    blendButton.addEventListener("click", blendSongs);
+
     // If this page was opened as a plain file, there is no server behind it; say so plainly.
     if (window.location.protocol === "file:") {
       // Explain the situation and the remedy on the status line.
