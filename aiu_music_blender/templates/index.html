@@ -94,6 +94,12 @@
              title="How likely each beat is to jump to a look-alike beat: 0.0 never, 1.0 always.">
       <span id="chaos_value">0.25</span>
     </div>
+    <!-- This rectangle's phrase option: jump only as 8-beat musical sentences end. -->
+    <div class="row">
+      <label title="A phrase is an 8-beat musical sentence (two 4-beat bars). When checked, the walk only jumps as a phrase ends, so musical thoughts finish before wandering.">
+        <input type="checkbox" id="phrase_jumps_one" checked>
+        Jump on phrases, not single beats</label>
+    </div>
     <!-- Row four: start and stop the infinite walk. -->
     <div class="row">
       <button id="play_button" disabled>Play Forever</button>
@@ -175,6 +181,12 @@
              title="How likely each beat is to jump to a look-alike beat: 0.0 never, 1.0 always.">
       <span id="chaos_two_value">0.25</span>
     </div>
+    <!-- This rectangle's phrase option: jump only as 8-beat musical sentences end. -->
+    <div class="row">
+      <label title="A phrase is an 8-beat musical sentence (two 4-beat bars). When checked, the walk only jumps as a phrase ends, so musical thoughts finish before wandering.">
+        <input type="checkbox" id="phrase_jumps_two" checked>
+        Jump on phrases, not single beats</label>
+    </div>
     <!-- Row five: the mash-up's own start and stop, so one rectangle covers one use. -->
     <div class="row">
       <button id="play_two_button" disabled>Play Forever</button>
@@ -216,6 +228,12 @@
       <input type="range" id="chaos_three" min="0" max="1" step="0.05" value="0.25"
              title="How likely each beat is to jump to a look-alike beat: 0.0 never, 1.0 always.">
       <span id="chaos_three_value">0.25</span>
+    </div>
+    <!-- This rectangle's phrase option: jump only as 8-beat musical sentences end. -->
+    <div class="row">
+      <label title="A phrase is an 8-beat musical sentence (two 4-beat bars). When checked, the walk only jumps as a phrase ends, so musical thoughts finish before wandering.">
+        <input type="checkbox" id="phrase_jumps_three" checked>
+        Jump on phrases, not single beats</label>
     </div>
     <!-- Row three: the instrumental blender's own start and stop. -->
     <div class="row">
@@ -272,6 +290,12 @@
              title="How likely each beat is to jump to a look-alike beat: 0.0 never, 1.0 always.">
       <span id="chaos_four_value">0.25</span>
     </div>
+    <!-- This rectangle's phrase option: jump only as 8-beat musical sentences end. -->
+    <div class="row">
+      <label title="A phrase is an 8-beat musical sentence (two 4-beat bars). When checked, the walk only jumps as a phrase ends, so musical thoughts finish before wandering.">
+        <input type="checkbox" id="phrase_jumps_four" checked>
+        Jump on phrases, not single beats</label>
+    </div>
     <!-- Row four: the beat extractor's own start and stop. -->
     <div class="row">
       <button id="play_four_button" disabled>Play Forever</button>
@@ -316,6 +340,12 @@
       <input type="range" id="chaos_five" min="0" max="1" step="0.05" value="0.25"
              title="How likely each beat is to jump to a look-alike beat: 0.0 never, 1.0 always.">
       <span id="chaos_five_value">0.25</span>
+    </div>
+    <!-- This rectangle's phrase option: jump only as 8-beat musical sentences end. -->
+    <div class="row">
+      <label title="A phrase is an 8-beat musical sentence (two 4-beat bars). When checked, the walk only jumps as a phrase ends, so musical thoughts finish before wandering.">
+        <input type="checkbox" id="phrase_jumps_five" checked>
+        Jump on phrases, not single beats</label>
     </div>
     <!-- Row four: this rectangle's own start and stop. -->
     <div class="row">
@@ -362,6 +392,12 @@
              title="How likely each beat is to jump to a look-alike beat: 0.0 never, 1.0 always.">
       <span id="chaos_six_value">0.25</span>
     </div>
+    <!-- This rectangle's phrase option: jump only as 8-beat musical sentences end. -->
+    <div class="row">
+      <label title="A phrase is an 8-beat musical sentence (two 4-beat bars). When checked, the walk only jumps as a phrase ends, so musical thoughts finish before wandering.">
+        <input type="checkbox" id="phrase_jumps_six" checked>
+        Jump on phrases, not single beats</label>
+    </div>
     <!-- Row four: this rectangle's own start and stop. -->
     <div class="row">
       <button id="play_six_button" disabled>Play Forever</button>
@@ -406,6 +442,12 @@
       <input type="range" id="chaos_seven" min="0" max="1" step="0.05" value="0.25"
              title="How likely each beat is to jump to a look-alike beat: 0.0 never, 1.0 always.">
       <span id="chaos_seven_value">0.25</span>
+    </div>
+    <!-- This rectangle's phrase option: jump only as 8-beat musical sentences end. -->
+    <div class="row">
+      <label title="A phrase is an 8-beat musical sentence (two 4-beat bars). When checked, the walk only jumps as a phrase ends, so musical thoughts finish before wandering.">
+        <input type="checkbox" id="phrase_jumps_seven" checked>
+        Jump on phrases, not single beats</label>
     </div>
     <!-- Row four: this rectangle's own start and stop. -->
     <div class="row">
@@ -461,6 +503,7 @@
     const statusLine = document.getElementById("status");
     const canvas = document.getElementById("arc_canvas");
     const paint = canvas.getContext("2d");
+
 
     // Find the new page elements: the YouTube row and the info cards.
     const youtubeInput = document.getElementById("youtube_input");
@@ -573,6 +616,14 @@
       // Answer the plain name for rectangle one, the patterned name for the rest.
       return document.getElementById(rect === "one" ? "chaos" : "chaos_" + rect);
     }
+
+    // Find one rectangle's phrase-jumping checkbox.
+    function rectanglePhraseBox(rect) {
+      // Every rectangle's phrase box follows one naming pattern.
+      return document.getElementById("phrase_jumps_" + rect);
+    }
+    // The phrase box the running walk obeys (rectangle one's until a walk starts).
+    let activePhraseBox = rectanglePhraseBox("one");
 
     // Arm one rectangle's save buttons for the track it just produced.
     function armSave(rectangle, audioKey) {
@@ -876,9 +927,13 @@
       // At the final beat, jump back into the song so it never ends.
       if (beatIndex >= record.beats.length - 1)
         return edges.length ? edges[0][0] : Math.floor(record.beats.length / 2);
+      // In phrase mode, only the last beat of an 8-beat phrase may jump, so every
+      // musical sentence finishes before the walk wanders (read live, like chaos).
+      const atPhraseEnd = (beatIndex + 1) % 8 === 0;
       // With probability chaos (read live from whichever rectangle started the walk),
-      // take a similarity-weighted jump edge.
-      if (edges.length && Math.random() < parseFloat(activeChaosSlider.value)) {
+      // take a similarity-weighted jump edge - at any beat, or only at phrase ends.
+      if (edges.length && (!activePhraseBox.checked || atPhraseEnd)
+          && Math.random() < parseFloat(activeChaosSlider.value)) {
         // Turn distances into weights favoring similar targets.
         const weights = edges.map(([, d]) => 1 / (0.001 + d));
         // Sum the weights for the draw.
@@ -984,6 +1039,8 @@
       drawArcs(-1);
       // Remember which slider steers this walk.
       activeChaosSlider = rectangleChaosSlider(rect);
+      // Remember which phrase box this walk obeys.
+      activePhraseBox = rectanglePhraseBox(rect);
       // Begin walking from the first beat.
       beginWalking(0);
     }
