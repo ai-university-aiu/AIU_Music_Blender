@@ -42,7 +42,8 @@ YouTube links work anywhere a file does (downloaded locally, analyzed locally).
 ## Install (Ubuntu)
 
 ```bash
-sudo apt install ffmpeg rubberband-cli yt-dlp python3-gi gir1.2-gtk-3.0
+sudo apt install ffmpeg rubberband-cli python3-gi gir1.2-gtk-3.0
+pip3 install --user --break-system-packages -U yt-dlp   # pip, not apt: the apt version goes stale
 pip3 install --user --break-system-packages librosa soundfile flask numpy
 pip3 install --user --break-system-packages demucs   # optional: stem mash-ups
 python3 -m unittest discover tests                    # verify: 8 tests, no network needed
