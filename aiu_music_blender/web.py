@@ -98,8 +98,13 @@ def mashup_route():
     vocals_a = request.form.get("vocals_a") == "on"
     # Read the second song's vocal choice.
     vocals_b = request.form.get("vocals_b") == "on"
-    # Render the mash-up with the chosen vocals.
-    report = render_mashup(path_a, path_b, output_path, vocals_a=vocals_a, vocals_b=vocals_b)
+    # Read each song's already-an-instrumental declaration (skips vocal removal for it).
+    instrumental_a = request.form.get("instrumental_a") == "on"
+    # Read the second song's declaration.
+    instrumental_b = request.form.get("instrumental_b") == "on"
+    # Render the mash-up with the chosen vocals and declarations.
+    report = render_mashup(path_a, path_b, output_path, vocals_a=vocals_a, vocals_b=vocals_b,
+                           instrumental_a=instrumental_a, instrumental_b=instrumental_b)
     # Analyze the rendered mash-up so it can play in the infinite engine immediately.
     record = analyze_song(output_path)
     # Remember the mash-up's audio for the audio route.

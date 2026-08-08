@@ -125,21 +125,31 @@
       <label title="Include SONG-1's vocals in the blend.">
         <input type="checkbox" id="vocals_one" checked> SONG-1 vocals</label>
     </div>
-    <!-- Row four: the second song's YouTube link. -->
+    <!-- Row four: declare the first song already vocal-free, skipping vocal removal for it. -->
+    <div class="row">
+      <label title="Skip the vocal-removal process for SONG-1: it has no vocals to remove.">
+        <input type="checkbox" id="instrumental_one"> SONG-1 is already an instrumental</label>
+    </div>
+    <!-- Row five: the second song's YouTube link. -->
     <div class="row">
       <label for="song_two_input">SONG-2 YouTube URL:</label>
       <input type="text" id="song_two_input" size="30"
              placeholder="https://www.youtube.com/watch?v=...">
     </div>
-    <!-- Row five: the second song as a local file instead (the file wins if both are given). -->
+    <!-- Row six: the second song as a local file instead (the file wins if both are given). -->
     <div class="row">
       <label for="song_two_file">SONG-2 file:</label>
       <input type="file" id="song_two_file" accept="audio/*">
     </div>
-    <!-- Row six: the second song's vocal choice, on its own line for the same reason. -->
+    <!-- Row seven: the second song's vocal choice, on its own line for the same reason. -->
     <div class="row">
       <label title="Include SONG-2's vocals in the blend.">
         <input type="checkbox" id="vocals_two"> SONG-2 vocals</label>
+    </div>
+    <!-- Row eight: declare the second song already vocal-free, skipping vocal removal for it. -->
+    <div class="row">
+      <label title="Skip the vocal-removal process for SONG-2: it has no vocals to remove.">
+        <input type="checkbox" id="instrumental_two"> SONG-2 is already an instrumental</label>
     </div>
     <!-- Row three: blend the two songs into one mash-up. -->
     <div class="row">
@@ -282,6 +292,9 @@
     const songTwoFile = document.getElementById("song_two_file");
     const vocalsOne = document.getElementById("vocals_one");
     const vocalsTwo = document.getElementById("vocals_two");
+    // Find the already-an-instrumental declarations.
+    const instrumentalOne = document.getElementById("instrumental_one");
+    const instrumentalTwo = document.getElementById("instrumental_two");
     const blendButton = document.getElementById("blend_button");
     const mashupStatus = document.getElementById("mashup_status");
     // Find the mash-up rectangle's own walk controls.
@@ -452,16 +465,21 @@
       blendButton.disabled = true;
       // Change the button label to the state, with the little spinning working indicator.
       blendButton.innerHTML = '<span class="spinner"></span>Blending...';
-      // Say what kind of blend this will be, and warn about the slow parts.
+      // Note whether the slow vocal-removal step will actually run: a song declared
+      // "already an instrumental" skips it, and the append mode never needs it.
+      const separationNote = (instrumentalOne.checked && instrumentalTwo.checked)
+        ? " (vocal removal skipped - both declared instrumental)"
+        : " (stems add a few minutes)";
+      // Say what kind of blend this will be, and warn about the slow parts honestly.
       mashupStatus.textContent = (vocalsOne.checked && vocalsTwo.checked)
         ? "Downloading, matching tempo and key, appending SONG-2 onto SONG-1 "
           + "as one big long song..."
         : (!vocalsOne.checked && !vocalsTwo.checked)
-        ? "Downloading, matching tempo and key, removing the vocals from BOTH songs "
-          + "(stems add a few minutes), then blending the two instrumentals "
+        ? "Downloading, matching tempo and key, removing remaining vocals"
+          + separationNote + ", then blending the two instrumentals "
           + "into one vocal-free mash-up..."
-        : "Downloading, matching tempo and key, separating stems "
-          + "(adds a few minutes), blending...";
+        : "Downloading, matching tempo and key, preparing parts"
+          + separationNote + ", blending...";
       // Guard the whole round trip so every failure is shown, never silent.
       try {
         // Build the form carrying both songs.
@@ -474,6 +492,10 @@
         if (vocalsOne.checked) form.append("vocals_a", "on");
         // Attach SONG-2's independent vocal choice.
         if (vocalsTwo.checked) form.append("vocals_b", "on");
+        // Attach SONG-1's already-an-instrumental declaration.
+        if (instrumentalOne.checked) form.append("instrumental_a", "on");
+        // Attach SONG-2's already-an-instrumental declaration.
+        if (instrumentalTwo.checked) form.append("instrumental_b", "on");
         // Post both songs to the mashup route.
         const answer = await fetch("/mashup", { method: "POST", body: form });
         // Refuse gracefully if the server reported a problem.

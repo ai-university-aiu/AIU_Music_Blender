@@ -114,7 +114,11 @@ def trim_to_first_beat(samples, record, time_ratio):
 
 # Define the main entry: render a mash-up of two songs and return an honest report.
 def render_mashup(path_a, path_b, output_path, use_stems=False,
-                  vocals_a=None, vocals_b=None):
+                  vocals_a=None, vocals_b=None,
+                  instrumental_a=False, instrumental_b=False):
+    # A song declared "already an instrumental" (instrumental_a or instrumental_b True)
+    # is used as-is wherever its instrumental would be wanted: the vocal-removal
+    # process is skipped for it, saving time and preventing double-processing.
     # Each song's vocals can be kept or dropped independently:
     #   vocals_a True,  vocals_b True .... APPEND: SONG-2 (with vocals) joins onto the end of
     #                                      SONG-1 (with vocals), tempo- and key-conformed, making
@@ -152,9 +156,11 @@ def render_mashup(path_a, path_b, output_path, use_stems=False,
     semitones_a = shift if abs(shift) <= MAX_KEY_SHIFT else 0
     # Do all intermediate work in a temporary folder that cleans itself up.
     with tempfile.TemporaryDirectory() as work_folder:
-        # Prepare the two source parts according to the per-song vocal choices.
+        # Prepare the two source parts according to the per-song vocal choices,
+        # honoring the already-instrumental declarations.
         part_a_path, part_b_path, gain_a, gain_b = prepare_parts(
-            path_a, path_b, work_folder, vocals_a, vocals_b)
+            path_a, path_b, work_folder, vocals_a, vocals_b,
+            instrumental_a, instrumental_b)
         # Build the stretched-and-shifted version of part A.
         conformed_a = os.path.join(work_folder, "conformed_a.wav")
         # Stretch and shift part A with rubberband.
@@ -180,27 +186,34 @@ def render_mashup(path_a, path_b, output_path, use_stems=False,
             "stretch_a": round(ratio_a, 4), "stretch_b": round(ratio_b, 4),
             "key_shift_applied": semitones_a, "stems": not (vocals_a and vocals_b),
             "mode": "append" if (vocals_a and vocals_b) else "mix",
-            "vocals_a": vocals_a, "vocals_b": vocals_b, "output": output_path}
+            "vocals_a": vocals_a, "vocals_b": vocals_b,
+            "already_instrumental_a": instrumental_a,
+            "already_instrumental_b": instrumental_b, "output": output_path}
 
 
-# Define the helper that prepares the two parts to be mixed, per the vocal choices,
-# returning each part's path and its mixing gain.
-def prepare_parts(path_a, path_b, work_folder, vocals_a, vocals_b):
-    # When both songs keep their vocals, blend the two full songs (no separation needed).
+# Define the helper that prepares the two parts to be mixed, per the vocal choices
+# and the already-instrumental declarations, returning each part's path and gain.
+def prepare_parts(path_a, path_b, work_folder, vocals_a, vocals_b,
+                  instrumental_a=False, instrumental_b=False):
+    # When both songs keep their vocals, use the two full songs (no separation needed).
     if vocals_a and vocals_b:
         # Prepare both whole songs.
         return (whole_song_wav(path_a, work_folder, "a"),
                 whole_song_wav(path_b, work_folder, "b"),
                 PLAIN_BLEND_GAIN, PLAIN_BLEND_GAIN)
-    # Every other choice needs the stem separator; verify it is installed.
-    if not demucs_available():
+    # Decide which songs genuinely need the separator (a declared instrumental never does).
+    separation_needed = (not instrumental_a) or (not instrumental_b)
+    # Verify the separator is installed only when some song actually needs it.
+    if separation_needed and not demucs_available():
         # Raise the error the faces will show the user.
         raise RuntimeError("Vocal selection needs Demucs, which is not installed; "
                            "install with: pip3 install demucs")
-    # Prepare part A: its vocal stem when chosen, otherwise its instrumental.
-    part_a = song_part(path_a, work_folder, vocals_a)
+    # Prepare part A: as-is when declared instrumental, else its chosen stem.
+    part_a = (whole_song_wav(path_a, work_folder, "a") if instrumental_a
+              else song_part(path_a, work_folder, vocals_a))
     # Prepare part B the same way.
-    part_b = song_part(path_b, work_folder, vocals_b)
+    part_b = (whole_song_wav(path_b, work_folder, "b") if instrumental_b
+              else song_part(path_b, work_folder, vocals_b))
     # A lone vocal rides on top; an instrumental sits ducked beneath a vocal.
     gain_a = VOCAL_GAIN if vocals_a else INSTRUMENTAL_GAIN
     # Choose part B's gain the same way, but two instrumentals blend evenly.
