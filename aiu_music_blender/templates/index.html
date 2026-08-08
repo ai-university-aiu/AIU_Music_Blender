@@ -886,6 +886,17 @@
       paint.moveTo(40, baseline);
       paint.lineTo(canvas.width - 40, baseline);
       paint.stroke();
+      // Mark the start of every 8-beat phrase with its own bright-orange tick,
+      // so the musical sentences the phrase-jumping option obeys are visible.
+      paint.strokeStyle = "#ff933a";
+      // Walk the beats in phrase-sized steps.
+      for (let phraseStart = 0; phraseStart < record.beats.length; phraseStart += 8) {
+        // Draw a small vertical tick rising from the baseline.
+        paint.beginPath();
+        paint.moveTo(beatPosition(phraseStart), baseline + 8);
+        paint.lineTo(beatPosition(phraseStart), baseline - 8);
+        paint.stroke();
+      }
       // Draw every jump edge as an arc over the baseline.
       for (let beat = 0; beat < record.graph.length; beat++) {
         // Walk this beat's edges.
