@@ -172,6 +172,12 @@
       <label title="Skip the vocal-removal process for SONG-2: it has no vocals to remove.">
         <input type="checkbox" id="instrumental_two"> SONG-2 is already an instrumental</label>
     </div>
+    <!-- The HIGH QUALITY option: deep shift-averaging, slower but cleaner stems. -->
+    <div class="row">
+      <label title="Runs each separation five times with tiny time offsets and averages them - cleaner stems, at a slower (once per song) separation.">
+        <input type="checkbox" id="high_quality_two" checked> HIGH QUALITY separation
+        (slower, cleaner)</label>
+    </div>
     <!-- Row three: blend the two songs into one mash-up. -->
     <div class="row">
       <button id="blend_button">Blend the two songs</button>
@@ -225,6 +231,12 @@
       <input type="text" id="instrumental_input" size="34"
              placeholder="https://www.youtube.com/watch?v=...">
       <button id="instrumental_button">Strip vocals &amp; analyze</button>
+    </div>
+    <!-- The HIGH QUALITY option: deep shift-averaging, slower but cleaner stems. -->
+    <div class="row">
+      <label title="Runs each separation five times with tiny time offsets and averages them - cleaner stems, at a slower (once per song) separation.">
+        <input type="checkbox" id="high_quality_three" checked> HIGH QUALITY separation
+        (slower, cleaner)</label>
     </div>
     <!-- Row two: the instrumental blender's own chaos label, slider, and live value. -->
     <div class="row">
@@ -281,6 +293,12 @@
     <!-- Row two: the song as a local file instead (the file wins if both are given). -->
     <div class="row">
       <input type="file" id="extract_file_eight" accept="audio/*">
+    </div>
+    <!-- The HIGH QUALITY option: deep shift-averaging, slower but cleaner stems. -->
+    <div class="row">
+      <label title="Runs each separation five times with tiny time offsets and averages them - cleaner stems, at a slower (once per song) separation.">
+        <input type="checkbox" id="high_quality_eight" checked> HIGH QUALITY separation
+        (slower, cleaner)</label>
     </div>
     <!-- The four live volume sliders, one per stem, active during playback. -->
     <div class="row fader">
@@ -719,6 +737,8 @@
         if (instrumentalOne.checked) form.append("instrumental_a", "on");
         // Attach SONG-2's already-an-instrumental declaration.
         if (instrumentalTwo.checked) form.append("instrumental_b", "on");
+        // Attach the HIGH QUALITY separation choice.
+        if (document.getElementById("high_quality_two").checked) form.append("high_quality", "on");
         // Post both songs to the mashup route.
         const answer = await fetch("/mashup", { method: "POST", body: form });
         // Refuse gracefully if the server reported a problem.
@@ -813,6 +833,9 @@
         const stemForm = new FormData();
         // Attach the song again the same way.
         if (file) stemForm.append("file", file); else stemForm.append("input", link);
+        // Attach the HIGH QUALITY separation choice.
+        if (document.getElementById("high_quality_eight").checked)
+          stemForm.append("high_quality", "on");
         // Post to the all-stems route.
         const stemAnswer = await fetch("/stems", { method: "POST", body: stemForm });
         // Refuse gracefully on failure.
@@ -1308,6 +1331,8 @@
         const form = new FormData();
         // Attach the link as the input.
         form.append("input", link);
+        // Attach the HIGH QUALITY separation choice.
+        if (document.getElementById("high_quality_three").checked) form.append("high_quality", "on");
         // Post the link to the instrumental route.
         const answer = await fetch("/instrumental", { method: "POST", body: form });
         // Refuse gracefully if the server reported a problem.

@@ -83,10 +83,10 @@ def rubberband(input_wav, output_wav, time_ratio, semitones):
 
 
 # Define a helper that separates a song into vocals and instrumental with Demucs.
-def separate_stems(audio_path, work_folder):
+def separate_stems(audio_path, work_folder, high_quality=False):
     # Run the FINE-TUNED model in two-stem mode, with shift-averaging, into the folder.
     subprocess.run(["python3", "-m", "demucs", "-n", TWO_STEM_MODEL,
-                    "--two-stems", "vocals", "--shifts", SEPARATION_SHIFTS,
+                    "--two-stems", "vocals", "--shifts", shifts_for(high_quality),
                     "-o", work_folder, audio_path], check=True, capture_output=True)
     # Name the song's stem folder the way Demucs names it.
     song_name = os.path.splitext(os.path.basename(audio_path))[0]
@@ -106,15 +106,23 @@ TWO_STEM_MODEL = "htdemucs_ft"
 # Define the shifts setting: each separation runs this many times with tiny random
 # time offsets and averages the results - the Demucs paper's own quality booster.
 SEPARATION_SHIFTS = "2"
+# Define the deep-averaging shifts used when the HIGH QUALITY option is checked.
+HIGH_QUALITY_SHIFTS = "5"
+
+
+# Define a helper that picks the shifts setting for a quality choice.
+def shifts_for(high_quality):
+    # Deep averaging when high quality is asked for, the standard booster otherwise.
+    return HIGH_QUALITY_SHIFTS if high_quality else SEPARATION_SHIFTS
 # Define the six stem names that model produces.
 STEM_NAMES = ("drums", "bass", "guitar", "piano", "vocals", "other")
 
 
 # Define a helper that separates a song into all six stems and returns one stem's path.
-def separate_one_stem(audio_path, work_folder, stem_name):
+def separate_one_stem(audio_path, work_folder, stem_name, high_quality=False):
     # Run Demucs's six-source model into the work folder.
     subprocess.run(["python3", "-m", "demucs", "-n", STEM_MODEL,
-                    "--shifts", SEPARATION_SHIFTS, "-o", work_folder,
+                    "--shifts", shifts_for(high_quality), "-o", work_folder,
                     audio_path], check=True, capture_output=True)
     # Name the song's stem folder the way Demucs names it.
     song_name = os.path.splitext(os.path.basename(audio_path))[0]
@@ -145,7 +153,7 @@ def render_stem(path, output_path, stem_name):
 
 # Define the function that extracts MANY stems in ONE Demucs run: output_paths maps
 # stem names to destinations, and every one is written from the same separation.
-def render_all_stems(path, output_paths):
+def render_all_stems(path, output_paths, high_quality=False):
     # Allow only the four real stem names.
     for stem_name in output_paths:
         # Refuse anything else.
@@ -161,7 +169,7 @@ def render_all_stems(path, output_paths):
     with tempfile.TemporaryDirectory() as work_folder:
         # Run Demucs's six-source model, once.
         subprocess.run(["python3", "-m", "demucs", "-n", STEM_MODEL,
-                        "--shifts", SEPARATION_SHIFTS, "-o", work_folder,
+                        "--shifts", shifts_for(high_quality), "-o", work_folder,
                         path], check=True, capture_output=True)
         # Name the song's stem folder the way Demucs names it.
         song_name = os.path.splitext(os.path.basename(path))[0]
@@ -202,7 +210,8 @@ def trim_to_first_beat(samples, record, time_ratio):
 # Define the main entry: render a mash-up of two songs and return an honest report.
 def render_mashup(path_a, path_b, output_path, use_stems=False,
                   vocals_a=None, vocals_b=None,
-                  instrumental_a=False, instrumental_b=False):
+                  instrumental_a=False, instrumental_b=False,
+                  high_quality=False):
     # A song declared "already an instrumental" (instrumental_a or instrumental_b True)
     # is used as-is wherever its instrumental would be wanted: the vocal-removal
     # process is skipped for it, saving time and preventing double-processing.
@@ -247,7 +256,7 @@ def render_mashup(path_a, path_b, output_path, use_stems=False,
         # honoring the already-instrumental declarations.
         part_a_path, part_b_path, gain_a, gain_b = prepare_parts(
             path_a, path_b, work_folder, vocals_a, vocals_b,
-            instrumental_a, instrumental_b)
+            instrumental_a, instrumental_b, high_quality)
         # Build the stretched-and-shifted version of part A.
         conformed_a = os.path.join(work_folder, "conformed_a.wav")
         # Stretch and shift part A with rubberband.
@@ -281,7 +290,7 @@ def render_mashup(path_a, path_b, output_path, use_stems=False,
 # Define the helper that prepares the two parts to be mixed, per the vocal choices
 # and the already-instrumental declarations, returning each part's path and gain.
 def prepare_parts(path_a, path_b, work_folder, vocals_a, vocals_b,
-                  instrumental_a=False, instrumental_b=False):
+                  instrumental_a=False, instrumental_b=False, high_quality=False):
     # When both songs keep their vocals, use the two full songs (no separation needed).
     if vocals_a and vocals_b:
         # Prepare both whole songs.
@@ -297,10 +306,10 @@ def prepare_parts(path_a, path_b, work_folder, vocals_a, vocals_b,
                            "install with: pip3 install demucs")
     # Prepare part A: as-is when declared instrumental, else its chosen stem.
     part_a = (whole_song_wav(path_a, work_folder, "a") if instrumental_a
-              else song_part(path_a, work_folder, vocals_a))
+              else song_part(path_a, work_folder, vocals_a, high_quality))
     # Prepare part B the same way.
     part_b = (whole_song_wav(path_b, work_folder, "b") if instrumental_b
-              else song_part(path_b, work_folder, vocals_b))
+              else song_part(path_b, work_folder, vocals_b, high_quality))
     # A lone vocal rides on top; an instrumental sits ducked beneath a vocal.
     gain_a = VOCAL_GAIN if vocals_a else INSTRUMENTAL_GAIN
     # Choose part B's gain the same way, but two instrumentals blend evenly.
@@ -323,9 +332,9 @@ def whole_song_wav(path, work_folder, tag):
 
 
 # Define a helper that returns one song's vocal stem or instrumental stem.
-def song_part(path, work_folder, want_vocals):
+def song_part(path, work_folder, want_vocals, high_quality=False):
     # Separate the song into its vocal and instrumental stems.
-    vocals, instrumental = separate_stems(path, work_folder)
+    vocals, instrumental = separate_stems(path, work_folder, high_quality)
     # Return the stem this song was asked for.
     return vocals if want_vocals else instrumental
 
@@ -335,7 +344,7 @@ APPEND_CROSSFADE_SECONDS = 0.5
 
 
 # Define the function that strips ALL vocals from one song, writing the instrumental.
-def render_instrumental(path, output_path):
+def render_instrumental(path, output_path, high_quality=False):
     # Verify the stem separator is installed.
     if not demucs_available():
         # Raise the error the faces will show the user.
@@ -344,7 +353,7 @@ def render_instrumental(path, output_path):
     # Do the separation work in a temporary folder that cleans itself up.
     with tempfile.TemporaryDirectory() as work_folder:
         # Separate the song and keep only its instrumental stem.
-        _, instrumental = separate_stems(path, work_folder)
+        _, instrumental = separate_stems(path, work_folder, high_quality)
         # Keep the instrumental EXACTLY as Demucs made it: 44,100 Hertz, stereo.
         shutil.copyfile(instrumental, output_path)
     # Return where the instrumental was written.

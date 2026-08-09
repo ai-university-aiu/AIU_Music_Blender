@@ -106,9 +106,12 @@ def mashup_route():
     instrumental_a = request.form.get("instrumental_a") == "on"
     # Read the second song's declaration.
     instrumental_b = request.form.get("instrumental_b") == "on"
-    # Render the mash-up with the chosen vocals and declarations.
+    # Read the HIGH QUALITY choice from its checkbox.
+    high_quality = request.form.get("high_quality") == "on"
+    # Render the mash-up with the chosen vocals, declarations, and quality.
     report = render_mashup(path_a, path_b, output_path, vocals_a=vocals_a, vocals_b=vocals_b,
-                           instrumental_a=instrumental_a, instrumental_b=instrumental_b)
+                           instrumental_a=instrumental_a, instrumental_b=instrumental_b,
+                           high_quality=high_quality)
     # Analyze the rendered mash-up so it can play in the infinite engine immediately.
     record = analyze_song(output_path)
     # Remember the mash-up's audio for the audio route.
@@ -125,11 +128,17 @@ def instrumental_route():
     # Resolve the input (path or YouTube link) to a local file.
     path = local_audio_path(request.form["input"])
     # Name the cached instrumental by the source song's cache key.
-    output_path = os.path.join(cache_directory(), "instrumental_hq_" + cache_key(path) + ".wav")
+    # Read the HIGH QUALITY choice from its checkbox.
+    high_quality = request.form.get("high_quality") == "on"
+    # Name the cache by the quality tier and the source song's key.
+    tier = "hq5" if high_quality else "hq"
+    # Build the cache path.
+    output_path = os.path.join(cache_directory(),
+                               "instrumental_" + tier + "_" + cache_key(path) + ".wav")
     # Strip the vocals only if this song's instrumental is not already cached.
     if not os.path.isfile(output_path):
-        # Render the vocal-free instrumental.
-        render_instrumental(path, output_path)
+        # Render the vocal-free instrumental at the asked-for quality.
+        render_instrumental(path, output_path, high_quality)
     # Analyze the instrumental so it can play in the infinite engine.
     record = analyze_song(output_path)
     # Remember the instrumental's audio for the audio route.
@@ -167,18 +176,20 @@ def export_route(key, file_format):
 
 # Define a helper that produces ALL FOUR stem records for a song, separating ONCE:
 # Demucs makes every stem in one run, so asking for one stem fills all four caches.
-def stem_records(path):
-    # Name every stem's cached track by the stem and the source song's cache key.
+def stem_records(path, high_quality=False):
+    # Name every stem's cached track by the stem, the quality tier, and the song's key.
     key = cache_key(path)
-    # Build the four cache paths (the 44 marks full-quality stems, bypassing old caches).
-    outputs = {name: os.path.join(cache_directory(), name + "_hq_" + key + ".wav")
+    # Pick the cache mark for this quality tier.
+    tier = "hq5" if high_quality else "hq"
+    # Build the cache paths.
+    outputs = {name: os.path.join(cache_directory(), name + "_" + tier + "_" + key + ".wav")
                for name in STEM_NAMES}
     # Find the stems not yet cached.
     missing = {name: p for name, p in outputs.items() if not os.path.isfile(p)}
     # Separate once to fill every missing stem.
     if missing:
-        # Render all missing stems from one Demucs run.
-        render_all_stems(path, missing)
+        # Render all missing stems from one Demucs run, at the asked-for quality.
+        render_all_stems(path, missing, high_quality)
     # Build the playable record for every stem.
     records = {}
     # Walk the four stems.
@@ -200,8 +211,10 @@ def stem_records(path):
 def stems_route():
     # Resolve the song from its upload or its link.
     path = resolve_song("file", "input")
+    # Read the HIGH QUALITY choice from its checkbox.
+    high_quality = request.form.get("high_quality") == "on"
     # Return every stem's playable record.
-    return jsonify(stem_records(path))
+    return jsonify(stem_records(path, high_quality))
 
 
 # Define the route that returns one stem only, built on the same one-run helper.
