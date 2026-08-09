@@ -727,6 +727,8 @@
 
     // Download one rectangle's track in the asked-for format, via the local server.
     function saveTrack(rectangle, fileFormat) {
+      // The Mixing Desk saves its FROZEN MIX, not the plain song.
+      if (rectangle === "eight") { saveMixingDesk(fileFormat); return; }
       // Do nothing if this rectangle has not produced a track yet.
       if (!saveKeys[rectangle]) return;
       // Build an invisible download link to the export route.
@@ -737,6 +739,57 @@
       link.download = "";
       // Click the link to start the download into the user's filesystem.
       link.click();
+    }
+
+    // Bounce the Mixing Desk: freeze the four sliders at their current positions and
+    // save one playback straight through from beginning to end - no jumps.
+    async function saveMixingDesk(fileFormat) {
+      // Do nothing before the desk has loaded its stems.
+      if (!equalizerStemKeys) return;
+      // Find the desk's status line for progress reporting.
+      const status = document.getElementById("extract_status_eight");
+      // Say what is being rendered.
+      status.textContent = "Rendering your mix straight through, start to finish, "
+        + "at the frozen slider volumes...";
+      // Guard the round trip so failures are shown.
+      try {
+        // Build the form carrying each stem's key and frozen volume.
+        const form = new FormData();
+        // Walk the four stems.
+        ["drums", "bass", "vocals", "other"].forEach((stem) => {
+          // Attach this stem's audio key.
+          form.append("key_" + stem, equalizerStemKeys[stem]);
+          // Attach this stem's frozen volume (zero to one).
+          form.append("gain_" + stem,
+                      parseFloat(document.getElementById("volume_" + stem).value) / 100);
+        });
+        // Ask the server to mix and convert.
+        const answer = await fetch("/mix_export/" + fileFormat, { method: "POST", body: form });
+        // Refuse gracefully on failure.
+        if (!answer.ok) { status.textContent = "Mix rendering failed."; return; }
+        // Receive the bounced file.
+        const bounced = await answer.blob();
+        // Build an invisible download link for it.
+        const link = document.createElement("a");
+        // Point the link at the received file.
+        link.href = URL.createObjectURL(bounced);
+        // Name the download.
+        link.download = "aiu_mixing_desk_mix." + fileFormat;
+        // Start the download into the user's filesystem.
+        link.click();
+        // Release the temporary link address.
+        URL.revokeObjectURL(link.href);
+        // Report the saved mix honestly, with the frozen volumes.
+        status.textContent = "Mix saved (" + fileFormat + "): drums "
+          + document.getElementById("volume_drums").value + "%, bass "
+          + document.getElementById("volume_bass").value + "%, vocals "
+          + document.getElementById("volume_vocals").value + "%, other "
+          + document.getElementById("volume_other").value + "% - straight through, no jumps.";
+      // Surface any network or server failure.
+      } catch (problem) {
+        // Show the failure instead of doing nothing.
+        status.textContent = "Could not reach the local server: " + problem;
+      }
     }
 
     // Wire every rectangle's save buttons to their downloads.
@@ -988,12 +1041,16 @@
         ensureEqualizerGains();
         // Decode all four stem audios for the simultaneous player.
         equalizerBuffers = {};
+        // Remember each stem's audio key for the frozen-mix bounce.
+        equalizerStemKeys = {};
         // Walk the four stems.
         for (const stem of ["drums", "bass", "vocals", "other"]) {
           // Fetch this stem's audio bytes.
           const bytes = await (await fetch("/audio/" + allStems[stem].audio_key)).arrayBuffer();
           // Decode and keep them.
           equalizerBuffers[stem] = await audioContext.decodeAudioData(bytes);
+          // Keep this stem's key for the bounce.
+          equalizerStemKeys[stem] = allStems[stem].audio_key;
         }
         // Populate the four extractor rectangles too - the stems are already made.
         STEM_RECTANGLES.forEach(([familyRect, familyStem]) => {
@@ -1173,6 +1230,8 @@
 
     // The equalizer's decoded stem audio (drums, bass, vocals, other), once loaded.
     let equalizerBuffers = null;
+    // The four stems' audio keys, for the Mixing Desk's frozen-mix bounce.
+    let equalizerStemKeys = null;
     // The equalizer's live volume controls, one gain node per stem, built on first use.
     let equalizerGains = null;
     // Whether the running walk is the equalizer's four-stems-at-once playback.

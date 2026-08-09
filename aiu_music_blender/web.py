@@ -5,12 +5,16 @@
 import os
 # Import the subprocess tools for the ffmpeg converter.
 import subprocess
+# Import the numerical array library for mixing stems.
+import numpy
+# Import the audio file writer for the bounced mix.
+import soundfile
 # Import the Flask web framework pieces we use.
 from flask import Flask, request, jsonify, send_file, render_template
 # Import the engine's cache folder helper.
 from .ingest import cache_directory, local_audio_path
 # Import the engine's analysis function and cache key.
-from .analysis import analyze_song, cache_key
+from .analysis import analyze_song, cache_key, load_samples, SAMPLE_RATE
 # Import the engine's mash-up renderer.
 from .mashup import render_mashup, render_instrumental, render_all_stems, STEM_NAMES
 
@@ -218,6 +222,80 @@ def stem_route(stem_name):
 def beats_route():
     # Delegate to the general stem route with the drums stem.
     return stem_route("drums")
+
+
+# Define the route that bounces the Mixing Desk: the four stems mixed STRAIGHT
+# THROUGH from beginning to end (no jumps), at the frozen slider volumes.
+@application.route("/mix_export/<file_format>", methods=["POST"])
+def mix_export_route(file_format):
+    # Allow only the two supported formats.
+    if file_format not in ("wav", "mp3"):
+        # Refuse anything else.
+        return ("Unsupported format", 400)
+    # Start the mix empty.
+    mix = None
+    # Collect a fingerprint of the request for caching the bounce.
+    fingerprint_parts = []
+    # Walk the four stems, each with its key and its frozen volume.
+    for stem in ("drums", "bass", "vocals", "other"):
+        # Read this stem's audio key.
+        key = request.form.get("key_" + stem)
+        # Read this stem's frozen volume (zero to one).
+        gain = max(0.0, min(1.0, float(request.form.get("gain_" + stem, "1"))))
+        # Refuse unknown keys.
+        if key not in AUDIO_PATHS:
+            # Answer with a not-found error.
+            return ("Unknown audio key for " + stem, 404)
+        # Remember this stem in the fingerprint.
+        fingerprint_parts.append(key + (":%0.2f" % gain))
+        # Load this stem's samples.
+        samples, _ = load_samples(AUDIO_PATHS[key])
+        # Scale by the frozen volume.
+        samples = samples * gain
+        # Start or grow the mix, padding to the longer length.
+        if mix is None:
+            # The first stem starts the mix.
+            mix = samples
+        else:
+            # Match lengths by padding the shorter with silence.
+            length = max(len(mix), len(samples))
+            # Pad the mix if needed.
+            mix = numpy.pad(mix, (0, length - len(mix)))
+            # Pad this stem if needed.
+            samples = numpy.pad(samples, (0, length - len(samples)))
+            # Add this stem into the mix.
+            mix = mix + samples
+    # Keep the mix inside the legal sample range.
+    peak = numpy.max(numpy.abs(mix)) + 1e-9
+    # Normalize only if the mix would clip.
+    if peak > 1.0:
+        # Scale down to the peak.
+        mix = mix / peak
+    # Name the bounce by its fingerprint so identical bounces are cached.
+    import hashlib
+    # Hash the fingerprint.
+    bounce_name = hashlib.sha1("|".join(fingerprint_parts).encode()).hexdigest()[:16]
+    # Build the bounced wav's cache path.
+    bounced_wav = os.path.join(cache_directory(), "mixdesk_" + bounce_name + ".wav")
+    # Write the wav only if this exact bounce is not already cached.
+    if not os.path.isfile(bounced_wav):
+        # Write the mixed samples.
+        soundfile.write(bounced_wav, mix, SAMPLE_RATE)
+    # For wav, send the bounce directly.
+    if file_format == "wav":
+        # Send the file as a browser download.
+        return send_file(bounced_wav, as_attachment=True,
+                         download_name="aiu_mixing_desk_" + bounce_name[:8] + ".wav")
+    # For mp3, convert with ffmpeg (cached per bounce).
+    bounced_mp3 = os.path.join(cache_directory(), "mixdesk_" + bounce_name + ".mp3")
+    # Convert only if not already cached.
+    if not os.path.isfile(bounced_mp3):
+        # Run ffmpeg quietly.
+        subprocess.run(["ffmpeg", "-loglevel", "quiet", "-y", "-i", bounced_wav, bounced_mp3],
+                       check=True)
+    # Send the mp3 as a browser download.
+    return send_file(bounced_mp3, as_attachment=True,
+                     download_name="aiu_mixing_desk_" + bounce_name[:8] + ".mp3")
 
 
 # Define the function that starts the localhost-only server.
