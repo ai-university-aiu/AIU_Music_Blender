@@ -98,7 +98,7 @@
     <div class="row">
       <label title="A phrase is an 8-beat musical sentence (two 4-beat bars). When checked, the walk only jumps as a phrase ends, so musical thoughts finish before wandering.">
         <input type="checkbox" id="phrase_jumps_one" checked>
-        Jump on phrases, not single beats</label>
+        Jump on sentences (grouped phrases), not single beats</label>
     </div>
     <!-- Row four: start and stop the infinite walk. -->
     <div class="row">
@@ -111,6 +111,7 @@
       <div class="card"><h3>Key</h3><p id="key_value_one"></p></div>
       <div class="card"><h3>Beats</h3><p id="beats_value_one"></p></div>
       <div class="card"><h3>Phrases</h3><p id="phrases_value_one"></p></div>
+      <div class="card"><h3>Sentences</h3><p id="sentences_value_one"></p></div>
       <div class="card"><h3>Jump Edges</h3><p id="edges_value_one"></p></div>
       <div class="card"><h3>Length</h3><p id="length_value_one"></p></div>
       <div class="card"><h3>Vocals</h3><p id="vocal_value_one"></p></div>
@@ -186,7 +187,7 @@
     <div class="row">
       <label title="A phrase is an 8-beat musical sentence (two 4-beat bars). When checked, the walk only jumps as a phrase ends, so musical thoughts finish before wandering.">
         <input type="checkbox" id="phrase_jumps_two" checked>
-        Jump on phrases, not single beats</label>
+        Jump on sentences (grouped phrases), not single beats</label>
     </div>
     <!-- Row five: the mash-up's own start and stop, so one rectangle covers one use. -->
     <div class="row">
@@ -199,6 +200,7 @@
       <div class="card"><h3>Key</h3><p id="key_value_two"></p></div>
       <div class="card"><h3>Beats</h3><p id="beats_value_two"></p></div>
       <div class="card"><h3>Phrases</h3><p id="phrases_value_two"></p></div>
+      <div class="card"><h3>Sentences</h3><p id="sentences_value_two"></p></div>
       <div class="card"><h3>Jump Edges</h3><p id="edges_value_two"></p></div>
       <div class="card"><h3>Length</h3><p id="length_value_two"></p></div>
       <div class="card"><h3>Vocals</h3><p id="vocal_value_two"></p></div>
@@ -235,7 +237,7 @@
     <div class="row">
       <label title="A phrase is an 8-beat musical sentence (two 4-beat bars). When checked, the walk only jumps as a phrase ends, so musical thoughts finish before wandering.">
         <input type="checkbox" id="phrase_jumps_three" checked>
-        Jump on phrases, not single beats</label>
+        Jump on sentences (grouped phrases), not single beats</label>
     </div>
     <!-- Row three: the instrumental blender's own start and stop. -->
     <div class="row">
@@ -248,6 +250,7 @@
       <div class="card"><h3>Key</h3><p id="key_value_three"></p></div>
       <div class="card"><h3>Beats</h3><p id="beats_value_three"></p></div>
       <div class="card"><h3>Phrases</h3><p id="phrases_value_three"></p></div>
+      <div class="card"><h3>Sentences</h3><p id="sentences_value_three"></p></div>
       <div class="card"><h3>Jump Edges</h3><p id="edges_value_three"></p></div>
       <div class="card"><h3>Length</h3><p id="length_value_three"></p></div>
       <div class="card"><h3>Vocals</h3><p id="vocal_value_three"></p></div>
@@ -321,7 +324,7 @@
     <div class="row">
       <label title="A phrase is an 8-beat musical sentence (two 4-beat bars). When checked, the walk only jumps as a phrase ends, so musical thoughts finish before wandering.">
         <input type="checkbox" id="phrase_jumps_eight" checked>
-        Jump on phrases, not single beats</label>
+        Jump on sentences (grouped phrases), not single beats</label>
     </div>
     <!-- This rectangle's own start and stop. -->
     <div class="row">
@@ -334,6 +337,7 @@
       <div class="card"><h3>Key</h3><p id="key_value_eight"></p></div>
       <div class="card"><h3>Beats</h3><p id="beats_value_eight"></p></div>
       <div class="card"><h3>Phrases</h3><p id="phrases_value_eight"></p></div>
+      <div class="card"><h3>Sentences</h3><p id="sentences_value_eight"></p></div>
       <div class="card"><h3>Jump Edges</h3><p id="edges_value_eight"></p></div>
       <div class="card"><h3>Length</h3><p id="length_value_eight"></p></div>
       <div class="card"><h3>Vocals</h3><p id="vocal_value_eight"></p></div>
@@ -394,8 +398,10 @@
       write("key", rec.key.tonic + " " + rec.key.mode + " (" + rec.key.camelot + ")");
       // Show the beat count.
       write("beats", rec.beats.length);
-      // Show the phrase count (complete 8-beat musical sentences).
+      // Show the phrase count (complete 8-beat units).
       write("phrases", Math.floor(rec.beats.length / 8));
+      // Show the detected sentence count (groups of phrases that belong together).
+      write("sentences", rec.sentences ? rec.sentences.length : "-");
       // Show the jump edge count (the walk's choices).
       write("edges", rec.graph.flat().length);
       // Show the track length as minutes and seconds.
@@ -914,8 +920,7 @@
       paint.moveTo(40, baseline);
       paint.lineTo(canvas.width - 40, baseline);
       paint.stroke();
-      // Mark the start of every 8-beat phrase with its own bright-orange tick,
-      // so the musical sentences the phrase-jumping option obeys are visible.
+      // Mark the start of every 8-beat phrase with its own bright-orange tick.
       paint.strokeStyle = "#ff933a";
       // Walk the beats in phrase-sized steps.
       for (let phraseStart = 0; phraseStart < record.beats.length; phraseStart += 8) {
@@ -925,10 +930,23 @@
         paint.lineTo(beatPosition(phraseStart), baseline - 8);
         paint.stroke();
       }
+      // Mark the start of every detected SENTENCE with a taller gold tick - these are
+      // the boundaries the sentence-jumping option obeys.
+      paint.strokeStyle = "#ffce59";
+      // Walk the detected sentence starts.
+      for (const sentenceStart of (record.sentences || [])) {
+        // Draw a taller vertical tick crossing the baseline.
+        paint.beginPath();
+        paint.moveTo(beatPosition(sentenceStart), baseline + 12);
+        paint.lineTo(beatPosition(sentenceStart), baseline - 14);
+        paint.stroke();
+      }
       // Draw every jump edge as an arc over the baseline.
       for (let beat = 0; beat < record.graph.length; beat++) {
-        // Note whether jumps from this beat are phrase-to-phrase (it ends a phrase).
-        const phraseArc = (beat % 8 === 7);
+        // Note whether jumps from this beat are sentence-to-sentence (it ends a
+        // detected sentence; older records fall back to phrase ends).
+        const phraseArc = record.sentences
+          ? record.sentences.includes(beat + 1) : (beat % 8 === 7);
         // Walk this beat's edges.
         for (const [target, distance] of record.graph[beat]) {
           // Highlight the active beat's edges in gold; phrase-to-phrase arcs glow
@@ -979,12 +997,16 @@
       // At the final beat, jump back into the song so it never ends.
       if (beatIndex >= record.beats.length - 1)
         return edges.length ? edges[0][0] : Math.floor(record.beats.length / 2);
-      // In phrase mode, only the last beat of an 8-beat phrase may jump, so every
-      // musical sentence finishes before the walk wanders (read live, like chaos).
-      const atPhraseEnd = (beatIndex + 1) % 8 === 0;
+      // In sentence mode, only the last beat of a SENTENCE may jump. Sentences are
+      // detected groups of phrases that belong together (continuous music, or a vocal
+      // line bridging the phrases), so no musical thought is chopped in half; older
+      // records without detected sentences fall back to plain 8-beat phrases.
+      const atSentenceEnd = record.sentences
+        ? record.sentences.includes(beatIndex + 1)
+        : (beatIndex + 1) % 8 === 0;
       // With probability chaos (read live from whichever rectangle started the walk),
-      // take a similarity-weighted jump edge - at any beat, or only at phrase ends.
-      if (edges.length && (!activePhraseBox.checked || atPhraseEnd)
+      // take a similarity-weighted jump edge - at any beat, or only at sentence ends.
+      if (edges.length && (!activePhraseBox.checked || atSentenceEnd)
           && Math.random() < parseFloat(activeChaosSlider.value)) {
         // Turn distances into weights favoring similar targets.
         const weights = edges.map(([, d]) => 1 / (0.001 + d));

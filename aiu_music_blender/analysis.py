@@ -40,8 +40,14 @@ VOCAL_PENALTY_FRACTION = 0.8
 VOCAL_LOW_HERTZ = 200.0
 # Define the top of the vocal frequency band, in Hertz.
 VOCAL_HIGH_HERTZ = 4000.0
+# Define how many beats make one phrase (two 4-beat bars, the pop-music sentence unit).
+PHRASE_BEATS = 8
+# Define how strongly a vocal line bridging two phrases argues AGAINST cutting between them.
+VOCAL_BRIDGE_WEIGHT = 1.0
+# Define the most phrases one sentence may swallow before a boundary is forced.
+MAX_PHRASES_PER_SENTENCE = 4
 # Define the analysis record format version; a cache with an older version is re-analyzed.
-ANALYSIS_VERSION = 2
+ANALYSIS_VERSION = 3
 # Define the Krumhansl major key profile (perceived strength of each pitch class in a major key).
 MAJOR_PROFILE = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88]
 # Define the Krumhansl minor key profile.
@@ -98,6 +104,9 @@ def analyze_song(audio_path, force=False):
     vocal = vocal_activity(samples, sample_rate, beat_frames)
     # Build the beat graph of jump edges from the features and the vocal activity.
     graph = build_beat_graph(features, vocal)
+    # Group adjacent phrases into SENTENCES: phrases that sound continuous, or that a
+    # vocal line bridges, stay together; boundaries fall only at genuine seams.
+    sentences = detect_sentences(features, vocal, len(beat_times))
     # Estimate the song's key from its overall chroma.
     key_estimate = estimate_key(samples, sample_rate)
     # Package everything into one analysis record.
@@ -116,6 +125,8 @@ def analyze_song(audio_path, force=False):
         "graph": graph,
         # Record the per-beat vocal activity (0.0 silent to 1.0 full singing).
         "vocal": [round(float(value), 3) for value in vocal],
+        # Record the beat indices where sentences (grouped phrases) begin.
+        "sentences": sentences,
         # Record the analysis record format version.
         "version": ANALYSIS_VERSION}
     # Open the cache file for writing.
@@ -172,6 +183,50 @@ def vocal_activity(samples, sample_rate, beat_frames):
     reference = numpy.percentile(beat_energy, 95.0) + 1e-12
     # Scale to the range zero to one, clipping the loudest outliers.
     return numpy.clip(beat_energy / reference, 0.0, 1.0)
+
+
+# Define the function that groups adjacent phrases into sentences: a boundary is kept
+# only where the music genuinely changes AND no vocal line bridges across the cut,
+# so jumping between sentences never feels like a thought chopped in half.
+def detect_sentences(features, vocal, beat_count):
+    # List every phrase's starting beat.
+    starts = list(range(0, beat_count, PHRASE_BEATS))
+    # A track with one phrase is one sentence.
+    if len(starts) <= 1:
+        # The single sentence starts at the beginning.
+        return [0]
+    # Average each phrase's beat features into one phrase profile.
+    profiles = [features[:, s:min(s + PHRASE_BEATS, beat_count)].mean(axis=1) for s in starts]
+    # Measure how much the music CHANGES across each phrase boundary.
+    changes = numpy.array([float(numpy.linalg.norm(profiles[i + 1] - profiles[i]))
+                           for i in range(len(starts) - 1)])
+    # Measure how strongly a VOCAL bridges each boundary (singing across the cut).
+    bridges = numpy.array([float(numpy.mean(vocal[max(0, starts[i + 1] - 2):starts[i + 1] + 2]))
+                           for i in range(len(starts) - 1)])
+    # Standardize both measures so they argue on equal terms.
+    changes = (changes - changes.mean()) / (changes.std() + 1e-9)
+    # Standardize the bridges the same way.
+    bridges = (bridges - bridges.mean()) / (bridges.std() + 1e-9)
+    # Score each boundary: high change argues FOR cutting, a vocal bridge AGAINST.
+    scores = changes - VOCAL_BRIDGE_WEIGHT * bridges
+    # Keep boundaries scoring above the middle of the pack.
+    threshold = float(numpy.median(scores))
+    # Every track's first sentence starts at the beginning.
+    sentence_starts = [0]
+    # Count phrases swallowed since the last boundary.
+    phrases_since = 0
+    # Walk every phrase boundary in order.
+    for index in range(len(scores)):
+        # One more phrase has joined the current sentence.
+        phrases_since += 1
+        # Keep this boundary if it is a genuine seam, or the sentence has grown too long.
+        if scores[index] >= threshold or phrases_since >= MAX_PHRASES_PER_SENTENCE:
+            # Start a new sentence at the next phrase.
+            sentence_starts.append(int(starts[index + 1]))
+            # Reset the growth counter.
+            phrases_since = 0
+    # Return the sentence starting beats.
+    return sentence_starts
 
 
 # Define a helper that blends each pair's distance with its following-beats context.
