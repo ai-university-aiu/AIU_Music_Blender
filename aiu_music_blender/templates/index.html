@@ -927,10 +927,14 @@
       }
       // Draw every jump edge as an arc over the baseline.
       for (let beat = 0; beat < record.graph.length; beat++) {
+        // Note whether jumps from this beat are phrase-to-phrase (it ends a phrase).
+        const phraseArc = (beat % 8 === 7);
         // Walk this beat's edges.
         for (const [target, distance] of record.graph[beat]) {
-          // Highlight the active beat's edges in gold; others glow ember.
-          paint.strokeStyle = (beat === activeBeat) ? "#ffce59" : "rgba(240,109,31,0.25)";
+          // Highlight the active beat's edges in gold; phrase-to-phrase arcs glow
+          // bright orange (the phrase ticks' color); all others glow ember.
+          paint.strokeStyle = (beat === activeBeat) ? "#ffce59"
+            : phraseArc ? "rgba(255,147,58,0.5)" : "rgba(240,109,31,0.25)";
           // Find both ends on the baseline.
           const from = beatPosition(beat), to = beatPosition(target);
           // Make the arc height follow the jump span.
