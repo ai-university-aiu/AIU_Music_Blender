@@ -7,6 +7,8 @@ import os
 import tempfile
 # Import the file-copy tool, so stems keep their full studio quality untouched.
 import shutil
+# Import the pattern-matching file finder for the RoFormer separator's outputs.
+import glob
 # Import the subprocess tools for the rubberband and demucs programs.
 import subprocess
 # Import the importable-module checker for optional Demucs.
@@ -34,6 +36,17 @@ PLAIN_BLEND_GAIN = 0.55
 def demucs_available():
     # Report whether the demucs module can be found.
     return importlib.util.find_spec("demucs") is not None
+
+
+# Define the BS-RoFormer model used for high-quality two-stem separation - the
+# benchmark leader for vocals as of 2026, run through the audio-separator program.
+ROFORMER_MODEL = "model_bs_roformer_ep_317_sdr_12.9755.ckpt"
+
+
+# Define a helper that reports whether the RoFormer separator program is installed.
+def roformer_available():
+    # Report whether the audio-separator program can be found.
+    return shutil.which("audio-separator") is not None
 
 
 # Define a helper that folds song B's tempo by halves and doubles to sit nearest song A's tempo.
@@ -84,7 +97,20 @@ def rubberband(input_wav, output_wav, time_ratio, semitones):
 
 # Define a helper that separates a song into vocals and instrumental with Demucs.
 def separate_stems(audio_path, work_folder, high_quality=False):
-    # Run the FINE-TUNED model in two-stem mode, with shift-averaging, into the folder.
+    # In HIGH QUALITY, use the benchmark-leading BS-RoFormer separator when installed.
+    if high_quality and roformer_available():
+        # Run the RoFormer separator into the work folder.
+        subprocess.run(["audio-separator", audio_path,
+                        "--model_filename", ROFORMER_MODEL,
+                        "--output_dir", work_folder, "--output_format", "WAV"],
+                       check=True, capture_output=True)
+        # Find the vocals output by its naming pattern.
+        vocals = glob.glob(os.path.join(work_folder, "*(Vocals)*.wav"))[0]
+        # Find the instrumental output the same way.
+        instrumental = glob.glob(os.path.join(work_folder, "*(Instrumental)*.wav"))[0]
+        # Return the vocal and instrumental paths.
+        return vocals, instrumental
+    # Otherwise, run the fine-tuned Demucs model in two-stem mode with shift-averaging.
     subprocess.run(["python3", "-m", "demucs", "-n", TWO_STEM_MODEL,
                     "--two-stems", "vocals", "--shifts", shifts_for(high_quality),
                     "-o", work_folder, audio_path], check=True, capture_output=True)

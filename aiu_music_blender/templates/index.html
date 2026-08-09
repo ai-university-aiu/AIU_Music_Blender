@@ -54,8 +54,8 @@
     /* Line the mixing desk's faders up vertically: equal label, slider, and value
        widths in every row, so the four sliders sit in one straight column. */
     .fader label { width: 16em; text-align: right; }
-    /* Give every fader slider the same width. */
-    .fader input[type="range"] { width: 11em; }
+    /* Give EVERY slider on the page the same doubled length. */
+    input[type="range"] { width: 22em; }
     /* Give every fader value label the same width, left-aligned. */
     .fader span { width: 3.2em; text-align: left; }
     /* Style the buttons and inputs. */
@@ -90,7 +90,7 @@
     <!-- Row three: the chaos label, slider, and live value, kept together on one line. -->
     <div class="row">
       <label for="chaos">Chaos (jump probability):</label>
-      <input type="range" id="chaos" min="0" max="1" step="0.05" value="0.25"
+      <input type="range" id="chaos" min="0" max="1" step="0.025" value="0.25"
              title="How likely each beat is to jump to a look-alike beat: 0.0 never, 1.0 always.">
       <span id="chaos_value">0.25</span>
     </div>
@@ -185,7 +185,7 @@
     <!-- Row four: the mash-up's own chaos label, slider, and live value. -->
     <div class="row">
       <label for="chaos_two">Chaos (jump probability):</label>
-      <input type="range" id="chaos_two" min="0" max="1" step="0.05" value="0.25"
+      <input type="range" id="chaos_two" min="0" max="1" step="0.025" value="0.25"
              title="How likely each beat is to jump to a look-alike beat: 0.0 never, 1.0 always.">
       <span id="chaos_two_value">0.25</span>
     </div>
@@ -241,7 +241,7 @@
     <!-- Row two: the instrumental blender's own chaos label, slider, and live value. -->
     <div class="row">
       <label for="chaos_three">Chaos (jump probability):</label>
-      <input type="range" id="chaos_three" min="0" max="1" step="0.05" value="0.25"
+      <input type="range" id="chaos_three" min="0" max="1" step="0.025" value="0.25"
              title="How likely each beat is to jump to a look-alike beat: 0.0 never, 1.0 always.">
       <span id="chaos_three_value">0.25</span>
     </div>
@@ -303,38 +303,38 @@
     <!-- The four live volume sliders, one per stem, active during playback. -->
     <div class="row fader">
       <label for="volume_drums">DRUMS/BEAT VOLUME 0% to 100%</label>
-      <input type="range" id="volume_drums" min="0" max="100" step="1" value="100">
+      <input type="range" id="volume_drums" min="0" max="100" step="0.5" value="100">
       <span id="volume_drums_value">100%</span>
     </div>
     <div class="row fader">
       <label for="volume_bass">BASS VOLUME 0% to 100%</label>
-      <input type="range" id="volume_bass" min="0" max="100" step="1" value="100">
+      <input type="range" id="volume_bass" min="0" max="100" step="0.5" value="100">
       <span id="volume_bass_value">100%</span>
     </div>
     <div class="row fader">
       <label for="volume_guitar">GUITAR VOLUME 0% to 100%</label>
-      <input type="range" id="volume_guitar" min="0" max="100" step="1" value="100">
+      <input type="range" id="volume_guitar" min="0" max="100" step="0.5" value="100">
       <span id="volume_guitar_value">100%</span>
     </div>
     <div class="row fader">
       <label for="volume_piano">PIANO VOLUME 0% to 100%</label>
-      <input type="range" id="volume_piano" min="0" max="100" step="1" value="100">
+      <input type="range" id="volume_piano" min="0" max="100" step="0.5" value="100">
       <span id="volume_piano_value">100%</span>
     </div>
     <div class="row fader">
       <label for="volume_vocals">VOCAL VOLUME 0% to 100%</label>
-      <input type="range" id="volume_vocals" min="0" max="100" step="1" value="100">
+      <input type="range" id="volume_vocals" min="0" max="100" step="0.5" value="100">
       <span id="volume_vocals_value">100%</span>
     </div>
     <div class="row fader">
       <label for="volume_other">OTHER VOLUME 0% to 100%</label>
-      <input type="range" id="volume_other" min="0" max="100" step="1" value="100">
+      <input type="range" id="volume_other" min="0" max="100" step="0.5" value="100">
       <span id="volume_other_value">100%</span>
     </div>
     <!-- This rectangle's own chaos label, slider, and live value. -->
     <div class="row">
       <label for="chaos_eight">Chaos (jump probability):</label>
-      <input type="range" id="chaos_eight" min="0" max="1" step="0.05" value="0.25"
+      <input type="range" id="chaos_eight" min="0" max="1" step="0.025" value="0.25"
              title="How likely each beat is to jump to a look-alike beat: 0.0 never, 1.0 always.">
       <span id="chaos_eight_value">0.25</span>
     </div>
@@ -392,7 +392,7 @@
     // Whenever the slider moves, show its current value beside it.
     chaosSlider.addEventListener("input", () => {
       // Write the slider's value, always with two decimals, into the value label.
-      chaosValue.textContent = parseFloat(chaosSlider.value).toFixed(2);
+      chaosValue.textContent = parseFloat(chaosSlider.value).toFixed(3);
     });
     const playButton = document.getElementById("play_button");
     const stopButton = document.getElementById("stop_button");
@@ -455,7 +455,7 @@
     // Whenever the mash-up slider moves, show its current value beside it.
     chaosTwoSlider.addEventListener("input", () => {
       // Write the slider's value, always with two decimals, into its value label.
-      chaosTwoValue.textContent = parseFloat(chaosTwoSlider.value).toFixed(2);
+      chaosTwoValue.textContent = parseFloat(chaosTwoSlider.value).toFixed(3);
     });
     // Find the instrumental rectangle's elements.
     const instrumentalInput = document.getElementById("instrumental_input");
@@ -468,7 +468,7 @@
     // Whenever the instrumental slider moves, show its current value beside it.
     chaosThreeSlider.addEventListener("input", () => {
       // Write the slider's value, always with two decimals, into its value label.
-      chaosThreeValue.textContent = parseFloat(chaosThreeSlider.value).toFixed(2);
+      chaosThreeValue.textContent = parseFloat(chaosThreeSlider.value).toFixed(3);
     });
     // The slider the running walk reads its chaos from (set by whichever Play was pressed).
     let activeChaosSlider = chaosSlider;
@@ -786,7 +786,7 @@
     const chaosEightValue = document.getElementById("chaos_eight_value");
     // Show the slider's live value beside it.
     chaosEightSlider.addEventListener("input", () =>
-      { chaosEightValue.textContent = parseFloat(chaosEightSlider.value).toFixed(2); });
+      { chaosEightValue.textContent = parseFloat(chaosEightSlider.value).toFixed(3); });
     // The equalizer's play starts the four-stems-at-once walk.
     document.getElementById("play_eight_button")
       .addEventListener("click", () => startWalk("eight"));
