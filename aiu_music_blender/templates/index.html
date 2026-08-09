@@ -25,6 +25,10 @@
              border: 1px solid #c02b18; border-radius: 14px; }
     /* Style the title inside the top of each group rectangle. */
     .group h2 { margin: 0.1em 0 0.5em 0; color: #ff933a; font-size: 1.15em; }
+    /* A dormant rectangle rests darker until it is actually working on files. */
+    .group.dormant { border-color: #5c1310; }
+    /* Its title rests darker too. */
+    .group.dormant h2 { color: #a1531f; }
     /* Style the little ready flag beside a rectangle's title (hidden until ready). */
     .ready_flag { display: none; background: #7c0300; border: 1px solid #ffce59;
                   color: #ffce59; border-radius: 999px; padding: 0.1em 0.6em;
@@ -128,102 +132,6 @@
     <div class="row">
       <button id="save_wav_one" disabled>SAVE TO WAV</button>
       <button id="save_mp3_one" disabled>SAVE TO MP3</button>
-    </div>
-  </div>
-
-  <!-- The second big rounded-corner group rectangle: the two-song mash-up blender. -->
-  <div class="group">
-    <!-- The title inside the top of the rectangle. -->
-    <h2>AIU Mash-Up Blender</h2>
-    <!-- Row one: the first song's YouTube link. -->
-    <div class="row">
-      <label for="song_one_input">SONG-1 YouTube URL:</label>
-      <input type="text" id="song_one_input" size="30"
-             placeholder="https://www.youtube.com/watch?v=...">
-    </div>
-    <!-- Row two: the first song as a local file instead (the file wins if both are given). -->
-    <div class="row">
-      <label for="song_one_file">SONG-1 file:</label>
-      <input type="file" id="song_one_file" accept="audio/*">
-    </div>
-    <!-- Row three: the first song's vocal choice, on its own line - it applies to the
-         song itself, whichever way the song arrived. -->
-    <div class="row">
-      <label title="Include SONG-1's vocals in the blend.">
-        <input type="checkbox" id="vocals_one" checked> SONG-1 vocals</label>
-    </div>
-    <!-- Row four: declare the first song already vocal-free, skipping vocal removal for it. -->
-    <div class="row">
-      <label title="Skip the vocal-removal process for SONG-1: it has no vocals to remove.">
-        <input type="checkbox" id="instrumental_one"> SONG-1 is already an instrumental</label>
-    </div>
-    <!-- Row five: the second song's YouTube link. -->
-    <div class="row">
-      <label for="song_two_input">SONG-2 YouTube URL:</label>
-      <input type="text" id="song_two_input" size="30"
-             placeholder="https://www.youtube.com/watch?v=...">
-    </div>
-    <!-- Row six: the second song as a local file instead (the file wins if both are given). -->
-    <div class="row">
-      <label for="song_two_file">SONG-2 file:</label>
-      <input type="file" id="song_two_file" accept="audio/*">
-    </div>
-    <!-- Row seven: the second song's vocal choice, on its own line for the same reason. -->
-    <div class="row">
-      <label title="Include SONG-2's vocals in the blend.">
-        <input type="checkbox" id="vocals_two"> SONG-2 vocals</label>
-    </div>
-    <!-- Row eight: declare the second song already vocal-free, skipping vocal removal for it. -->
-    <div class="row">
-      <label title="Skip the vocal-removal process for SONG-2: it has no vocals to remove.">
-        <input type="checkbox" id="instrumental_two"> SONG-2 is already an instrumental</label>
-    </div>
-    <!-- The HIGH QUALITY option: deep shift-averaging, slower but cleaner stems. -->
-    <div class="row">
-      <label title="Runs each separation five times with tiny time offsets and averages them - cleaner stems, at a slower (once per song) separation.">
-        <input type="checkbox" id="high_quality_two" checked> HIGH QUALITY separation
-        (slower, cleaner)</label>
-    </div>
-    <!-- Row three: blend the two songs into one mash-up. -->
-    <div class="row">
-      <button id="blend_button">Blend the two songs</button>
-    </div>
-    <!-- Row four: the mash-up's own chaos label, slider, and live value. -->
-    <div class="row">
-      <label for="chaos_two">Chaos (jump probability):</label>
-      <input type="range" id="chaos_two" min="0" max="1" step="0.025" value="0"
-             title="How likely each beat is to jump to a look-alike beat: 0.0 never, 1.0 always.">
-      <span id="chaos_two_value">0.000</span>
-    </div>
-    <!-- This rectangle's phrase option: jump only as 8-beat musical sentences end. -->
-    <div class="row">
-      <label title="A phrase is an 8-beat musical sentence (two 4-beat bars). When checked, the walk only jumps as a phrase ends, so musical thoughts finish before wandering.">
-        <input type="checkbox" id="phrase_jumps_two" checked>
-        Jump on sentences (grouped phrases), not single beats</label>
-    </div>
-    <!-- Row five: the mash-up's own start and stop, so one rectangle covers one use. -->
-    <div class="row">
-      <button id="play_two_button" disabled>Play Forever</button>
-      <button id="stop_two_button" disabled>Stopped</button>
-    </div>
-    <!-- Show what the pipeline found in the finished blend, one card per fact. -->
-    <div class="cards" id="cards_two">
-      <div class="card"><h3>Tempo</h3><p id="tempo_value_two"></p></div>
-      <div class="card"><h3>Key</h3><p id="key_value_two"></p></div>
-      <div class="card"><h3>Beats</h3><p id="beats_value_two"></p></div>
-      <div class="card"><h3>Phrases</h3><p id="phrases_value_two"></p></div>
-      <div class="card"><h3>Sentences</h3><p id="sentences_value_two"></p></div>
-      <div class="card"><h3>Jump Edges</h3><p id="edges_value_two"></p></div>
-      <div class="card"><h3>Length</h3><p id="length_value_two"></p></div>
-      <div class="card"><h3>Vocals</h3><p id="vocal_value_two"></p></div>
-    </div>
-    <!-- Report mash-up progress and the honest compatibility report here. -->
-    <div id="mashup_status">Paste two songs, then blend; the result loads into the
-      AIU Song Blender above so it can play forever.</div>
-    <!-- The bottom row: save this rectangle's blend to the local filesystem. -->
-    <div class="row">
-      <button id="save_wav_two" disabled>SAVE TO WAV</button>
-      <button id="save_mp3_two" disabled>SAVE TO MP3</button>
     </div>
   </div>
 
@@ -389,6 +297,103 @@
     </div>
   </div>
 
+
+  <!-- The two-song Mash-Up Blender, resting at the bottom of the page. It sits
+       DORMANT (darker) until it is actually working on processing two files. -->
+  <div class="group dormant" id="mashup_group">
+    <!-- The title inside the top of the rectangle. -->
+    <h2>AIU Mash-Up Blender</h2>
+    <!-- Row one: the first song's YouTube link. -->
+    <div class="row">
+      <label for="song_one_input">SONG-1 YouTube URL:</label>
+      <input type="text" id="song_one_input" size="30"
+             placeholder="https://www.youtube.com/watch?v=...">
+    </div>
+    <!-- Row two: the first song as a local file instead (the file wins if both are given). -->
+    <div class="row">
+      <label for="song_one_file">SONG-1 file:</label>
+      <input type="file" id="song_one_file" accept="audio/*">
+    </div>
+    <!-- Row three: the first song's vocal choice, on its own line - it applies to the
+         song itself, whichever way the song arrived. -->
+    <div class="row">
+      <label title="Include SONG-1's vocals in the blend.">
+        <input type="checkbox" id="vocals_one" checked> SONG-1 vocals</label>
+    </div>
+    <!-- Row four: declare the first song already vocal-free, skipping vocal removal for it. -->
+    <div class="row">
+      <label title="Skip the vocal-removal process for SONG-1: it has no vocals to remove.">
+        <input type="checkbox" id="instrumental_one"> SONG-1 is already an instrumental</label>
+    </div>
+    <!-- Row five: the second song's YouTube link. -->
+    <div class="row">
+      <label for="song_two_input">SONG-2 YouTube URL:</label>
+      <input type="text" id="song_two_input" size="30"
+             placeholder="https://www.youtube.com/watch?v=...">
+    </div>
+    <!-- Row six: the second song as a local file instead (the file wins if both are given). -->
+    <div class="row">
+      <label for="song_two_file">SONG-2 file:</label>
+      <input type="file" id="song_two_file" accept="audio/*">
+    </div>
+    <!-- Row seven: the second song's vocal choice, on its own line for the same reason. -->
+    <div class="row">
+      <label title="Include SONG-2's vocals in the blend.">
+        <input type="checkbox" id="vocals_two"> SONG-2 vocals</label>
+    </div>
+    <!-- Row eight: declare the second song already vocal-free, skipping vocal removal for it. -->
+    <div class="row">
+      <label title="Skip the vocal-removal process for SONG-2: it has no vocals to remove.">
+        <input type="checkbox" id="instrumental_two"> SONG-2 is already an instrumental</label>
+    </div>
+    <!-- The HIGH QUALITY option: deep shift-averaging, slower but cleaner stems. -->
+    <div class="row">
+      <label title="Runs each separation five times with tiny time offsets and averages them - cleaner stems, at a slower (once per song) separation.">
+        <input type="checkbox" id="high_quality_two" checked> HIGH QUALITY separation
+        (slower, cleaner)</label>
+    </div>
+    <!-- Row three: blend the two songs into one mash-up. -->
+    <div class="row">
+      <button id="blend_button">Blend the two songs</button>
+    </div>
+    <!-- Row four: the mash-up's own chaos label, slider, and live value. -->
+    <div class="row">
+      <label for="chaos_two">Chaos (jump probability):</label>
+      <input type="range" id="chaos_two" min="0" max="1" step="0.025" value="0"
+             title="How likely each beat is to jump to a look-alike beat: 0.0 never, 1.0 always.">
+      <span id="chaos_two_value">0.000</span>
+    </div>
+    <!-- This rectangle's phrase option: jump only as 8-beat musical sentences end. -->
+    <div class="row">
+      <label title="A phrase is an 8-beat musical sentence (two 4-beat bars). When checked, the walk only jumps as a phrase ends, so musical thoughts finish before wandering.">
+        <input type="checkbox" id="phrase_jumps_two" checked>
+        Jump on sentences (grouped phrases), not single beats</label>
+    </div>
+    <!-- Row five: the mash-up's own start and stop, so one rectangle covers one use. -->
+    <div class="row">
+      <button id="play_two_button" disabled>Play Forever</button>
+      <button id="stop_two_button" disabled>Stopped</button>
+    </div>
+    <!-- Show what the pipeline found in the finished blend, one card per fact. -->
+    <div class="cards" id="cards_two">
+      <div class="card"><h3>Tempo</h3><p id="tempo_value_two"></p></div>
+      <div class="card"><h3>Key</h3><p id="key_value_two"></p></div>
+      <div class="card"><h3>Beats</h3><p id="beats_value_two"></p></div>
+      <div class="card"><h3>Phrases</h3><p id="phrases_value_two"></p></div>
+      <div class="card"><h3>Sentences</h3><p id="sentences_value_two"></p></div>
+      <div class="card"><h3>Jump Edges</h3><p id="edges_value_two"></p></div>
+      <div class="card"><h3>Length</h3><p id="length_value_two"></p></div>
+      <div class="card"><h3>Vocals</h3><p id="vocal_value_two"></p></div>
+    </div>
+    <!-- Report mash-up progress and the honest compatibility report here. -->
+    <div id="mashup_status">Paste two songs, then blend; the result loads into the
+      AIU Song Blender above so it can play forever.</div>
+    <!-- The bottom row: save this rectangle's blend to the local filesystem. -->
+    <div class="row">
+      <button id="save_wav_two" disabled>SAVE TO WAV</button>
+      <button id="save_mp3_two" disabled>SAVE TO MP3</button>
+    </div>
+  </div>
 
   <!-- Draw the classic arc diagram on this canvas. -->
   <canvas id="arc_canvas" width="900" height="520"></canvas>
@@ -746,6 +751,8 @@
         // Stop here.
         return;
       }
+      // Wake the rectangle: it is now working on processing two files.
+      document.getElementById("mashup_group").classList.remove("dormant");
       // Show the work on the button itself.
       blendButton.disabled = true;
       // Change the button label to the state, with the little spinning working indicator.
