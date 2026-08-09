@@ -480,6 +480,81 @@
     </div>
   </div>
 
+  <!-- The fifth sub-rectangle of the super-group: all four stems at once, with a
+       live volume slider for each - a mixing desk over the infinite walk. -->
+  <div class="group">
+    <!-- The title inside the top of the rectangle, with its ready flag. -->
+    <h2>AIU Stem Equalizer<span class="ready_flag" id="ready_eight">ready</span></h2>
+    <!-- Row one: the song's YouTube link, loaded on Enter or button press. -->
+    <div class="row">
+      <label for="extract_input_eight">YouTube URL:</label>
+      <input type="text" id="extract_input_eight" size="34"
+             placeholder="https://www.youtube.com/watch?v=...">
+      <button id="extract_button_eight">Load stems &amp; analyze</button>
+    </div>
+    <!-- Row two: the song as a local file instead (the file wins if both are given). -->
+    <div class="row">
+      <input type="file" id="extract_file_eight" accept="audio/*">
+    </div>
+    <!-- The four live volume sliders, one per stem, active during playback. -->
+    <div class="row">
+      <label for="volume_drums">DRUMS/BEAT VOLUME 0% to 100%</label>
+      <input type="range" id="volume_drums" min="0" max="100" step="1" value="100">
+      <span id="volume_drums_value">100%</span>
+    </div>
+    <div class="row">
+      <label for="volume_bass">BASS VOLUME 0% to 100%</label>
+      <input type="range" id="volume_bass" min="0" max="100" step="1" value="100">
+      <span id="volume_bass_value">100%</span>
+    </div>
+    <div class="row">
+      <label for="volume_vocals">VOCAL VOLUME 0% to 100%</label>
+      <input type="range" id="volume_vocals" min="0" max="100" step="1" value="100">
+      <span id="volume_vocals_value">100%</span>
+    </div>
+    <div class="row">
+      <label for="volume_other">OTHER VOLUME 0% to 100%</label>
+      <input type="range" id="volume_other" min="0" max="100" step="1" value="100">
+      <span id="volume_other_value">100%</span>
+    </div>
+    <!-- This rectangle's own chaos label, slider, and live value. -->
+    <div class="row">
+      <label for="chaos_eight">Chaos (jump probability):</label>
+      <input type="range" id="chaos_eight" min="0" max="1" step="0.05" value="0.25"
+             title="How likely each beat is to jump to a look-alike beat: 0.0 never, 1.0 always.">
+      <span id="chaos_eight_value">0.25</span>
+    </div>
+    <!-- This rectangle's phrase option: jump only as 8-beat musical sentences end. -->
+    <div class="row">
+      <label title="A phrase is an 8-beat musical sentence (two 4-beat bars). When checked, the walk only jumps as a phrase ends, so musical thoughts finish before wandering.">
+        <input type="checkbox" id="phrase_jumps_eight" checked>
+        Jump on phrases, not single beats</label>
+    </div>
+    <!-- This rectangle's own start and stop. -->
+    <div class="row">
+      <button id="play_eight_button" disabled>Play Forever</button>
+      <button id="stop_eight_button" disabled>Stopped</button>
+    </div>
+    <!-- Show what the pipeline found in the full song, one card per fact. -->
+    <div class="cards" id="cards_eight">
+      <div class="card"><h3>Tempo</h3><p id="tempo_value_eight"></p></div>
+      <div class="card"><h3>Key</h3><p id="key_value_eight"></p></div>
+      <div class="card"><h3>Beats</h3><p id="beats_value_eight"></p></div>
+      <div class="card"><h3>Phrases</h3><p id="phrases_value_eight"></p></div>
+      <div class="card"><h3>Jump Edges</h3><p id="edges_value_eight"></p></div>
+      <div class="card"><h3>Length</h3><p id="length_value_eight"></p></div>
+      <div class="card"><h3>Vocals</h3><p id="vocal_value_eight"></p></div>
+    </div>
+    <!-- Report the equalizer's progress here. -->
+    <div id="extract_status_eight">This box plays ALL FOUR stems at the same time,
+      with a live volume slider for each - mix the song while it plays forever.</div>
+    <!-- The bottom row: save this rectangle's full song to the local filesystem. -->
+    <div class="row">
+      <button id="save_wav_eight" disabled>SAVE TO WAV</button>
+      <button id="save_mp3_eight" disabled>SAVE TO MP3</button>
+    </div>
+  </div>
+
   <!-- Close the all-encompassing super-group. -->
   </div>
 
@@ -590,15 +665,16 @@
       four: [document.getElementById("save_wav_four"), document.getElementById("save_mp3_four")],
       five: [document.getElementById("save_wav_five"), document.getElementById("save_mp3_five")],
       six: [document.getElementById("save_wav_six"), document.getElementById("save_mp3_six")],
-      seven: [document.getElementById("save_wav_seven"), document.getElementById("save_mp3_seven")]};
+      seven: [document.getElementById("save_wav_seven"), document.getElementById("save_mp3_seven")],
+      eight: [document.getElementById("save_wav_eight"), document.getElementById("save_mp3_eight")]};
     // The audio key each rectangle most recently produced (nothing yet).
     const saveKeys = { one: null, two: null, three: null, four: null,
-                       five: null, six: null, seven: null };
+                       five: null, six: null, seven: null, eight: null };
     // The analysis record each rectangle most recently produced - so each rectangle's
     // Play Forever plays ITS OWN track (drums in the beat rectangle, bass in the bass
     // rectangle, and so on), never whatever happened to load last.
     const loadedRecords = { one: null, two: null, three: null, four: null,
-                            five: null, six: null, seven: null };
+                            five: null, six: null, seven: null, eight: null };
     // Already-decoded audio, kept by audio key so switching rectangles is instant.
     const decodedBuffers = {};
 
@@ -840,6 +916,127 @@
     // Blend when the button is pressed.
     blendButton.addEventListener("click", blendSongs);
 
+    // Wire the equalizer rectangle's chaos slider display.
+    const chaosEightSlider = document.getElementById("chaos_eight");
+    // Find its value label.
+    const chaosEightValue = document.getElementById("chaos_eight_value");
+    // Show the slider's live value beside it.
+    chaosEightSlider.addEventListener("input", () =>
+      { chaosEightValue.textContent = parseFloat(chaosEightSlider.value).toFixed(2); });
+    // The equalizer's play starts the four-stems-at-once walk.
+    document.getElementById("play_eight_button")
+      .addEventListener("click", () => startWalk("eight"));
+    // The equalizer's stop ends the walk.
+    document.getElementById("stop_eight_button")
+      .addEventListener("click", stopWalk);
+
+    // Load the equalizer: the full song's analysis plus all four decoded stems.
+    async function loadEqualizer() {
+      // Find the equalizer's own input elements.
+      const urlBox = document.getElementById("extract_input_eight");
+      // Find the file chooser.
+      const fileBox = document.getElementById("extract_file_eight");
+      // Find the button.
+      const goButton = document.getElementById("extract_button_eight");
+      // Find the status line.
+      const status = document.getElementById("extract_status_eight");
+      // Take the pasted link.
+      const link = urlBox.value.trim();
+      // Take the chosen file (a chosen file wins over a pasted link).
+      const file = fileBox.files[0];
+      // Ask again when neither was given.
+      if (!link && !file) { status.textContent = "Give the song a link or a file first."; return; }
+      // Show the work on the button itself, with the spinning working indicator.
+      goButton.disabled = true;
+      // Change the button label to the state.
+      goButton.innerHTML = '<span class="spinner"></span>Loading...';
+      // Tell the user what is happening.
+      status.textContent = "Fetching the song, separating ALL FOUR stems "
+        + "(a few minutes the first time), then analyzing everything...";
+      // Guard the whole round trip so every failure is shown, never silent.
+      try {
+        // Ask for the full song's analysis (the beat grid the equalizer walks).
+        const songForm = new FormData();
+        // Attach the song as a file when chosen, otherwise as its link.
+        if (file) songForm.append("file", file); else songForm.append("input", link);
+        // Post to the analyze route.
+        const songAnswer = await fetch("/analyze", { method: "POST", body: songForm });
+        // Refuse gracefully on failure.
+        if (!songAnswer.ok) { status.textContent = "Analysis failed - check the input."; return; }
+        // Keep the full song's record.
+        const songRecord = await songAnswer.json();
+        // Ask for all four stems from the same song.
+        const stemForm = new FormData();
+        // Attach the song again the same way.
+        if (file) stemForm.append("file", file); else stemForm.append("input", link);
+        // Post to the all-stems route.
+        const stemAnswer = await fetch("/stems", { method: "POST", body: stemForm });
+        // Refuse gracefully on failure.
+        if (!stemAnswer.ok) { status.textContent = "Stem separation failed."; return; }
+        // Keep all four stem records.
+        const allStems = await stemAnswer.json();
+        // Create the audio context on first use.
+        audioContext = audioContext || new AudioContext();
+        // Build the live volume controls now that the context exists.
+        ensureEqualizerGains();
+        // Decode all four stem audios for the simultaneous player.
+        equalizerBuffers = {};
+        // Walk the four stems.
+        for (const stem of ["drums", "bass", "vocals", "other"]) {
+          // Fetch this stem's audio bytes.
+          const bytes = await (await fetch("/audio/" + allStems[stem].audio_key)).arrayBuffer();
+          // Decode and keep them.
+          equalizerBuffers[stem] = await audioContext.decodeAudioData(bytes);
+        }
+        // Populate the four extractor rectangles too - the stems are already made.
+        STEM_RECTANGLES.forEach(([familyRect, familyStem]) => {
+          // Remember that rectangle's own stem as its playable track.
+          loadedRecords[familyRect] = allStems[familyStem];
+          // Fill that rectangle's metric cards.
+          showMetrics(familyRect, allStems[familyStem]);
+          // Arm that rectangle's save buttons.
+          armSave(familyRect, allStems[familyStem].audio_key);
+          // Raise that rectangle's ready flag.
+          document.getElementById("ready_" + familyRect).style.display = "inline-block";
+        });
+        // Remember the full song as the equalizer's own track.
+        loadedRecords.eight = songRecord;
+        // Fill the equalizer's metric cards from the full song.
+        showMetrics("eight", songRecord);
+        // Arm the equalizer's save buttons with the full song.
+        armSave("eight", songRecord.audio_key);
+        // Raise the equalizer's ready flag.
+        document.getElementById("ready_eight").style.display = "inline-block";
+        // Show the full song on the visualizer.
+        record = songRecord;
+        // Draw its arcs.
+        drawArcs(-1);
+        // Arm every play button that now holds a track.
+        refreshPlayButtons();
+        // Report success.
+        status.textContent = "All four stems loaded and synchronized - press Play "
+          + "Forever and mix with the volume sliders while it plays.";
+      // Surface any network or server failure.
+      } catch (problem) {
+        // Show the failure instead of doing nothing.
+        status.textContent = "Could not reach the local server: " + problem;
+      // Always restore the button, success or failure.
+      } finally {
+        // Re-enable the button.
+        goButton.disabled = false;
+        // Restore the button label.
+        goButton.textContent = "Load stems & analyze";
+      }
+    }
+    // Load when the button is pressed.
+    document.getElementById("extract_button_eight").addEventListener("click", loadEqualizer);
+    // Load when Enter is pressed in the box.
+    document.getElementById("extract_input_eight").addEventListener("keydown", (key) =>
+      { if (key.key === "Enter") loadEqualizer(); });
+    // Load when a file is chosen.
+    document.getElementById("extract_file_eight").addEventListener("change", () =>
+      { if (document.getElementById("extract_file_eight").files[0]) loadEqualizer(); });
+
     // If this page was opened as a plain file, there is no server behind it; say so plainly.
     if (window.location.protocol === "file:") {
       // Explain the situation and the remedy on the status line.
@@ -967,6 +1164,47 @@
       return beatIndex + 1;
     }
 
+    // The equalizer's decoded stem audio (drums, bass, vocals, other), once loaded.
+    let equalizerBuffers = null;
+    // The equalizer's live volume controls, one gain node per stem, built on first use.
+    let equalizerGains = null;
+    // Whether the running walk is the equalizer's four-stems-at-once playback.
+    let equalizerMode = false;
+
+    // Build the four live gain nodes once, wired from the sliders to the speakers.
+    function ensureEqualizerGains() {
+      // Build only once, after the audio context exists.
+      if (equalizerGains) return;
+      // Start the empty set.
+      equalizerGains = {};
+      // Make one gain node per stem.
+      ["drums", "bass", "vocals", "other"].forEach((stem) => {
+        // Create the gain node.
+        const gain = audioContext.createGain();
+        // Start it at its slider's current setting.
+        gain.gain.value = parseFloat(document.getElementById("volume_" + stem).value) / 100;
+        // Send it to the speakers.
+        gain.connect(audioContext.destination);
+        // Keep it.
+        equalizerGains[stem] = gain;
+      });
+    }
+
+    // Wire each volume slider: show its value, and steer its gain node LIVE while playing.
+    ["drums", "bass", "vocals", "other"].forEach((stem) => {
+      // Find this stem's slider.
+      const slider = document.getElementById("volume_" + stem);
+      // Find its value label.
+      const label = document.getElementById("volume_" + stem + "_value");
+      // React to every movement of the slider.
+      slider.addEventListener("input", () => {
+        // Show the percentage.
+        label.textContent = slider.value + "%";
+        // Steer the live gain node, so the mix changes DURING playback.
+        if (equalizerGains) equalizerGains[stem].gain.value = parseFloat(slider.value) / 100;
+      });
+    });
+
     // The scheduler state: the beat to schedule next, when it starts on the audio clock,
     // the queued sources (so Stop can silence them), and the pump timer.
     let scheduleBeat = 0, scheduleTime = 0, queuedSources = [], pumpTimer = null;
@@ -975,18 +1213,37 @@
 
     // Queue one beat span at an exact time on the audio clock (sample-accurate, no drift).
     function queueBeat(beatIndex, startTime) {
-      // Create a source for this beat span.
-      const source = audioContext.createBufferSource();
-      // Give the source the song's audio.
-      source.buffer = audioBuffer;
-      // Connect the source to the speakers.
-      source.connect(audioContext.destination);
       // Compute this beat's start and length inside the song.
       const start = record.beats[beatIndex], length = beatEnd(beatIndex) - start;
-      // Start exactly on the audio clock, playing exactly this beat span.
-      source.start(startTime, start, length);
-      // Remember the source so Stop can silence it.
-      queuedSources.push(source);
+      // In equalizer mode, play the SAME beat span from all four stems at once,
+      // each through its own live volume control.
+      if (equalizerMode) {
+        // Walk the four stems.
+        ["drums", "bass", "vocals", "other"].forEach((stem) => {
+          // Create a source for this stem's beat span.
+          const stemSource = audioContext.createBufferSource();
+          // Give the source this stem's audio.
+          stemSource.buffer = equalizerBuffers[stem];
+          // Route it through this stem's live volume control.
+          stemSource.connect(equalizerGains[stem]);
+          // Start exactly on the audio clock, in perfect sync with the other stems.
+          stemSource.start(startTime, start, length);
+          // Remember the source so Stop can silence it.
+          queuedSources.push(stemSource);
+        });
+      // Otherwise, play the one loaded track as always.
+      } else {
+        // Create a source for this beat span.
+        const source = audioContext.createBufferSource();
+        // Give the source the song's audio.
+        source.buffer = audioBuffer;
+        // Connect the source to the speakers.
+        source.connect(audioContext.destination);
+        // Start exactly on the audio clock, playing exactly this beat span.
+        source.start(startTime, start, length);
+        // Remember the source so Stop can silence it.
+        queuedSources.push(source);
+      }
       // Light up the diagram when this beat actually begins.
       setTimeout(() => { if (walking) drawArcs(beatIndex); },
                  Math.max(0, (startTime - audioContext.currentTime) * 1000));
@@ -1006,8 +1263,8 @@
         scheduleTime += length;
         // Choose the next beat with the engine's rules (reading the chaos slider live).
         scheduleBeat = chooseNextBeat(scheduleBeat);
-        // Forget sources that have already finished playing.
-        if (queuedSources.length > 8) queuedSources.shift();
+        // Forget sources that have already finished playing (four stems queue faster).
+        while (queuedSources.length > 32) queuedSources.shift();
       }
     }
 
@@ -1023,7 +1280,7 @@
       // Walk every play button with its partner stop button.
       [[playButton, stopButton], [playTwoButton, stopTwoButton],
        [playThreeButton, stopThreeButton],
-       ...["four", "five", "six", "seven"].map((rect) =>
+       ...["four", "five", "six", "seven", "eight"].map((rect) =>
          [document.getElementById("play_" + rect + "_button"),
           document.getElementById("stop_" + rect + "_button")])].forEach(([play, stop]) => {
         // A running walk disables every play; a resting play arms only where its
@@ -1044,6 +1301,23 @@
       const ownRecord = loadedRecords[rect];
       // Refuse quietly if this rectangle has not produced a track yet.
       if (!ownRecord) return;
+      // The equalizer walks the full song while playing all four stems at once.
+      equalizerMode = (rect === "eight");
+      // In equalizer mode, skip the single-buffer switching below.
+      if (equalizerMode) {
+        // Walk the full song's beat grid.
+        record = ownRecord;
+        // Redraw the arc diagram for the full song.
+        drawArcs(-1);
+        // Remember which slider steers this walk.
+        activeChaosSlider = rectangleChaosSlider(rect);
+        // Remember which phrase box this walk obeys.
+        activePhraseBox = rectanglePhraseBox(rect);
+        // Begin walking from the first beat.
+        beginWalking(0);
+        // The equalizer path is complete.
+        return;
+      }
       // Switch the player to this rectangle's track.
       record = ownRecord;
       // Decode this track's audio now if it has not been decoded yet.
