@@ -16,7 +16,7 @@ from .ingest import cache_directory, local_audio_path
 # Import the engine's analysis function and cache key.
 from .analysis import analyze_song, cache_key, load_samples, SAMPLE_RATE
 # Import the engine's mash-up renderer.
-from .mashup import render_mashup, render_instrumental, render_all_stems, STEM_NAMES
+from .mashup import render_mashup, render_instrumental, render_all_stems, render_two_stems, STEM_NAMES
 
 # Create the Flask application, pointing at our templates folder.
 application = Flask(__name__, template_folder="templates")
@@ -237,6 +237,42 @@ def beats_route():
     return stem_route("drums")
 
 
+# Define the route that returns BOTH two-stem records (vocal and instrumental)
+# from one separation, for the Vocal to Instrumental Blender's two faders.
+@application.route("/two_stems", methods=["POST"])
+def two_stems_route():
+    # Resolve the song from its upload or its link.
+    path = resolve_song("file", "input")
+    # Read the HIGH QUALITY choice from its checkbox.
+    high_quality = request.form.get("high_quality") == "on"
+    # Name the caches by the quality tier and the song's key.
+    tier = "hq5" if high_quality else "hq"
+    # Build the vocal cache path.
+    vocals_path = os.path.join(cache_directory(),
+                               "vocalstem_" + tier + "_" + cache_key(path) + ".wav")
+    # Build the instrumental cache path (shared with the instrumental route).
+    instrumental_path = os.path.join(cache_directory(),
+                                     "instrumental_" + tier + "_" + cache_key(path) + ".wav")
+    # Separate once if either half is missing.
+    if not (os.path.isfile(vocals_path) and os.path.isfile(instrumental_path)):
+        # Render both halves from one separation.
+        render_two_stems(path, vocals_path, instrumental_path, high_quality)
+    # Build the two playable records.
+    records = {}
+    # Walk the two halves.
+    for name, half_path in (("vocals", vocals_path), ("instrumental", instrumental_path)):
+        # Analyze this half (cached after the first time).
+        record = analyze_song(half_path)
+        # Remember the half's audio for the audio route.
+        half_key = cache_key(half_path)
+        # Store the mapping.
+        AUDIO_PATHS[half_key] = half_path
+        # Keep the record with its audio key.
+        records[name] = dict(record, audio_key=half_key)
+    # Return both records.
+    return jsonify(records)
+
+
 # Define the route that bounces the Mixing Desk: the four stems mixed STRAIGHT
 # THROUGH from beginning to end (no jumps), at the frozen slider volumes.
 @application.route("/mix_export/<file_format>", methods=["POST"])
@@ -249,8 +285,15 @@ def mix_export_route(file_format):
     mix = None
     # Collect a fingerprint of the request for caching the bounce.
     fingerprint_parts = []
-    # Walk the six stems, each with its key and its frozen volume.
-    for stem in STEM_NAMES:
+    # Find the stems this bounce carries (six from the Mixing Desk, two from the
+    # Vocal to Instrumental Blender - whatever key_ fields the form sends).
+    bounce_stems = sorted(k[4:] for k in request.form if k.startswith("key_"))
+    # Refuse an empty bounce.
+    if not bounce_stems:
+        # Answer with a clear error.
+        return ("No stems given", 400)
+    # Walk the sent stems, each with its key and its frozen volume.
+    for stem in bounce_stems:
         # Read this stem's audio key.
         key = request.form.get("key_" + stem)
         # Read this stem's frozen volume (zero to one).

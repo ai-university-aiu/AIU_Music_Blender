@@ -238,6 +238,18 @@
         <input type="checkbox" id="high_quality_three" checked> HIGH QUALITY separation
         (slower, cleaner)</label>
     </div>
+    <!-- The two live faders: mix the vocal against the instrumental during playback.
+         Defaults (vocal 0%, instrumental 100%) keep the classic vocal-free behavior. -->
+    <div class="row fader">
+      <label for="volume_v2i_vocals">VOCAL VOLUME 0% to 100%</label>
+      <input type="range" id="volume_v2i_vocals" min="0" max="100" step="0.5" value="0">
+      <span id="volume_v2i_vocals_value">0%</span>
+    </div>
+    <div class="row fader">
+      <label for="volume_v2i_instrumental">INSTRUMENTAL VOLUME 0% to 100%</label>
+      <input type="range" id="volume_v2i_instrumental" min="0" max="100" step="0.5" value="100">
+      <span id="volume_v2i_instrumental_value">100%</span>
+    </div>
     <!-- Row two: the instrumental blender's own chaos label, slider, and live value. -->
     <div class="row">
       <label for="chaos_three">Chaos (jump probability):</label>
@@ -532,6 +544,8 @@
     function saveTrack(rectangle, fileFormat) {
       // The Mixing Desk saves its FROZEN MIX, not the plain song.
       if (rectangle === "eight") { saveMixingDesk(fileFormat); return; }
+      // The Vocal to Instrumental Blender saves ITS frozen two-fader mix.
+      if (rectangle === "three" && v2iKeys) { saveV2iMix(fileFormat); return; }
       // Do nothing if this rectangle has not produced a track yet.
       if (!saveKeys[rectangle]) return;
       // Build an invisible download link to the export route.
@@ -544,27 +558,21 @@
       link.click();
     }
 
-    // Bounce the Mixing Desk: freeze the four sliders at their current positions and
-    // save one playback straight through from beginning to end - no jumps.
-    async function saveMixingDesk(fileFormat) {
-      // Do nothing before the desk has loaded its stems.
-      if (!equalizerStemKeys) return;
-      // Find the desk's status line for progress reporting.
-      const status = document.getElementById("extract_status_eight");
+    // Bounce ANY frozen stem mix straight through, start to finish, no jumps.
+    async function bounceStems(fileFormat, entries, status) {
       // Say what is being rendered.
       status.textContent = "Rendering your mix straight through, start to finish, "
-        + "at the frozen slider volumes...";
+        + "at the frozen fader positions...";
       // Guard the round trip so failures are shown.
       try {
         // Build the form carrying each stem's key and frozen volume.
         const form = new FormData();
-        // Walk the four stems.
-        ["drums", "bass", "guitar", "piano", "vocals", "other"].forEach((stem) => {
+        // Walk the given stems.
+        entries.forEach(([stem, key, gain]) => {
           // Attach this stem's audio key.
-          form.append("key_" + stem, equalizerStemKeys[stem]);
-          // Attach this stem's frozen volume (zero to one).
-          form.append("gain_" + stem,
-                      parseFloat(document.getElementById("volume_" + stem).value) / 100);
+          form.append("key_" + stem, key);
+          // Attach this stem's frozen volume.
+          form.append("gain_" + stem, gain);
         });
         // Ask the server to mix and convert.
         const answer = await fetch("/mix_export/" + fileFormat, { method: "POST", body: form });
@@ -577,21 +585,43 @@
         // Point the link at the received file.
         link.href = URL.createObjectURL(bounced);
         // Name the download.
-        link.download = "aiu_mixing_desk_mix." + fileFormat;
+        link.download = "aiu_mix." + fileFormat;
         // Start the download into the user's filesystem.
         link.click();
         // Release the temporary link address.
         URL.revokeObjectURL(link.href);
         // Report the saved mix honestly, with the frozen volumes.
         status.textContent = "Mix saved (" + fileFormat + "): "
-          + ["drums", "bass", "guitar", "piano", "vocals", "other"].map((stem) =>
-              stem + " " + document.getElementById("volume_" + stem).value + "%").join(", ")
+          + entries.map(([stem, , gain]) => stem + " " + Math.round(gain * 100) + "%").join(", ")
           + " - straight through, no jumps.";
       // Surface any network or server failure.
       } catch (problem) {
         // Show the failure instead of doing nothing.
         status.textContent = "Could not reach the local server: " + problem;
       }
+    }
+
+    // Bounce the two-fader Vocal to Instrumental mix.
+    function saveV2iMix(fileFormat) {
+      // Do nothing before both halves are loaded.
+      if (!v2iKeys) return;
+      // Bounce the two halves at their frozen fader positions.
+      bounceStems(fileFormat,
+        ["vocals", "instrumental"].map((stem) => [stem, v2iKeys[stem],
+          parseFloat(document.getElementById("volume_v2i_" + stem).value) / 100]),
+        instrumentalStatus);
+    }
+
+    // Bounce the Mixing Desk: freeze the six faders and save one straight playback.
+    async function saveMixingDesk(fileFormat) {
+      // Do nothing before the desk has loaded its stems.
+      if (!equalizerStemKeys) return;
+      // Bounce the six stems at their frozen fader positions.
+      bounceStems(fileFormat,
+        ["drums", "bass", "guitar", "piano", "vocals", "other"].map((stem) =>
+          [stem, equalizerStemKeys[stem],
+           parseFloat(document.getElementById("volume_" + stem).value) / 100]),
+        document.getElementById("extract_status_eight"));
     }
 
     // Wire every rectangle's save buttons to their downloads.
@@ -1050,8 +1080,49 @@
     let equalizerStemKeys = null;
     // The equalizer's live volume controls, one gain node per stem, built on first use.
     let equalizerGains = null;
-    // Whether the running walk is the equalizer's four-stems-at-once playback.
-    let equalizerMode = false;
+    // The stem set the running walk plays (the desk's six, the vocal-instrumental
+    // pair, or nothing for single-track playback).
+    let activeStemSet = null;
+    // The Vocal to Instrumental Blender's decoded stems and live gains, once loaded.
+    let v2iBuffers = null;
+    // Both halves' audio keys, for the two-fader frozen-mix bounce.
+    let v2iKeys = null;
+    // Its two live volume controls.
+    let v2iGains = null;
+
+    // Build the vocal-instrumental gain pair once, wired from its faders.
+    function ensureV2iGains() {
+      // Build only once, after the audio context exists.
+      if (v2iGains) return;
+      // Start the empty pair.
+      v2iGains = {};
+      // Make one gain node per half.
+      ["vocals", "instrumental"].forEach((stem) => {
+        // Create the gain node.
+        const gain = audioContext.createGain();
+        // Start it at its fader's current setting.
+        gain.gain.value = parseFloat(document.getElementById("volume_v2i_" + stem).value) / 100;
+        // Send it to the speakers.
+        gain.connect(audioContext.destination);
+        // Keep it.
+        v2iGains[stem] = gain;
+      });
+    }
+
+    // Wire the two faders: show values, and steer the gains LIVE while playing.
+    ["vocals", "instrumental"].forEach((stem) => {
+      // Find this half's fader.
+      const slider = document.getElementById("volume_v2i_" + stem);
+      // Find its value label.
+      const label = document.getElementById("volume_v2i_" + stem + "_value");
+      // React to every movement.
+      slider.addEventListener("input", () => {
+        // Show the percentage.
+        label.textContent = slider.value + "%";
+        // Steer the live gain, so the mix changes DURING playback.
+        if (v2iGains) v2iGains[stem].gain.value = parseFloat(slider.value) / 100;
+      });
+    });
 
     // Build the four live gain nodes once, wired from the sliders to the speakers.
     function ensureEqualizerGains() {
@@ -1097,17 +1168,17 @@
     function queueBeat(beatIndex, startTime) {
       // Compute this beat's start and length inside the song.
       const start = record.beats[beatIndex], length = beatEnd(beatIndex) - start;
-      // In equalizer mode, play the SAME beat span from all four stems at once,
+      // With a stem set active, play the SAME beat span from every stem at once,
       // each through its own live volume control.
-      if (equalizerMode) {
-        // Walk the four stems.
-        ["drums", "bass", "guitar", "piano", "vocals", "other"].forEach((stem) => {
+      if (activeStemSet) {
+        // Walk the active set's stems.
+        activeStemSet.stems.forEach((stem) => {
           // Create a source for this stem's beat span.
           const stemSource = audioContext.createBufferSource();
           // Give the source this stem's audio.
-          stemSource.buffer = equalizerBuffers[stem];
+          stemSource.buffer = activeStemSet.buffers[stem];
           // Route it through this stem's live volume control.
-          stemSource.connect(equalizerGains[stem]);
+          stemSource.connect(activeStemSet.gains[stem]);
           // Start exactly on the audio clock, in perfect sync with the other stems.
           stemSource.start(startTime, start, length);
           // Remember the source so Stop can silence it.
@@ -1183,10 +1254,16 @@
       const ownRecord = loadedRecords[rect];
       // Refuse quietly if this rectangle has not produced a track yet.
       if (!ownRecord) return;
-      // The equalizer walks the full song while playing all four stems at once.
-      equalizerMode = (rect === "eight");
-      // In equalizer mode, skip the single-buffer switching below.
-      if (equalizerMode) {
+      // Choose the stem set for this rectangle: the desk's six, the vocal-instrumental
+      // pair, or none for single-track playback.
+      activeStemSet = (rect === "eight" && equalizerBuffers)
+        ? { stems: ["drums", "bass", "guitar", "piano", "vocals", "other"],
+            buffers: equalizerBuffers, gains: equalizerGains }
+        : (rect === "three" && v2iBuffers)
+        ? { stems: ["vocals", "instrumental"], buffers: v2iBuffers, gains: v2iGains }
+        : null;
+      // With a stem set, skip the single-buffer switching below.
+      if (activeStemSet) {
         // Walk the full song's beat grid.
         record = ownRecord;
         // Redraw the arc diagram for the full song.
@@ -1241,13 +1318,11 @@
 
     // Click anywhere on the visualizer to continue play from that spot.
     canvas.addEventListener("click", (event) => {
-      // Do nothing before any track is loaded (the desk carries its own stem audio,
-      // so in equalizer mode the stem buffers stand in for the single-track buffer).
+      // Do nothing before any track is loaded (a playing stem set carries its own
+      // audio, standing in for the single-track buffer).
       if (!record) return;
-      // Outside equalizer mode, the single-track buffer must be loaded.
-      if (!equalizerMode && !audioBuffer) return;
-      // In equalizer mode, the six stem buffers must be loaded.
-      if (equalizerMode && !equalizerBuffers) return;
+      // Without a stem set, the single-track buffer must be loaded.
+      if (!activeStemSet && !audioBuffer) return;
       // Find where on the canvas the click landed.
       const clickX = event.clientX - canvas.getBoundingClientRect().left;
       // Find the nearest beat to the click.
@@ -1310,8 +1385,6 @@
     // The instrumental rectangle's stop does the same.
     stopThreeButton.addEventListener("click", stopWalk);
 
-    });
-
     // Strip the vocals from the pasted song and load the instrumental into the player.
     async function analyzeInstrumental() {
       // Take the pasted link.
@@ -1333,23 +1406,37 @@
         form.append("input", link);
         // Attach the HIGH QUALITY separation choice.
         if (document.getElementById("high_quality_three").checked) form.append("high_quality", "on");
-        // Post the link to the instrumental route.
-        const answer = await fetch("/instrumental", { method: "POST", body: form });
+        // Post the link to the two-stems route (both halves from one separation).
+        const answer = await fetch("/two_stems", { method: "POST", body: form });
         // Refuse gracefully if the server reported a problem.
-        if (!answer.ok) { instrumentalStatus.textContent = "Stripping failed - check the link."; return; }
-        // Unwrap the vocal-free record.
-        const instrumentalRecord = await answer.json();
-        // Load the vocal-free record into the shared player.
-        await loadRecord(instrumentalRecord);
+        if (!answer.ok) { instrumentalStatus.textContent = "Separation failed - check the link."; return; }
+        // Unwrap both halves.
+        const halves = await answer.json();
+        // Load the instrumental half into the shared player (the walk's beat grid).
+        await loadRecord(halves.instrumental);
+        // Build the live gain pair now that the audio context exists.
+        ensureV2iGains();
+        // Decode both halves for the two-fader player.
+        v2iBuffers = {};
+        // Walk the two halves.
+        for (const stem of ["vocals", "instrumental"]) {
+          // Fetch this half's audio bytes.
+          const bytes = await (await fetch("/audio/" + halves[stem].audio_key)).arrayBuffer();
+          // Decode and keep them.
+          v2iBuffers[stem] = await audioContext.decodeAudioData(bytes);
+        }
+        // Remember both halves' audio keys for the frozen-mix bounce.
+        v2iKeys = { vocals: halves.vocals.audio_key,
+                    instrumental: halves.instrumental.audio_key };
         // Remember the instrumental as this rectangle's own track.
-        loadedRecords.three = instrumentalRecord;
-        // Fill the Instrumental Blender's metric cards (its Vocals card should sit near zero).
-        showMetrics("three", instrumentalRecord);
-        // Arm the Instrumental Blender's save buttons for this track.
-        armSave("three", instrumentalRecord.audio_key);
+        loadedRecords.three = halves.instrumental;
+        // Fill the metric cards from the instrumental (its Vocals card sits near zero).
+        showMetrics("three", halves.instrumental);
+        // Arm the save buttons (they bounce the frozen two-fader mix).
+        armSave("three", halves.instrumental.audio_key);
         // Report success in this rectangle.
-        instrumentalStatus.textContent = "Vocals stripped! The instrumental is loaded "
-          + "- press Play Forever.";
+        instrumentalStatus.textContent = "Both halves loaded - press Play Forever and "
+          + "mix the vocal against the band with the two faders.";
       // Surface any network or server failure.
       } catch (problem) {
         // Show the failure instead of doing nothing.

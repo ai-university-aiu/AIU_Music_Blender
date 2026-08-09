@@ -209,6 +209,26 @@ def render_all_stems(path, output_paths, high_quality=False):
     return output_paths
 
 
+# Define the function that keeps BOTH two-stem outputs - the vocal and the
+# instrumental - from one separation, at full quality.
+def render_two_stems(path, vocals_output, instrumental_output, high_quality=False):
+    # Verify a separator is installed.
+    if not demucs_available() and not roformer_available():
+        # Raise the error the faces will show the user.
+        raise RuntimeError("Separation needs Demucs or audio-separator; "
+                           "install with: pip3 install demucs")
+    # Do the separation work in a temporary folder that cleans itself up.
+    with tempfile.TemporaryDirectory() as work_folder:
+        # Separate the song into its vocal and instrumental stems.
+        vocals, instrumental = separate_stems(path, work_folder, high_quality)
+        # Keep the vocal EXACTLY as the separator made it.
+        shutil.copyfile(vocals, vocals_output)
+        # Keep the instrumental the same way.
+        shutil.copyfile(instrumental, instrumental_output)
+    # Return both output paths.
+    return vocals_output, instrumental_output
+
+
 # Define the beat-only extractor as the drums case of the general stem extractor.
 def render_beats(path, output_path):
     # Extract the drums stem.
