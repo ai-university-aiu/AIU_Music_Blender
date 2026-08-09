@@ -5,6 +5,8 @@
 import os
 # Import the temporary-folder tools for intermediate audio files.
 import tempfile
+# Import the file-copy tool, so stems keep their full studio quality untouched.
+import shutil
 # Import the subprocess tools for the rubberband and demucs programs.
 import subprocess
 # Import the importable-module checker for optional Demucs.
@@ -124,8 +126,8 @@ def render_stem(path, output_path, stem_name):
     with tempfile.TemporaryDirectory() as work_folder:
         # Separate the song and keep only the asked-for stem.
         stem_path = separate_one_stem(path, work_folder, stem_name)
-        # Write the stem-only track at the engine sample rate.
-        soundfile.write(output_path, load_mono(stem_path), SAMPLE_RATE)
+        # Keep the stem EXACTLY as Demucs made it: 44,100 Hertz, stereo, untouched.
+        shutil.copyfile(stem_path, output_path)
     # Return where the stem-only track was written.
     return output_path
 
@@ -151,12 +153,12 @@ def render_all_stems(path, output_paths):
                        check=True, capture_output=True)
         # Name the song's stem folder the way Demucs names it.
         song_name = os.path.splitext(os.path.basename(path))[0]
-        # Write every asked-for stem from the one separation.
+        # Keep every asked-for stem from the one separation, at full quality.
         for stem_name, output_path in output_paths.items():
             # Build this stem's source path inside the separation folder.
             stem_source = os.path.join(work_folder, "htdemucs", song_name, stem_name + ".wav")
-            # Write the stem-only track at the engine sample rate.
-            soundfile.write(output_path, load_mono(stem_source), SAMPLE_RATE)
+            # Keep the stem EXACTLY as Demucs made it: 44,100 Hertz, stereo, untouched.
+            shutil.copyfile(stem_source, output_path)
     # Return the map of written stems.
     return output_paths
 
@@ -331,8 +333,8 @@ def render_instrumental(path, output_path):
     with tempfile.TemporaryDirectory() as work_folder:
         # Separate the song and keep only its instrumental stem.
         _, instrumental = separate_stems(path, work_folder)
-        # Write the instrumental at the engine sample rate.
-        soundfile.write(output_path, load_mono(instrumental), SAMPLE_RATE)
+        # Keep the instrumental EXACTLY as Demucs made it: 44,100 Hertz, stereo.
+        shutil.copyfile(instrumental, output_path)
     # Return where the instrumental was written.
     return output_path
 

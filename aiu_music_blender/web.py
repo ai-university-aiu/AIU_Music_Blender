@@ -125,7 +125,7 @@ def instrumental_route():
     # Resolve the input (path or YouTube link) to a local file.
     path = local_audio_path(request.form["input"])
     # Name the cached instrumental by the source song's cache key.
-    output_path = os.path.join(cache_directory(), "instrumental_" + cache_key(path) + ".wav")
+    output_path = os.path.join(cache_directory(), "instrumental_44_" + cache_key(path) + ".wav")
     # Strip the vocals only if this song's instrumental is not already cached.
     if not os.path.isfile(output_path):
         # Render the vocal-free instrumental.
@@ -170,8 +170,8 @@ def export_route(key, file_format):
 def stem_records(path):
     # Name every stem's cached track by the stem and the source song's cache key.
     key = cache_key(path)
-    # Build the four cache paths.
-    outputs = {name: os.path.join(cache_directory(), name + "_" + key + ".wav")
+    # Build the four cache paths (the 44 marks full-quality stems, bypassing old caches).
+    outputs = {name: os.path.join(cache_directory(), name + "_44_" + key + ".wav")
                for name in STEM_NAMES}
     # Find the stems not yet cached.
     missing = {name: p for name, p in outputs.items() if not os.path.isfile(p)}
@@ -248,8 +248,8 @@ def mix_export_route(file_format):
             return ("Unknown audio key for " + stem, 404)
         # Remember this stem in the fingerprint.
         fingerprint_parts.append(key + (":%0.2f" % gain))
-        # Load this stem's samples.
-        samples, _ = load_samples(AUDIO_PATHS[key])
+        # Load this stem's samples at their NATIVE rate and channels (44.1 kHz stereo).
+        samples, native_rate = soundfile.read(AUDIO_PATHS[key], always_2d=True)
         # Scale by the frozen volume.
         samples = samples * gain
         # Start or grow the mix, padding to the longer length.
@@ -257,12 +257,12 @@ def mix_export_route(file_format):
             # The first stem starts the mix.
             mix = samples
         else:
-            # Match lengths by padding the shorter with silence.
+            # Match lengths by padding the shorter with silence (rows are samples).
             length = max(len(mix), len(samples))
             # Pad the mix if needed.
-            mix = numpy.pad(mix, (0, length - len(mix)))
+            mix = numpy.pad(mix, ((0, length - len(mix)), (0, 0)))
             # Pad this stem if needed.
-            samples = numpy.pad(samples, (0, length - len(samples)))
+            samples = numpy.pad(samples, ((0, length - len(samples)), (0, 0)))
             # Add this stem into the mix.
             mix = mix + samples
     # Keep the mix inside the legal sample range.
@@ -279,8 +279,8 @@ def mix_export_route(file_format):
     bounced_wav = os.path.join(cache_directory(), "mixdesk_" + bounce_name + ".wav")
     # Write the wav only if this exact bounce is not already cached.
     if not os.path.isfile(bounced_wav):
-        # Write the mixed samples.
-        soundfile.write(bounced_wav, mix, SAMPLE_RATE)
+        # Write the mixed samples at the stems' native rate (44.1 kHz stereo).
+        soundfile.write(bounced_wav, mix, native_rate)
     # For wav, send the bounce directly.
     if file_format == "wav":
         # Send the file as a browser download.
