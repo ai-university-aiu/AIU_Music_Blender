@@ -236,8 +236,8 @@ def mix_export_route(file_format):
     mix = None
     # Collect a fingerprint of the request for caching the bounce.
     fingerprint_parts = []
-    # Walk the four stems, each with its key and its frozen volume.
-    for stem in ("drums", "bass", "vocals", "other"):
+    # Walk the six stems, each with its key and its frozen volume.
+    for stem in STEM_NAMES:
         # Read this stem's audio key.
         key = request.form.get("key_" + stem)
         # Read this stem's frozen volume (zero to one).

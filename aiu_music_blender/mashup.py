@@ -96,19 +96,22 @@ def separate_stems(audio_path, work_folder):
             os.path.join(stem_folder, "no_vocals.wav"))
 
 
-# Define the four stem names Demucs produces in full four-stem mode.
-STEM_NAMES = ("drums", "bass", "vocals", "other")
+# Define the Demucs model used for stem extraction: the six-source model, which
+# separates guitar and piano out of "other" for the six-fader Mixing Desk.
+STEM_MODEL = "htdemucs_6s"
+# Define the six stem names that model produces.
+STEM_NAMES = ("drums", "bass", "guitar", "piano", "vocals", "other")
 
 
-# Define a helper that separates a song into all four stems and returns one stem's path.
+# Define a helper that separates a song into all six stems and returns one stem's path.
 def separate_one_stem(audio_path, work_folder, stem_name):
-    # Run Demucs in full four-stem mode (drums, bass, other, vocals) into the work folder.
-    subprocess.run(["python3", "-m", "demucs", "-o", work_folder, audio_path],
-                   check=True, capture_output=True)
+    # Run Demucs's six-source model into the work folder.
+    subprocess.run(["python3", "-m", "demucs", "-n", STEM_MODEL, "-o", work_folder,
+                    audio_path], check=True, capture_output=True)
     # Name the song's stem folder the way Demucs names it.
     song_name = os.path.splitext(os.path.basename(audio_path))[0]
     # Return the asked-for stem's path.
-    return os.path.join(work_folder, "htdemucs", song_name, stem_name + ".wav")
+    return os.path.join(work_folder, STEM_MODEL, song_name, stem_name + ".wav")
 
 
 # Define the function that extracts ONE STEM ONLY (drums, bass, vocals, or other) from a song.
@@ -148,15 +151,15 @@ def render_all_stems(path, output_paths):
                            "install with: pip3 install demucs")
     # Do the separation work in a temporary folder that cleans itself up.
     with tempfile.TemporaryDirectory() as work_folder:
-        # Run Demucs in full four-stem mode, once.
-        subprocess.run(["python3", "-m", "demucs", "-o", work_folder, path],
-                       check=True, capture_output=True)
+        # Run Demucs's six-source model, once.
+        subprocess.run(["python3", "-m", "demucs", "-n", STEM_MODEL, "-o", work_folder,
+                        path], check=True, capture_output=True)
         # Name the song's stem folder the way Demucs names it.
         song_name = os.path.splitext(os.path.basename(path))[0]
         # Keep every asked-for stem from the one separation, at full quality.
         for stem_name, output_path in output_paths.items():
             # Build this stem's source path inside the separation folder.
-            stem_source = os.path.join(work_folder, "htdemucs", song_name, stem_name + ".wav")
+            stem_source = os.path.join(work_folder, STEM_MODEL, song_name, stem_name + ".wav")
             # Keep the stem EXACTLY as Demucs made it: 44,100 Hertz, stereo, untouched.
             shutil.copyfile(stem_source, output_path)
     # Return the map of written stems.
