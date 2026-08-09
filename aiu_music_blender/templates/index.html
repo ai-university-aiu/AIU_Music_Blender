@@ -25,10 +25,14 @@
              border: 1px solid #c02b18; border-radius: 14px; }
     /* Style the title inside the top of each group rectangle. */
     .group h2 { margin: 0.1em 0 0.5em 0; color: #ff933a; font-size: 1.15em; }
-    /* Style the little ready flag beside a stem rectangle's title (hidden until ready). */
+    /* Style the little ready flag beside a rectangle's title (hidden until ready). */
     .ready_flag { display: none; background: #7c0300; border: 1px solid #ffce59;
                   color: #ffce59; border-radius: 999px; padding: 0.1em 0.6em;
                   font-size: 0.7em; vertical-align: middle; margin-left: 0.5em; }
+    /* Style the little working flag shown while background activation runs. */
+    .working_flag { display: none; background: #590000; border: 1px solid #f26d1f;
+                    color: #f26d1f; border-radius: 999px; padding: 0.1em 0.6em;
+                    font-size: 0.7em; vertical-align: middle; margin-left: 0.5em; }
     /* Dim disabled buttons so their state is visible at a glance. */
     button:disabled { opacity: 0.45; }
     /* The little spinning working indicator: a gold ring with one bright edge. */
@@ -75,7 +79,7 @@
   <!-- The first big rounded-corner group rectangle: the single-song infinite blender. -->
   <div class="group">
     <!-- The title inside the top of the rectangle. -->
-    <h2>AIU Song Blender</h2>
+    <h2>AIU Song Blender<span class="working_flag" id="working_one"><span class="spinner"></span>working...</span><span class="ready_flag" id="ready_one">ready</span></h2>
     <!-- Row one: let the user paste a YouTube link, analyzed on Enter or button press. -->
     <div class="row">
       <label for="youtube_input">YouTube URL:</label>
@@ -224,7 +228,7 @@
   <!-- The third big rounded-corner group rectangle: one song, vocals stripped, blended. -->
   <div class="group">
     <!-- The title inside the top of the rectangle. -->
-    <h2>AIU Vocal to Instrumental Blender</h2>
+    <h2>AIU Vocal to Instrumental Blender<span class="working_flag" id="working_three"><span class="spinner"></span>working...</span><span class="ready_flag" id="ready_three">ready</span></h2>
     <!-- Row one: the song's YouTube link, stripped and analyzed on Enter or button press. -->
     <div class="row">
       <label for="instrumental_input">YouTube URL:</label>
@@ -294,7 +298,7 @@
        its fader to 100% and the rest to 0%. -->
   <div class="group">
     <!-- The title inside the top of the rectangle, with its ready flag. -->
-    <h2>AIU Mixing Desk<span class="ready_flag" id="ready_eight">ready</span></h2>
+    <h2>AIU Mixing Desk<span class="working_flag" id="working_eight"><span class="spinner"></span>working...</span><span class="ready_flag" id="ready_eight">ready</span></h2>
     <!-- Row one: the song's YouTube link, loaded on Enter or button press. -->
     <div class="row">
       <label for="extract_input_eight">YouTube URL:</label>
@@ -679,7 +683,11 @@
       // Attach the file.
       form.append("file", file);
       // Post the file to the analyze route and finish.
-      finishAnalysis(await fetch("/analyze", { method: "POST", body: form }));
+      await finishAnalysis(await fetch("/analyze", { method: "POST", body: form }));
+      // Raise this rectangle's own ready flag.
+      setTitleFlag("one", "ready");
+      // Feed the song into the other single-song rectangles, in the background.
+      crossActivate("one", { file });
     });
 
     // Send a pasted YouTube link to the local server for download and analysis.
@@ -702,6 +710,10 @@
         form.append("input", link);
         // Post the link to the analyze route and finish.
         await finishAnalysis(await fetch("/analyze", { method: "POST", body: form }));
+        // Raise this rectangle's own ready flag.
+        setTitleFlag("one", "ready");
+        // Feed the song into the other single-song rectangles, in the background.
+        crossActivate("one", { link });
       // Surface any network or server failure on the status line.
       } catch (problem) {
         // Show the failure instead of doing nothing.
@@ -896,7 +908,7 @@
         // Arm the equalizer's save buttons with the full song.
         armSave("eight", songRecord.audio_key);
         // Raise the equalizer's ready flag.
-        document.getElementById("ready_eight").style.display = "inline-block";
+        setTitleFlag("eight", "ready");
         // Show the full song on the visualizer.
         record = songRecord;
         // Draw its arcs.
@@ -906,6 +918,8 @@
         // Report success.
         status.textContent = "All six stems loaded and synchronized - press Play "
           + "Forever and mix with the six faders while it plays.";
+        // Feed the song into the other single-song rectangles, in the background.
+        crossActivate("eight", file ? { file } : { link });
       // Surface any network or server failure.
       } catch (problem) {
         // Show the failure instead of doing nothing.
@@ -926,6 +940,183 @@
     // Load when a file is chosen.
     document.getElementById("extract_file_eight").addEventListener("change", () =>
       { if (document.getElementById("extract_file_eight").files[0]) loadEqualizer(); });
+
+    // ---- Background cross-activation: one paste feeds all three single-song ----
+    // ---- rectangles (the Mash-Up Blender needs two songs, so it is excluded). ----
+
+    // Show one rectangle's title flag: "working", "ready", or nothing.
+    function setTitleFlag(rect, state) {
+      // Find the working flag.
+      const working = document.getElementById("working_" + rect);
+      // Find the ready flag.
+      const ready = document.getElementById("ready_" + rect);
+      // Show the working flag only while working.
+      working.style.display = (state === "working") ? "inline-block" : "none";
+      // Show the ready flag only when ready.
+      ready.style.display = (state === "ready") ? "inline-block" : "none";
+    }
+
+    // Guard against doubled background activations per rectangle.
+    const activationBusy = { one: false, three: false, eight: false };
+
+    // Build a form carrying the song, from a file or a link.
+    function sourceForm(source) {
+      // Start the form.
+      const form = new FormData();
+      // Attach the song as a file when given, otherwise as its link.
+      if (source.file) form.append("file", source.file); else form.append("input", source.link);
+      // Return the form.
+      return form;
+    }
+
+    // Activate the Song Blender in the background: analyze the full song.
+    async function activateSongBlender(source) {
+      // Skip if already working.
+      if (activationBusy.one) return;
+      // Mark busy and show the spinner flag.
+      activationBusy.one = true; setTitleFlag("one", "working");
+      // Guard so a failure clears the flag.
+      try {
+        // Ask for the full song's analysis.
+        const answer = await fetch("/analyze", { method: "POST", body: sourceForm(source) });
+        // Give up quietly on failure.
+        if (!answer.ok) { setTitleFlag("one", ""); return; }
+        // Keep the record as the Song Blender's own track (without stealing the player).
+        const rec = await answer.json();
+        // Remember it.
+        loadedRecords.one = rec;
+        // Fill the Song Blender's metric cards.
+        showMetrics("one", rec);
+        // Arm its save buttons.
+        armSave("one", rec.audio_key);
+        // Arm its play button.
+        refreshPlayButtons();
+        // Raise the ready flag.
+        setTitleFlag("one", "ready");
+      // Clear the flag on any failure.
+      } catch (ignored) { setTitleFlag("one", ""); }
+      // Always release the busy guard.
+      finally { activationBusy.one = false; }
+    }
+
+    // Activate the Vocal to Instrumental Blender in the background: both halves.
+    async function activateV2i(source) {
+      // Skip if already working.
+      if (activationBusy.three) return;
+      // Mark busy and show the spinner flag.
+      activationBusy.three = true; setTitleFlag("three", "working");
+      // Guard so a failure clears the flag.
+      try {
+        // Build the form, honoring this rectangle's own HIGH QUALITY choice.
+        const form = sourceForm(source);
+        // Attach the quality choice.
+        if (document.getElementById("high_quality_three").checked)
+          form.append("high_quality", "on");
+        // Ask for both halves.
+        const answer = await fetch("/two_stems", { method: "POST", body: form });
+        // Give up quietly on failure.
+        if (!answer.ok) { setTitleFlag("three", ""); return; }
+        // Unwrap both halves.
+        const halves = await answer.json();
+        // Create the audio context on first use.
+        audioContext = audioContext || new AudioContext();
+        // Build the live gain pair.
+        ensureV2iGains();
+        // Decode both halves.
+        v2iBuffers = {};
+        // Walk the two halves.
+        for (const stem of ["vocals", "instrumental"]) {
+          // Fetch this half's audio bytes.
+          const bytes = await (await fetch("/audio/" + halves[stem].audio_key)).arrayBuffer();
+          // Decode and keep them.
+          v2iBuffers[stem] = await audioContext.decodeAudioData(bytes);
+        }
+        // Remember both keys for the bounce.
+        v2iKeys = { vocals: halves.vocals.audio_key, instrumental: halves.instrumental.audio_key };
+        // Remember the instrumental as this rectangle's own track.
+        loadedRecords.three = halves.instrumental;
+        // Fill the metric cards.
+        showMetrics("three", halves.instrumental);
+        // Arm the save buttons.
+        armSave("three", halves.instrumental.audio_key);
+        // Arm the play button.
+        refreshPlayButtons();
+        // Raise the ready flag.
+        setTitleFlag("three", "ready");
+      // Clear the flag on any failure.
+      } catch (ignored) { setTitleFlag("three", ""); }
+      // Always release the busy guard.
+      finally { activationBusy.three = false; }
+    }
+
+    // Activate the Mixing Desk in the background: the full song plus all six stems.
+    async function activateDesk(source) {
+      // Skip if already working.
+      if (activationBusy.eight) return;
+      // Mark busy and show the spinner flag.
+      activationBusy.eight = true; setTitleFlag("eight", "working");
+      // Guard so a failure clears the flag.
+      try {
+        // Ask for the full song's analysis (the desk's beat grid).
+        const songAnswer = await fetch("/analyze", { method: "POST", body: sourceForm(source) });
+        // Give up quietly on failure.
+        if (!songAnswer.ok) { setTitleFlag("eight", ""); return; }
+        // Keep the full song's record.
+        const songRecord = await songAnswer.json();
+        // Build the stems form, honoring the desk's own HIGH QUALITY choice.
+        const stemForm = sourceForm(source);
+        // Attach the quality choice.
+        if (document.getElementById("high_quality_eight").checked)
+          stemForm.append("high_quality", "on");
+        // Ask for all six stems.
+        const stemAnswer = await fetch("/stems", { method: "POST", body: stemForm });
+        // Give up quietly on failure.
+        if (!stemAnswer.ok) { setTitleFlag("eight", ""); return; }
+        // Unwrap all six stem records.
+        const allStems = await stemAnswer.json();
+        // Create the audio context on first use.
+        audioContext = audioContext || new AudioContext();
+        // Build the live volume controls.
+        ensureEqualizerGains();
+        // Decode all six stems.
+        equalizerBuffers = {};
+        // Remember the keys for the bounce.
+        equalizerStemKeys = {};
+        // Walk the six stems.
+        for (const stem of ["drums", "bass", "guitar", "piano", "vocals", "other"]) {
+          // Fetch this stem's audio bytes.
+          const bytes = await (await fetch("/audio/" + allStems[stem].audio_key)).arrayBuffer();
+          // Decode and keep them.
+          equalizerBuffers[stem] = await audioContext.decodeAudioData(bytes);
+          // Keep this stem's key.
+          equalizerStemKeys[stem] = allStems[stem].audio_key;
+        }
+        // Remember the full song as the desk's own track.
+        loadedRecords.eight = songRecord;
+        // Fill the desk's metric cards.
+        showMetrics("eight", songRecord);
+        // Arm its save buttons.
+        armSave("eight", songRecord.audio_key);
+        // Arm its play button.
+        refreshPlayButtons();
+        // Raise the ready flag.
+        setTitleFlag("eight", "ready");
+      // Clear the flag on any failure.
+      } catch (ignored) { setTitleFlag("eight", ""); }
+      // Always release the busy guard.
+      finally { activationBusy.eight = false; }
+    }
+
+    // Feed a pasted song into the OTHER single-song rectangles, one at a time in the
+    // background (sequential, so heavy separations queue instead of colliding).
+    async function crossActivate(origin, source) {
+      // The Song Blender is cheap to activate, so it goes first.
+      if (origin !== "one") await activateSongBlender(source);
+      // Then the two-stem rectangle.
+      if (origin !== "three") await activateV2i(source);
+      // Then the six-stem desk.
+      if (origin !== "eight") await activateDesk(source);
+    }
 
     // If this page was opened as a plain file, there is no server behind it; say so plainly.
     if (window.location.protocol === "file:") {
@@ -1437,6 +1628,10 @@
         // Report success in this rectangle.
         instrumentalStatus.textContent = "Both halves loaded - press Play Forever and "
           + "mix the vocal against the band with the two faders.";
+        // Raise this rectangle's own ready flag.
+        setTitleFlag("three", "ready");
+        // Feed the song into the other single-song rectangles, in the background.
+        crossActivate("three", { link });
       // Surface any network or server failure.
       } catch (problem) {
         // Show the failure instead of doing nothing.
