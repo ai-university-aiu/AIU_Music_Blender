@@ -125,7 +125,7 @@ def instrumental_route():
     # Resolve the input (path or YouTube link) to a local file.
     path = local_audio_path(request.form["input"])
     # Name the cached instrumental by the source song's cache key.
-    output_path = os.path.join(cache_directory(), "instrumental_44_" + cache_key(path) + ".wav")
+    output_path = os.path.join(cache_directory(), "instrumental_hq_" + cache_key(path) + ".wav")
     # Strip the vocals only if this song's instrumental is not already cached.
     if not os.path.isfile(output_path):
         # Render the vocal-free instrumental.
@@ -171,7 +171,7 @@ def stem_records(path):
     # Name every stem's cached track by the stem and the source song's cache key.
     key = cache_key(path)
     # Build the four cache paths (the 44 marks full-quality stems, bypassing old caches).
-    outputs = {name: os.path.join(cache_directory(), name + "_44_" + key + ".wav")
+    outputs = {name: os.path.join(cache_directory(), name + "_hq_" + key + ".wav")
                for name in STEM_NAMES}
     # Find the stems not yet cached.
     missing = {name: p for name, p in outputs.items() if not os.path.isfile(p)}

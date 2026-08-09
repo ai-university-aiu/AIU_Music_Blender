@@ -84,13 +84,14 @@ def rubberband(input_wav, output_wav, time_ratio, semitones):
 
 # Define a helper that separates a song into vocals and instrumental with Demucs.
 def separate_stems(audio_path, work_folder):
-    # Run Demucs in two-stem mode (vocals versus everything else) into the work folder.
-    subprocess.run(["python3", "-m", "demucs", "--two-stems", "vocals",
+    # Run the FINE-TUNED model in two-stem mode, with shift-averaging, into the folder.
+    subprocess.run(["python3", "-m", "demucs", "-n", TWO_STEM_MODEL,
+                    "--two-stems", "vocals", "--shifts", SEPARATION_SHIFTS,
                     "-o", work_folder, audio_path], check=True, capture_output=True)
     # Name the song's stem folder the way Demucs names it.
     song_name = os.path.splitext(os.path.basename(audio_path))[0]
-    # Build the folder where Demucs put this song's stems.
-    stem_folder = os.path.join(work_folder, "htdemucs", song_name)
+    # Build the folder where Demucs put its stems.
+    stem_folder = os.path.join(work_folder, TWO_STEM_MODEL, song_name)
     # Return the vocals path and the instrumental (no_vocals) path.
     return (os.path.join(stem_folder, "vocals.wav"),
             os.path.join(stem_folder, "no_vocals.wav"))
@@ -99,6 +100,12 @@ def separate_stems(audio_path, work_folder):
 # Define the Demucs model used for stem extraction: the six-source model, which
 # separates guitar and piano out of "other" for the six-fader Mixing Desk.
 STEM_MODEL = "htdemucs_6s"
+# Define the Demucs model for the two-stem paths (vocals versus instrumental): the
+# FINE-TUNED model, which separates cleaner where artifacts are most audible.
+TWO_STEM_MODEL = "htdemucs_ft"
+# Define the shifts setting: each separation runs this many times with tiny random
+# time offsets and averages the results - the Demucs paper's own quality booster.
+SEPARATION_SHIFTS = "2"
 # Define the six stem names that model produces.
 STEM_NAMES = ("drums", "bass", "guitar", "piano", "vocals", "other")
 
@@ -106,7 +113,8 @@ STEM_NAMES = ("drums", "bass", "guitar", "piano", "vocals", "other")
 # Define a helper that separates a song into all six stems and returns one stem's path.
 def separate_one_stem(audio_path, work_folder, stem_name):
     # Run Demucs's six-source model into the work folder.
-    subprocess.run(["python3", "-m", "demucs", "-n", STEM_MODEL, "-o", work_folder,
+    subprocess.run(["python3", "-m", "demucs", "-n", STEM_MODEL,
+                    "--shifts", SEPARATION_SHIFTS, "-o", work_folder,
                     audio_path], check=True, capture_output=True)
     # Name the song's stem folder the way Demucs names it.
     song_name = os.path.splitext(os.path.basename(audio_path))[0]
@@ -152,7 +160,8 @@ def render_all_stems(path, output_paths):
     # Do the separation work in a temporary folder that cleans itself up.
     with tempfile.TemporaryDirectory() as work_folder:
         # Run Demucs's six-source model, once.
-        subprocess.run(["python3", "-m", "demucs", "-n", STEM_MODEL, "-o", work_folder,
+        subprocess.run(["python3", "-m", "demucs", "-n", STEM_MODEL,
+                        "--shifts", SEPARATION_SHIFTS, "-o", work_folder,
                         path], check=True, capture_output=True)
         # Name the song's stem folder the way Demucs names it.
         song_name = os.path.splitext(os.path.basename(path))[0]
