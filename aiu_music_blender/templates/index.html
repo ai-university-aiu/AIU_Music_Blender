@@ -1127,6 +1127,13 @@
       if (origin !== "eight") await activateDesk(source);
     }
 
+    // Enforce the honest startup state, overriding browser-restored form states
+    // (a reload can otherwise resurrect enabled buttons from the previous visit).
+    setButtonsWalking(false);
+    // Every save button starts grey: nothing has been produced yet.
+    Object.keys(saveButtons).forEach((rect) =>
+      { saveButtons[rect].forEach((button) => { button.disabled = true; }); });
+
     // If this page was opened as a plain file, there is no server behind it; say so plainly.
     if (window.location.protocol === "file:") {
       // Explain the situation and the remedy on the status line.
