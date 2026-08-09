@@ -33,8 +33,10 @@
     .working_flag { display: none; background: #590000; border: 1px solid #f26d1f;
                     color: #f26d1f; border-radius: 999px; padding: 0.1em 0.6em;
                     font-size: 0.7em; vertical-align: middle; margin-left: 0.5em; }
-    /* Dim disabled buttons so their state is visible at a glance. */
-    button:disabled { opacity: 0.45; }
+    /* Grey out disabled buttons entirely: a grey Play Forever means there is
+       nothing behind it to play yet. */
+    button:disabled { background: #4a4a4a; border-color: #6e6e6e; color: #a9a9a9;
+                      cursor: not-allowed; }
     /* The little spinning working indicator: a gold ring with one bright edge. */
     .spinner { display: inline-block; width: 0.85em; height: 0.85em;
                border: 2px solid rgba(255, 206, 89, 0.3); border-top-color: #ffce59;
