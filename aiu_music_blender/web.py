@@ -114,8 +114,10 @@ def mashup_route():
     report = render_mashup(path_a, path_b, output_path, vocals_a=vocals_a, vocals_b=vocals_b,
                            instrumental_a=instrumental_a, instrumental_b=instrumental_b,
                            high_quality=high_quality, append_only=append_only)
-    # Analyze the rendered mash-up so it can play in the infinite engine immediately.
-    record = analyze_song(output_path)
+    # Analyze the rendered mash-up so it can play in the infinite engine immediately,
+    # telling the analysis where the second song begins so the beat graph can build
+    # jumps that travel BETWEEN the two songs, not merely within each one.
+    record = analyze_song(output_path, join_seconds=report.get("join_seconds"))
     # Remember the mash-up's audio for the audio route.
     key = cache_key(output_path)
     # Store the mapping.

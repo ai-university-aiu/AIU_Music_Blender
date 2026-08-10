@@ -321,10 +321,12 @@ def render_mashup(path_a, path_b, output_path, use_stems=False,
         # Only both-vocals-kept appends song B onto the end of song A as one long song;
         # every other choice overlays the two parts into one blended mash-up.
         if vocals_a and vocals_b:
-            # Join the two conformed parts end to end.
-            mix = append_parts(conformed_a, conformed_b)
-        # A single vocal overlays the other song's instrumental.
+            # Join the two conformed parts end to end, learning where the join falls.
+            mix, join_seconds = append_parts(conformed_a, conformed_b)
+        # A single vocal overlays the other song's instrumental (no join point).
         else:
+            # Overlaid mixes have no second song to jump into.
+            join_seconds = None
             # Load, align, and mix the two conformed parts.
             mix = mix_parts(conformed_a, conformed_b, record_a, record_b,
                             ratio_a, ratio_b, gain_a, gain_b)
@@ -336,6 +338,7 @@ def render_mashup(path_a, path_b, output_path, use_stems=False,
             "key_shift_applied": semitones_a, "stems": not (vocals_a and vocals_b),
             "mode": "append" if (vocals_a and vocals_b) else "mix",
             "append_only": append_only,
+            "join_seconds": round(join_seconds, 3) if join_seconds else None,
             "vocals_a": vocals_a, "vocals_b": vocals_b,
             "already_instrumental_a": instrumental_a,
             "already_instrumental_b": instrumental_b, "output": output_path}
@@ -414,7 +417,8 @@ def render_instrumental(path, output_path, high_quality=False):
     return output_path
 
 
-# Define the helper that appends part B onto the end of part A with a smooth seam.
+# Define the helper that appends part B onto the end of part A with a smooth seam,
+# reporting where the join falls so the blender can jump between the two songs.
 def append_parts(conformed_a, conformed_b):
     # Load the conformed part A.
     samples_a = load_mono(conformed_a)
@@ -424,16 +428,18 @@ def append_parts(conformed_a, conformed_b):
     fade = int(APPEND_CROSSFADE_SECONDS * SAMPLE_RATE)
     # Fall back to a plain join if either song is too short to crossfade.
     if len(samples_a) <= fade or len(samples_b) <= fade:
-        # Join the songs end to end with no seam blending.
-        return numpy.concatenate([samples_a, samples_b])
+        # Join the songs end to end, reporting the seam position in seconds.
+        return numpy.concatenate([samples_a, samples_b]), len(samples_a) / SAMPLE_RATE
     # Build the equal-power fade-out curve for the end of song A.
     fade_out = numpy.cos(numpy.linspace(0, numpy.pi / 2, fade)) ** 2
     # Build the matching fade-in curve for the start of song B.
     fade_in = 1.0 - fade_out
     # Blend song A's tail with song B's head into one seam.
     seam = samples_a[-fade:] * fade_out + samples_b[:fade] * fade_in
-    # Join song A's body, the seam, and song B's remainder into one big long song.
-    return numpy.concatenate([samples_a[:-fade], seam, samples_b[fade:]])
+    # Join song A's body, the seam, and song B's remainder into one big long song,
+    # reporting where the second song begins, in seconds.
+    return (numpy.concatenate([samples_a[:-fade], seam, samples_b[fade:]]),
+            (len(samples_a) - fade) / SAMPLE_RATE)
 
 
 # Define the helper that aligns the two conformed parts at their first beats and mixes them.

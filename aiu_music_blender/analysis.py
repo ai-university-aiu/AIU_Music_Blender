@@ -49,8 +49,14 @@ MAX_PHRASES_PER_SENTENCE = 4
 # Define the smallest vocal-bridge spread worth trusting: below this the track has no
 # real singing (an instrumental), and standardizing would amplify noise into votes.
 MIN_BRIDGE_SPREAD = 0.02
+# Define the percentile of CROSS-SONG distances kept as jump edges on a joined track:
+# two songs differ systematically, so cross-song pairs are judged among themselves.
+CROSS_SONG_PERCENTILE = 6.0
+# Define how many of a beat's edge slots are reserved for cross-song jumps on a
+# joined track, so the walk can always travel between the two songs.
+CROSS_SONG_EDGES_RESERVED = 3
 # Define the analysis record format version; a cache with an older version is re-analyzed.
-ANALYSIS_VERSION = 4
+ANALYSIS_VERSION = 5
 # Define the Krumhansl major key profile (perceived strength of each pitch class in a major key).
 MAJOR_PROFILE = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88]
 # Define the Krumhansl minor key profile.
@@ -80,7 +86,7 @@ def cache_key(audio_path):
 
 
 # Define the main entry: analyze a song and return its analysis record, using the cache.
-def analyze_song(audio_path, force=False):
+def analyze_song(audio_path, force=False, join_seconds=None):
     # Compute the cache key of this exact audio file.
     key = cache_key(audio_path)
     # Build the path where this song's analysis record is cached.
@@ -91,8 +97,9 @@ def analyze_song(audio_path, force=False):
         with open(record_path, "r") as record_file:
             # Read the cached analysis record.
             cached = json.load(record_file)
-        # Return the cached record only if it was made by this version of the pipeline.
-        if cached.get("version") == ANALYSIS_VERSION:
+        # Return the cached record only if it matches this pipeline AND this join.
+        if (cached.get("version") == ANALYSIS_VERSION
+                and cached.get("join_seconds") == join_seconds):
             # Return the still-valid cached record.
             return cached
     # Load the song's samples.
@@ -105,8 +112,11 @@ def analyze_song(audio_path, force=False):
     features = beat_feature_matrix(samples, sample_rate, beat_frames)
     # Measure how strongly the vocal band is singing on every beat.
     vocal = vocal_activity(samples, sample_rate, beat_frames)
-    # Build the beat graph of jump edges from the features and the vocal activity.
-    graph = build_beat_graph(features, vocal)
+    # Find which beat begins the second song, when this track is two songs joined.
+    join_beat = (int(numpy.searchsorted(numpy.array(beat_times), join_seconds))
+                 if join_seconds else None)
+    # Build the beat graph of jump edges from the features, vocals, and any join.
+    graph = build_beat_graph(features, vocal, join_beat)
     # Group adjacent phrases into SENTENCES: phrases that sound continuous, or that a
     # vocal line bridges, stay together; boundaries fall only at genuine seams.
     sentences = detect_sentences(features, vocal, len(beat_times))
@@ -130,6 +140,10 @@ def analyze_song(audio_path, force=False):
         "vocal": [round(float(value), 3) for value in vocal],
         # Record the beat indices where sentences (grouped phrases) begin.
         "sentences": sentences,
+        # Record where a second song begins, when this track is two songs joined.
+        "join_seconds": join_seconds,
+        # Record the beat that begins the second song.
+        "join_beat": join_beat,
         # Record the analysis record format version.
         "version": ANALYSIS_VERSION}
     # Open the cache file for writing.
@@ -267,10 +281,28 @@ def vocal_penalty_table(distance_table, vocal):
     return VOCAL_PENALTY_FRACTION * typical * pair_vocal
 
 
+# Define a helper that levels two joined songs: each song's features are centred on
+# their own average, removing the systematic difference between two productions so
+# that a beat of one song can genuinely resemble a beat of the other.
+def level_joined_songs(features, join_beat):
+    # Copy the features so the original stays untouched.
+    levelled = features.copy()
+    # Centre the first song's features on their own average.
+    levelled[:, :join_beat] -= levelled[:, :join_beat].mean(axis=1, keepdims=True)
+    # Centre the second song's features on their own average.
+    levelled[:, join_beat:] -= levelled[:, join_beat:].mean(axis=1, keepdims=True)
+    # Return the levelled features.
+    return levelled
+
+
 # Define a function that builds the beat graph: per beat, a list of [target, distance] jump edges.
-def build_beat_graph(features, vocal):
+def build_beat_graph(features, vocal, join_beat=None):
     # Count the beats (the columns of the feature matrix).
     beat_count = features.shape[1]
+    # On a joined track, level the two songs first so cross-song pairs are comparable.
+    if join_beat and 0 < join_beat < beat_count:
+        # Centre each song's features on its own average.
+        features = level_joined_songs(features, join_beat)
     # Compute the full table of distances between every pair of beats.
     distance_table = pairwise_distances(features)
     # Blend each pair's distance with the distances of the beats that FOLLOW them,
@@ -280,8 +312,24 @@ def build_beat_graph(features, vocal):
     distance_table = distance_table + vocal_penalty_table(distance_table, vocal)
     # Add the bar-position penalty to pairs at different positions within a four-beat bar.
     distance_table = distance_table + bar_penalty_table(beat_count)
+    # Note whether this track is two songs joined.
+    joined = bool(join_beat) and 0 < join_beat < beat_count
+    # Mark which side of the join every beat belongs to.
+    song_of = (numpy.arange(beat_count) >= join_beat) if joined else numpy.zeros(beat_count, bool)
     # Choose the similarity threshold as a low percentile of all off-diagonal distances.
     threshold = numpy.percentile(off_diagonal_values(distance_table), SIMILARITY_PERCENTILE)
+    # On a joined track, judge CROSS-SONG pairs among themselves, so the walk can
+    # always travel between the two songs even though two productions never match
+    # each other as closely as a song matches itself.
+    if joined:
+        # Gather every cross-song distance.
+        cross_mask = song_of[:, None] != song_of[None, :]
+        # Choose the cross-song threshold from that population alone.
+        cross_threshold = numpy.percentile(distance_table[cross_mask], CROSS_SONG_PERCENTILE)
+    # Without a join there is no cross-song threshold.
+    else:
+        # Use the ordinary threshold.
+        cross_threshold = threshold
     # Prepare the graph as one edge list per beat.
     graph = []
     # Walk every beat to collect its edges.
@@ -292,18 +340,33 @@ def build_beat_graph(features, vocal):
         candidates = numpy.argsort(distances)
         # Prepare this beat's edge list.
         edges = []
+        # Count how many cross-song edges this beat has kept.
+        cross_kept = 0
         # Walk the candidates in order of similarity.
         for target in candidates:
             # Skip trivially-adjacent beats, which are inaudible non-jumps.
             if abs(int(target) - beat_index) <= NEIGHBOR_EXCLUSION:
                 # Move on to the next candidate.
                 continue
-            # Stop when the candidate is no longer similar enough.
-            if distances[target] > threshold:
-                # Leave the candidate loop.
-                break
+            # Note whether this candidate lies in the other song.
+            crossing = joined and (song_of[target] != song_of[beat_index])
+            # Judge a crossing candidate by the cross-song threshold, others by the usual one.
+            limit = cross_threshold if crossing else threshold
+            # Skip candidates that are not similar enough by their own measure.
+            if distances[target] > limit:
+                # Keep looking: a later candidate may still qualify by the other threshold.
+                continue
+            # Leave room for cross-song jumps by capping ordinary edges on a joined track.
+            if (joined and not crossing
+                    and len(edges) - cross_kept >= MAX_EDGES_PER_BEAT - CROSS_SONG_EDGES_RESERVED):
+                # This beat has its share of same-song edges; keep looking for crossings.
+                continue
             # Keep this candidate as a jump edge with its distance.
             edges.append([int(target), float(distances[target])])
+            # Count it if it crosses between the songs.
+            if crossing:
+                # One more cross-song edge kept.
+                cross_kept += 1
             # Stop when this beat has enough edges.
             if len(edges) >= MAX_EDGES_PER_BEAT:
                 # Leave the candidate loop.
