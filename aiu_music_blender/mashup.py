@@ -257,7 +257,14 @@ def trim_to_first_beat(samples, record, time_ratio):
 def render_mashup(path_a, path_b, output_path, use_stems=False,
                   vocals_a=None, vocals_b=None,
                   instrumental_a=False, instrumental_b=False,
-                  high_quality=False):
+                  high_quality=False, append_only=False):
+    # APPEND ONLY overrides every vocal choice: both songs keep everything they have,
+    # are aligned in tempo and key, and SONG-2 is joined onto the end of SONG-1.
+    if append_only:
+        # Both songs keep their vocals, which is the engine's append shape.
+        vocals_a, vocals_b = True, True
+        # No separation is needed, so no song needs declaring instrumental.
+        instrumental_a, instrumental_b = False, False
     # A song declared "already an instrumental" (instrumental_a or instrumental_b True)
     # is used as-is wherever its instrumental would be wanted: the vocal-removal
     # process is skipped for it, saving time and preventing double-processing.
@@ -328,6 +335,7 @@ def render_mashup(path_a, path_b, output_path, use_stems=False,
             "stretch_a": round(ratio_a, 4), "stretch_b": round(ratio_b, 4),
             "key_shift_applied": semitones_a, "stems": not (vocals_a and vocals_b),
             "mode": "append" if (vocals_a and vocals_b) else "mix",
+            "append_only": append_only,
             "vocals_a": vocals_a, "vocals_b": vocals_b,
             "already_instrumental_a": instrumental_a,
             "already_instrumental_b": instrumental_b, "output": output_path}

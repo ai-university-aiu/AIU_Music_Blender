@@ -108,10 +108,12 @@ def mashup_route():
     instrumental_b = request.form.get("instrumental_b") == "on"
     # Read the HIGH QUALITY choice from its checkbox.
     high_quality = request.form.get("high_quality") == "on"
-    # Render the mash-up with the chosen vocals, declarations, and quality.
+    # Read the APPEND ONLY choice from its checkbox.
+    append_only = request.form.get("append_only") == "on"
+    # Render the mash-up with the chosen vocals, declarations, quality, and mode.
     report = render_mashup(path_a, path_b, output_path, vocals_a=vocals_a, vocals_b=vocals_b,
                            instrumental_a=instrumental_a, instrumental_b=instrumental_b,
-                           high_quality=high_quality)
+                           high_quality=high_quality, append_only=append_only)
     # Analyze the rendered mash-up so it can play in the infinite engine immediately.
     record = analyze_song(output_path)
     # Remember the mash-up's audio for the audio route.

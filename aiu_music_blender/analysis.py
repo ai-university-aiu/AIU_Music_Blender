@@ -46,8 +46,11 @@ PHRASE_BEATS = 8
 VOCAL_BRIDGE_WEIGHT = 1.0
 # Define the most phrases one sentence may swallow before a boundary is forced.
 MAX_PHRASES_PER_SENTENCE = 4
+# Define the smallest vocal-bridge spread worth trusting: below this the track has no
+# real singing (an instrumental), and standardizing would amplify noise into votes.
+MIN_BRIDGE_SPREAD = 0.02
 # Define the analysis record format version; a cache with an older version is re-analyzed.
-ANALYSIS_VERSION = 3
+ANALYSIS_VERSION = 4
 # Define the Krumhansl major key profile (perceived strength of each pitch class in a major key).
 MAJOR_PROFILE = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88]
 # Define the Krumhansl minor key profile.
@@ -203,12 +206,21 @@ def detect_sentences(features, vocal, beat_count):
     # Measure how strongly a VOCAL bridges each boundary (singing across the cut).
     bridges = numpy.array([float(numpy.mean(vocal[max(0, starts[i + 1] - 2):starts[i + 1] + 2]))
                            for i in range(len(starts) - 1)])
-    # Standardize both measures so they argue on equal terms.
+    # Standardize the change measure so boundaries argue on equal terms.
     changes = (changes - changes.mean()) / (changes.std() + 1e-9)
-    # Standardize the bridges the same way.
-    bridges = (bridges - bridges.mean()) / (bridges.std() + 1e-9)
-    # Score each boundary: high change argues FOR cutting, a vocal bridge AGAINST.
-    scores = changes - VOCAL_BRIDGE_WEIGHT * bridges
+    # Measure how much the vocal bridges actually vary across this track.
+    bridge_spread = float(bridges.std())
+    # On an INSTRUMENTAL the bridges barely vary, and standardizing them would turn
+    # numerical noise into full-strength votes; trust musical change alone instead.
+    if bridge_spread < MIN_BRIDGE_SPREAD:
+        # Score boundaries by musical change only.
+        scores = changes
+    # With real singing present, let a vocal bridge argue against cutting.
+    else:
+        # Standardize the bridges the same way.
+        bridges = (bridges - bridges.mean()) / bridge_spread
+        # Score each boundary: high change argues FOR cutting, a vocal bridge AGAINST.
+        scores = changes - VOCAL_BRIDGE_WEIGHT * bridges
     # Keep boundaries scoring above the middle of the pack.
     threshold = float(numpy.median(scores))
     # Every track's first sentence starts at the beginning.

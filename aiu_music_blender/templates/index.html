@@ -303,6 +303,13 @@
   <div class="group dormant" id="mashup_group">
     <!-- The title inside the top of the rectangle. -->
     <h2>AIU Mash-Up Blender</h2>
+    <!-- APPEND ONLY: align both songs' tempo and key, then join SONG-2 onto the end
+         of SONG-1 - one long two-song track for the blender, no overlaying. -->
+    <div class="row">
+      <label title="Align the Beats Per Minute and the key of both songs, then append SONG-2 to the end of SONG-1, making one long song for the infinite walk.">
+        <input type="checkbox" id="append_only" checked> APPEND ONLY (align tempo and key,
+        then join SONG-2 onto SONG-1)</label>
+    </div>
     <!-- Row one: the first song's YouTube link. -->
     <div class="row">
       <label for="song_one_input">SONG-1 YouTube URL:</label>
@@ -763,7 +770,10 @@
         ? " (vocal removal skipped - both declared instrumental)"
         : " (stems add a few minutes)";
       // Say what kind of blend this will be, and warn about the slow parts honestly.
-      mashupStatus.textContent = (vocalsOne.checked && vocalsTwo.checked)
+      mashupStatus.textContent = document.getElementById("append_only").checked
+        ? "Aligning both songs' tempo and key, then appending SONG-2 onto the end of "
+          + "SONG-1 as one long song (no separation needed)..."
+        : (vocalsOne.checked && vocalsTwo.checked)
         ? "Downloading, matching tempo and key, appending SONG-2 onto SONG-1 "
           + "as one big long song..."
         : (!vocalsOne.checked && !vocalsTwo.checked)
@@ -790,6 +800,8 @@
         if (instrumentalTwo.checked) form.append("instrumental_b", "on");
         // Attach the HIGH QUALITY separation choice.
         if (document.getElementById("high_quality_two").checked) form.append("high_quality", "on");
+        // Attach the APPEND ONLY choice.
+        if (document.getElementById("append_only").checked) form.append("append_only", "on");
         // Post both songs to the mashup route.
         const answer = await fetch("/mashup", { method: "POST", body: form });
         // Refuse gracefully if the server reported a problem.
@@ -805,7 +817,9 @@
         // Arm the Mash-Up Blender's save buttons for this blend.
         armSave("two", blended.record.audio_key);
         // Show the honest compatibility report.
-        mashupStatus.textContent = (blended.report.mode === "append"
+        mashupStatus.textContent = (blended.report.append_only
+          ? "APPEND ONLY: tempo and key aligned, SONG-2 joined onto SONG-1! "
+          : blended.report.mode === "append"
           ? "Appended SONG-2 onto SONG-1 as one big long song! "
           : (!blended.report.vocals_a && !blended.report.vocals_b)
           ? "Blended both instrumentals into one vocal-free mash-up! "
